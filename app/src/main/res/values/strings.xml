@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">SimpleTracking</string>
+    <string name="duration">%s:%s:%s</string>
 </resources>
