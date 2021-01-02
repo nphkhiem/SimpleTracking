@@ -1,19 +1,36 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
+
+def cfg = rootProject.ext
 
 android {
-    compileSdkVersion 29
-    buildToolsVersion "29.0.3"
+    compileSdkVersion cfg.compileSdk
+    buildToolsVersion cfg.buildTools
 
     defaultConfig {
         applicationId "com.khiemnph.simpletracking"
-        minSdkVersion 21
-        targetSdkVersion 29
+        minSdkVersion cfg.minSdk
+        targetSdkVersion cfg.targetSdk
         versionCode 1
         versionName "1.0"
 
+        Properties properties = new Properties()
+        if (rootProject.file("local.properties").exists()) {
+            properties.load(rootProject.file("local.properties").newDataInputStream())
+        }
+
+        manifestPlaceholders = [ mapsApiKey : properties.getProperty("MAPS_API_KEY", "") ]
+
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = "1.8"
     }
 
     buildTypes {
@@ -22,6 +39,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+}
+
+repositories {
+    mavenCentral()
 }
 
 dependencies {
@@ -33,5 +54,17 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+
+    // layout
+    implementation "androidx.appcompat:appcompat:${cfg.appCompat}"
+    implementation "androidx.recyclerview:recyclerview:${cfg.rv}"
+
+    //google map sdk
+    implementation "com.google.android.gms:play-services-maps:${cfg.googleMapSDK}"
+    implementation "com.google.android.libraries.places:places:${cfg.googlePlaces}"
+
+    //glide
+    kapt "com.github.bumptech.glide:compiler:$cfg.glide"
+    implementation "com.github.bumptech.glide:glide:$cfg.glide"
 
 }

@@ -21,6 +21,18 @@ allprojects {
     }
 }
 
+ext {
+    minSdk              = 21
+    targetSdk           = 29
+    compileSdk          = 29
+    buildTools          = '29.0.3'
+    appCompat           = '1.2.0'
+    rv                  = '1.1.0'
+    glide               = '4.11.0'
+    googleMapSDK        = '17.0.0'
+    googlePlaces        = '2.4.0'
+}
+
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
