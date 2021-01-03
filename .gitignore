@@ -104,3 +104,7 @@ fabric.properties
 ### AndroidStudio Patch ###
 
 !/gradle/wrapper/gradle-wrapper.jar
+/data/src/androidTest/java/com/khiemnph/data/ExampleInstrumentedTest.kt
+/domain/src/androidTest/java/com/khiemnph/domain/ExampleInstrumentedTest.kt
+/data/src/test/java/com/khiemnph/data/ExampleUnitTest.kt
+/domain/src/test/java/com/khiemnph/domain/ExampleUnitTest.kt

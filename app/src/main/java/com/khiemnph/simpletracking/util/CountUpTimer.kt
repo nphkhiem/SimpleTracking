@@ -41,6 +41,8 @@ abstract class CountUpTimer(var interval: Long = 1000L) {
         }
     }
 
+    fun getElapsedTime(): Long = elapsedTime
+
     fun start() {
         baseTime = SystemClock.elapsedRealtime()
         countUpHandler.sendMessage(countUpHandler.obtainMessage(MESSAGE))

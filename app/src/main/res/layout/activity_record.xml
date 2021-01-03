@@ -76,7 +76,7 @@
 
 
     <ImageView
-        android:id="@+id/ivPause"
+        android:id="@+id/ivStop"
         android:layout_width="36dp"
         android:layout_height="36dp"
         android:layout_alignParentBottom="true"
@@ -85,29 +85,8 @@
         android:layout_marginEnd="20dp"
         android:layout_marginBottom="50dp"
         android:padding="5dp"
-        android:src="@drawable/ic_pause_record"
-        tools:visibility="visible" />
-
-    <ImageView
-        android:id="@+id/ivResume"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_alignParentBottom="true"
-        android:layout_marginBottom="50dp"
-        android:layout_toStartOf="@id/ivPause"
-        android:padding="5dp"
-        android:src="@drawable/ic_resume_record"
-        tools:visibility="visible" />
-
-    <ImageView
-        android:id="@+id/ivStop"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_alignParentBottom="true"
-        android:layout_marginBottom="50dp"
-        android:layout_toEndOf="@id/ivPause"
-        android:padding="5dp"
         android:src="@drawable/ic_stop_record"
         tools:visibility="visible" />
+
 
 </RelativeLayout>
