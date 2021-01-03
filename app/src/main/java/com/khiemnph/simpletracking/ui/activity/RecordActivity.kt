@@ -2,16 +2,19 @@ package com.khiemnph.simpletracking.ui.activity
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.location.Location
 import android.os.AsyncTask
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.updateLayoutParams
 import com.google.android.gms.location.*
@@ -22,27 +25,48 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.net.PlacesClient
+import com.khiemnph.domain.model.ActivityRecord
 import com.khiemnph.simpletracking.R
+import com.khiemnph.simpletracking.SimpleTrackingApp
+import com.khiemnph.simpletracking.di.component.DaggerRecordComponent
+import com.khiemnph.simpletracking.presenter.ActivityRecordPresenter
+import com.khiemnph.simpletracking.ui.view.ActivityRecordView
+import com.khiemnph.simpletracking.util.CountUpTimer
 import com.khiemnph.simpletracking.utils.UIUtil
 import com.khiemnph.simpletracking.utils.extension.*
 import kotlinx.android.synthetic.main.activity_record.*
 import java.io.ByteArrayOutputStream
 import java.lang.Exception
 import java.lang.ref.WeakReference
+import java.util.*
+import javax.inject.Inject
+import kotlin.collections.ArrayList
 
 
 /**
  * Created by Khiem Nguyen on 12/28/2020.
  */
-class RecordActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.SnapshotReadyCallback, View.OnClickListener {
+class RecordActivity : AppCompatActivity(), ActivityRecordView, OnMapReadyCallback, GoogleMap.SnapshotReadyCallback, View.OnClickListener {
+
+    @Inject
+    lateinit var presenter: ActivityRecordPresenter
+
 
     private var googleMap: GoogleMap? = null
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private lateinit var placesClient: PlacesClient
     private var totalDistanceInKiloMetre = 0f
+    private var speed = 0f
     private var cameraPosition: CameraPosition? = null
     private var lastKnownLocation: Location? = null
     private var trackingRoute: ArrayList<Location> = ArrayList()
+
+    private val countUpTimer = object : CountUpTimer() {
+        override fun onTick(displayedTime: String) {
+            tvElapsedTime.text = displayedTime
+        }
+    }
+
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult?) {
             result?.let {
@@ -62,36 +86,26 @@ class RecordActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.Snapsh
                     trackingRoute.add(lastLocation)
                 val size = trackingRoute.size
                 if (size >= 2) {
-                    val first = trackingRoute[0]
                     val from = trackingRoute[size - 2]
                     val to = trackingRoute[size - 1]
                     totalDistanceInKiloMetre += from.distanceTo(to).toKiloMetreUnit()
                     tvTotalDistance.text = totalDistanceInKiloMetre.toTextKilometre()
-                    tvSpeed.text = from.speed.toKiloMetreUnit().toTextKilometrePerHour()
-                    tvElapsedTime.text = to.speed.toKiloMetreUnit().toTextKilometrePerHour()
-
+                    speed = totalDistanceInKiloMetre / (countUpTimer.getElapsedTime() / (60 * 60 * 1000))
+                    if (speed.isInfinite() || speed.isNaN()) speed = 0f
+                    tvSpeed.text = speed.toTextSpeed()
                     val lineOptions = PolylineOptions().apply {
                         color(Color.BLUE)
                         jointType(JointType.ROUND)
                         startCap(RoundCap())
                         endCap(RoundCap())
-                        width(5f)
+                        width(3f.dp)
                         add(LatLng(from.latitude, from.longitude), LatLng(to.latitude, to.longitude))
                     }
 
                     map.addPolyline(lineOptions)
-                    try {
-                        map.moveCamera(
-                            CameraUpdateFactory.newLatLngBounds(
-                                LatLngBounds(
-                                    LatLng(first.latitude, first.longitude),
-                                    LatLng(to.latitude, to.longitude)
-                                ), 10
-                            )
-                        )
-                    } catch (e : Exception) {
 
-                    }
+                    //move the camera following the moving location
+                    map.moveCamera(CameraUpdateFactory.newLatLng(LatLng(to.latitude, to.longitude)))
                 }
 
             }
@@ -101,7 +115,9 @@ class RecordActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.Snapsh
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_record)
-
+        DaggerRecordComponent.builder().appComponent(SimpleTrackingApp.appComponent).build().inject(this)
+        lifecycle.addObserver(presenter)
+        presenter.setView(this)
         savedInstanceState?.let {
             lastKnownLocation = it.getParcelable(KEY_LOCATION)
             cameraPosition = it.getParcelable(KEY_CAMERA_POSITION)
@@ -119,7 +135,7 @@ class RecordActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.Snapsh
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as? SupportMapFragment
         mapFragment?.getMapAsync(this)
 
-        ivPause.setOnClickListener(this)
+        ivStop.setOnClickListener(this)
     }
 
     override fun onResume() {
@@ -135,7 +151,8 @@ class RecordActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.Snapsh
     override fun onDestroy() {
         trackingRoute.clear()
         stopLocationUpdates()
-        if (!compressBitmapAsync.isCancelled) compressBitmapAsync.cancel(true)
+        countUpTimer.destroy()
+        if (compressBitmapAsync?.isCancelled == false) compressBitmapAsync?.cancel(true)
         super.onDestroy()
     }
 
@@ -153,20 +170,7 @@ class RecordActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.Snapsh
         super.onSaveInstanceState(outState)
     }
 
-    private fun toggleUserActionViews(isPaused: Boolean) {
-        if (isPaused) {
-            ivResume.visible()
-            ivPause.invisible()
-            ivStop.visible()
-        } else {
-            ivResume.invisible()
-            ivPause.visible()
-            ivStop.invisible()
-        }
-    }
-
     override fun onMapReady(map: GoogleMap?) {
-        toggleUserActionViews(false)
         map?.let { myMap ->
             googleMap = myMap
             googleMap!!.setInfoWindowAdapter(object : GoogleMap.InfoWindowAdapter {
@@ -206,6 +210,7 @@ class RecordActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.Snapsh
                         }
 
                         startLocationUpdates()
+                        countUpTimer.start()
                     }
                 }
             } catch (e: SecurityException) {
@@ -251,26 +256,33 @@ class RecordActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.Snapsh
         const val KEY_LOCATION = "location"
     }
 
-    private val compressBitmapAsync by lazy { CompressBitmapAsync(this) }
+    private var compressBitmapAsync: CompressBitmapAsync? = null
 
     override fun onSnapshotReady(bitmap: Bitmap?) {
-        compressBitmapAsync.execute(bitmap)
+        compressBitmapAsync = CompressBitmapAsync(totalDistanceInKiloMetre, speed, countUpTimer.getElapsedTime(), presenter)
+        compressBitmapAsync!!.execute(bitmap)
     }
 
     override fun onClick(v: View?) {
         v?.let {
             when (it.id) {
-                R.id.ivPause -> {
-//                    googleMap?.snapshot(this@RecordActivity)
+                R.id.ivStop -> {
+                    googleMap?.snapshot(this@RecordActivity)
                 }
                 else -> {}
             }
         }
     }
 
-    class CompressBitmapAsync(activity: Activity) : AsyncTask<Bitmap, Void, ByteArray>() {
+    class CompressBitmapAsync(
+        val totalDistance: Float,
+        val speed: Float,
+        val elapsedTime: Long,
+        presenter: ActivityRecordPresenter
+    ) : AsyncTask<Bitmap, Void, ByteArray>() {
 
-        private val activityWeakRef = WeakReference(activity)
+        private val presenterWeakRef = WeakReference(presenter)
+
         override fun doInBackground(vararg bitmaps: Bitmap?): ByteArray? {
             bitmaps[0]?.let {
                 val stream = ByteArrayOutputStream()
@@ -283,14 +295,35 @@ class RecordActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.Snapsh
 
         override fun onPostExecute(result: ByteArray?) {
             super.onPostExecute(result)
-            activityWeakRef.get()?.let {
-                val returnedIntent = Intent().apply {
-                    putExtra(MainActivity.EXTRA_BITMAP_BYTE_ARRAY, result)
+            presenterWeakRef.get()?.let { presenter ->
+                result?.let { thumbByteArr ->
+                    presenter.saveRecord(
+                        ActivityRecord(
+                            id = UUID.randomUUID().toString(),
+                            recordThumbByteArr = thumbByteArr,
+                            totalDistance = totalDistance,
+                            speed = speed,
+                            elapsedTime = elapsedTime)
+                    )
                 }
-                it.setResult(Activity.RESULT_OK, returnedIntent)
-                it.finish()
+
             }
         }
 
+    }
+
+    override fun onSaveRecordSuccess(record: ActivityRecord) {
+        Toast.makeText(this, "Added to DB successfully", Toast.LENGTH_SHORT).show()
+        val returnedIntent = Intent().apply {
+            putExtra(MainActivity.EXTRA_RECORD_ID, record.id)
+            putExtra(MainActivity.EXTRA_BITMAP_BYTE_ARRAY, record.recordThumbByteArr)
+        }
+        setResult(Activity.RESULT_OK, returnedIntent)
+        finish()
+    }
+
+
+    override fun getContext(): Context? {
+        return this
     }
 }

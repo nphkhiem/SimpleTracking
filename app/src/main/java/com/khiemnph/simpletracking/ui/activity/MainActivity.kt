@@ -1,6 +1,7 @@
 package com.khiemnph.simpletracking.ui.activity
 
 import android.app.Activity
+import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 
 import android.content.Intent
@@ -13,22 +14,35 @@ import android.widget.RelativeLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.updateLayoutParams
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
+import com.khiemnph.domain.model.ActivityRecord
 
 import com.khiemnph.simpletracking.R
 import com.khiemnph.simpletracking.SimpleTrackingApp
+import com.khiemnph.simpletracking.di.component.DaggerMainComponent
+import com.khiemnph.simpletracking.presenter.MainPresenter
+import com.khiemnph.simpletracking.ui.adapter.RecordAdapter
+import com.khiemnph.simpletracking.ui.view.MainView
 import com.khiemnph.simpletracking.utils.UIUtil
+import com.khiemnph.simpletracking.utils.extension.gone
+import com.khiemnph.simpletracking.utils.extension.visible
 import kotlinx.android.synthetic.main.activity_main.*
+import javax.inject.Inject
 
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), MainView {
 
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE  = 1111
         private const val REQUEST_CODE                      = 1405
         const         val EXTRA_BITMAP_BYTE_ARRAY           = "xBitmapByteArr"
+        const         val EXTRA_RECORD_ID                   = "xRecordId"
     }
 
+    @Inject
+    lateinit var presenter: MainPresenter
+    private lateinit var adapter: RecordAdapter
 
     private val handleAfterPermissionGranted    : () -> Unit                        = {
         startActivityForResult(Intent(this@MainActivity, RecordActivity::class.java), REQUEST_CODE)
@@ -37,18 +51,26 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        DaggerMainComponent.builder().appComponent(SimpleTrackingApp.appComponent).build().inject(this)
+        lifecycle.addObserver(presenter)
+        presenter.setView(this)
         initViews()
     }
 
     private fun initViews() {
-        ivRecordThumb.updateLayoutParams<RelativeLayout.LayoutParams> {
-            width   = UIUtil.screenWidth()
-            height  = width
+        with(rv) {
+            layoutManager = LinearLayoutManager(this@MainActivity, LinearLayoutManager.VERTICAL, false)
+            adapter       = RecordAdapter().also { this@MainActivity.adapter = it }
         }
     }
 
     fun startRecord(v: View) {
         requestLocationPermission()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        presenter.loadAllRecords()
     }
 
     private fun requestLocationPermission() {
@@ -83,19 +105,51 @@ class MainActivity : AppCompatActivity() {
         when (requestCode) {
             REQUEST_CODE -> {
                 if (resultCode == Activity.RESULT_OK) {
-                    data?.let { intent ->
-                        if (intent.hasExtra(EXTRA_BITMAP_BYTE_ARRAY)) {
-                            val byteArray = intent.getByteArrayExtra(EXTRA_BITMAP_BYTE_ARRAY)
-                            byteArray?.let {
-                                val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
-                                Glide.with(this).load(bitmap).centerCrop().into(ivRecordThumb)
-                            }
-                        }
-                    }
+                    presenter.reloadAllRecords()
                 }
             }
             else -> {}
         }
+    }
+
+    override fun toggleLoading(show: Boolean) {
+        rv.gone()
+        tvNoData.gone()
+        loading.visible()
+    }
+
+    override fun toggleError(error: Throwable?) {
+        rv.visible()
+        loading.gone()
+        if (error != null) {
+            tvNoData.visible()
+            tvNoData.text = "Something went wrong \n ${error?.localizedMessage ?: ""}"
+        } else {
+            tvNoData.gone()
+        }
+    }
+
+    override fun toggleEmptyView(show: Boolean) {
+        if (show) {
+            rv.gone()
+            tvNoData.visible()
+            tvNoData.text = "No data"
+        } else {
+            rv.visible()
+            tvNoData.gone()
+        }
+    }
+
+    override fun doOnReceiveRecordData(records: ArrayList<ActivityRecord>) {
+        adapter.setData(records)
+    }
+
+    override fun doOnReceiveSingleRecordData(record: ActivityRecord) {
+
+    }
+
+    override fun getContext(): Context? {
+        return this
     }
 
 }
