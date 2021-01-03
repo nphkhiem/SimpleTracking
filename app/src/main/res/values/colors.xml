@@ -3,4 +3,13 @@
     <color name="colorPrimary">#6200EE</color>
     <color name="colorPrimaryDark">#3700B3</color>
     <color name="colorAccent">#03DAC5</color>
+
+    <color name="color_ripple">#66FD4A42</color>
+    <color name="dark_blue">#3291a8</color>
+    <color name="white">#FFFFFF</color>
+    <color name="dark_blue_alpha_30">#4D3291a8</color>
+
+    <color name="red_E71F15">#E71F15</color>
+    <color name="red_DC7570">#DC7570</color>
+    <color name="red_DC7570_alpha_40">#66DC7570</color>
 </resources>
