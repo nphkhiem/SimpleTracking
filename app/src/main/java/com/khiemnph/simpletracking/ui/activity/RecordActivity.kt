@@ -36,7 +36,6 @@ import com.khiemnph.simpletracking.utils.UIUtil
 import com.khiemnph.simpletracking.utils.extension.*
 import kotlinx.android.synthetic.main.activity_record.*
 import java.io.ByteArrayOutputStream
-import java.lang.Exception
 import java.lang.ref.WeakReference
 import java.util.*
 import javax.inject.Inject
@@ -56,10 +55,15 @@ class RecordActivity : AppCompatActivity(), ActivityRecordView, OnMapReadyCallba
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private lateinit var placesClient: PlacesClient
     private var totalDistanceInKiloMetre = 0f
-    private var speed = 0f
+    private var avgSpeed = 0f
+    private var totalElapsedTime = 0L
+    private var currentSpeed = 0f
+    private var totalSpeed = 0f
     private var cameraPosition: CameraPosition? = null
     private var lastKnownLocation: Location? = null
     private var trackingRoute: ArrayList<Location> = ArrayList()
+
+
 
     private val countUpTimer = object : CountUpTimer() {
         override fun onTick(displayedTime: String) {
@@ -81,18 +85,20 @@ class RecordActivity : AppCompatActivity(), ActivityRecordView, OnMapReadyCallba
 
     private fun onLocationUpdated(locations: List<Location>) {
         googleMap?.let { map ->
-            locations.forEach { lastLocation ->
+            locations.forEachIndexed { index, lastLocation ->
+                totalSpeed += lastLocation.speed
                 if (!trackingRoute.contains(lastLocation))
                     trackingRoute.add(lastLocation)
                 val size = trackingRoute.size
+                avgSpeed = totalSpeed / size
                 if (size >= 2) {
                     val from = trackingRoute[size - 2]
                     val to = trackingRoute[size - 1]
                     totalDistanceInKiloMetre += from.distanceTo(to).toKiloMetreUnit()
                     tvTotalDistance.text = totalDistanceInKiloMetre.toTextKilometre()
-                    speed = totalDistanceInKiloMetre / (countUpTimer.getElapsedTime() / (60 * 60 * 1000))
-                    if (speed.isInfinite() || speed.isNaN()) speed = 0f
-                    tvSpeed.text = speed.toTextSpeed()
+                    currentSpeed = lastLocation.speed
+                    if (currentSpeed.isInfinite() || currentSpeed.isNaN()) currentSpeed = 0f
+                    tvSpeed.text = currentSpeed.toTextSpeed()
                     val lineOptions = PolylineOptions().apply {
                         color(Color.BLUE)
                         jointType(JointType.ROUND)
@@ -149,11 +155,20 @@ class RecordActivity : AppCompatActivity(), ActivityRecordView, OnMapReadyCallba
     }
 
     override fun onDestroy() {
+        resetEverything()
+        super.onDestroy()
+    }
+
+    private fun resetEverything() {
+        totalSpeed = 0f
+        avgSpeed = 0f
+        currentSpeed = 0f
+        totalElapsedTime = 0L
+        totalDistanceInKiloMetre = 0f
         trackingRoute.clear()
         stopLocationUpdates()
         countUpTimer.destroy()
         if (compressBitmapAsync?.isCancelled == false) compressBitmapAsync?.cancel(true)
-        super.onDestroy()
     }
 
     @SuppressLint("MissingPermission")
@@ -259,7 +274,7 @@ class RecordActivity : AppCompatActivity(), ActivityRecordView, OnMapReadyCallba
     private var compressBitmapAsync: CompressBitmapAsync? = null
 
     override fun onSnapshotReady(bitmap: Bitmap?) {
-        compressBitmapAsync = CompressBitmapAsync(totalDistanceInKiloMetre, speed, countUpTimer.getElapsedTime(), presenter)
+        compressBitmapAsync = CompressBitmapAsync(totalDistanceInKiloMetre, currentSpeed, avgSpeed, countUpTimer.getElapsedTime(), presenter)
         compressBitmapAsync!!.execute(bitmap)
     }
 
@@ -277,6 +292,7 @@ class RecordActivity : AppCompatActivity(), ActivityRecordView, OnMapReadyCallba
     class CompressBitmapAsync(
         val totalDistance: Float,
         val speed: Float,
+        val avgSpeed: Float,
         val elapsedTime: Long,
         presenter: ActivityRecordPresenter
     ) : AsyncTask<Bitmap, Void, ByteArray>() {
@@ -303,6 +319,7 @@ class RecordActivity : AppCompatActivity(), ActivityRecordView, OnMapReadyCallba
                             recordThumbByteArr = thumbByteArr,
                             totalDistance = totalDistance,
                             speed = speed,
+                            avgSpeed = avgSpeed,
                             elapsedTime = elapsedTime)
                     )
                 }

@@ -19,6 +19,7 @@ class TblActivityRecord {
         val recordThumb     = "recordThumb"
         val totalDistance   = "total_distance"
         val speed           = "speed"
+        val avgSpeed        = "avg_speed"
         val elapsedTime     = "elapsed_time"
         val date            = "date"
     }

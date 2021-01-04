@@ -50,6 +50,7 @@ class DatabaseHelper(
                     "${TblActivityRecord.recordThumb} BLOB, " +
                     "${TblActivityRecord.totalDistance} REAL, " +
                     "${TblActivityRecord.speed} REAL, " +
+                    "${TblActivityRecord.avgSpeed} REAL, " +
                     "${TblActivityRecord.elapsedTime} INTEGER, " +
                     "${TblActivityRecord.date} INTEGER, PRIMARY KEY (${TblActivityRecord.recordId}))"
             )
@@ -66,10 +67,10 @@ class DatabaseHelper(
                 value.put(TblActivityRecord.recordThumb, activityRecord.recordThumbByteArr)
                 value.put(TblActivityRecord.totalDistance, activityRecord.totalDistance)
                 value.put(TblActivityRecord.speed, activityRecord.speed)
+                value.put(TblActivityRecord.avgSpeed, activityRecord.avgSpeed)
                 value.put(TblActivityRecord.elapsedTime, activityRecord.elapsedTime)
                 value.put(TblActivityRecord.date, activityRecord.recordDate)
                 result = db.insert(DatabaseDefines.TBL_RECORD, null, value)
-                db.close()
                 return@fromCallable result
             }
         } catch (e: Exception) {
@@ -89,6 +90,7 @@ class DatabaseHelper(
                     TblActivityRecord.recordThumb,
                     TblActivityRecord.totalDistance,
                     TblActivityRecord.speed,
+                    TblActivityRecord.avgSpeed,
                     TblActivityRecord.elapsedTime,
                     TblActivityRecord.date
                 )
@@ -105,10 +107,10 @@ class DatabaseHelper(
                     record.recordThumbByteArr = cursor.getBlobOrNull(cursor.getColumnIndex(TblActivityRecord.recordThumb))
                     record.totalDistance = cursor.getFloat(cursor.getColumnIndex(TblActivityRecord.totalDistance))
                     record.speed = cursor.getFloat(cursor.getColumnIndex(TblActivityRecord.speed))
+                    record.avgSpeed = cursor.getFloat(cursor.getColumnIndex(TblActivityRecord.avgSpeed))
                     record.elapsedTime = cursor.getLong(cursor.getColumnIndex(TblActivityRecord.elapsedTime))
                     record.recordDate = cursor.getLong(cursor.getColumnIndex(TblActivityRecord.date))
                 }
-                db.close()
                 cursor.close()
 
                 return@fromCallable record
@@ -130,6 +132,7 @@ class DatabaseHelper(
                     TblActivityRecord.recordThumb,
                     TblActivityRecord.totalDistance,
                     TblActivityRecord.speed,
+                    TblActivityRecord.avgSpeed,
                     TblActivityRecord.elapsedTime,
                     TblActivityRecord.date
                 )
@@ -148,12 +151,12 @@ class DatabaseHelper(
                         record.recordThumbByteArr = cursor.getBlobOrNull(cursor.getColumnIndex(TblActivityRecord.recordThumb))
                         record.totalDistance = cursor.getFloat(cursor.getColumnIndex(TblActivityRecord.totalDistance))
                         record.speed = cursor.getFloat(cursor.getColumnIndex(TblActivityRecord.speed))
+                        record.avgSpeed = cursor.getFloat(cursor.getColumnIndex(TblActivityRecord.avgSpeed))
                         record.elapsedTime = cursor.getLong(cursor.getColumnIndex(TblActivityRecord.elapsedTime))
                         record.recordDate = cursor.getLong(cursor.getColumnIndex(TblActivityRecord.date))
                         records.add(record)
                     } while (cursor.moveToNext())
                 }
-                db.close()
                 cursor.close()
 
                 return@fromCallable records

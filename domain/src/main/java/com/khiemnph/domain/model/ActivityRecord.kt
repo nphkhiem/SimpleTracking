@@ -14,6 +14,7 @@ class ActivityRecord(
     var recordThumbByteArr  : ByteArray?         = null,
     var totalDistance       : Float              = 0f,
     var speed               : Float              = 0f,
+    var avgSpeed            : Float              = 0f,
     var elapsedTime         : Long               = 0L,
     var recordDate          : Long               = System.currentTimeMillis()
 ): Parcelable {

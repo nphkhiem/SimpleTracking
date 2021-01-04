@@ -40,7 +40,9 @@ class MainPresenterImpl @Inject constructor(val useCase: MainUseCase): MainPrese
             }
 
             override fun onReceiveRecordListFail(e: Throwable) {
-                TODO("Not yet implemented")
+                mainView.toggleLoading(false)
+                mainView.toggleEmptyView(false)
+                mainView.toggleError(e)
             }
 
         })
