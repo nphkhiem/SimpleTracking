@@ -86,7 +86,9 @@ class RecordActivity : AppCompatActivity(), ActivityRecordView, OnMapReadyCallba
     private fun onLocationUpdated(locations: List<Location>) {
         googleMap?.let { map ->
             locations.forEachIndexed { index, lastLocation ->
-                totalSpeed += lastLocation.speed
+                if (isRecording) {
+                    totalSpeed += lastLocation.speed
+                }
                 if (!trackingRoute.contains(lastLocation))
                     trackingRoute.add(lastLocation)
                 val size = trackingRoute.size
@@ -94,13 +96,18 @@ class RecordActivity : AppCompatActivity(), ActivityRecordView, OnMapReadyCallba
                 if (size >= 2) {
                     val from = trackingRoute[size - 2]
                     val to = trackingRoute[size - 1]
-                    totalDistanceInKiloMetre += from.distanceTo(to).toKiloMetreUnit()
-                    tvTotalDistance.text = totalDistanceInKiloMetre.toTextKilometre()
-                    currentSpeed = lastLocation.speed
+                    if (isRecording) {
+                        totalDistanceInKiloMetre += from.distanceTo(to).toKiloMetreUnit()
+                        tvTotalDistance.text = totalDistanceInKiloMetre.toTextKilometre()
+                    } else {
+                        tvTotalDistance.text = "--.--(km)"
+                    }
+
+                    currentSpeed = if (isRecording) lastLocation.speed else -1f
                     if (currentSpeed.isInfinite() || currentSpeed.isNaN()) currentSpeed = 0f
                     tvSpeed.text = currentSpeed.toTextSpeed()
                     val lineOptions = PolylineOptions().apply {
-                        color(Color.BLUE)
+                        color(if (isRecording) Color.BLUE else Color.YELLOW)
                         jointType(JointType.ROUND)
                         startCap(RoundCap())
                         endCap(RoundCap())
@@ -141,7 +148,9 @@ class RecordActivity : AppCompatActivity(), ActivityRecordView, OnMapReadyCallba
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as? SupportMapFragment
         mapFragment?.getMapAsync(this)
 
+        ivResume.setOnClickListener(this)
         ivStop.setOnClickListener(this)
+        ivPause.setOnClickListener(this)
     }
 
     override fun onResume() {
@@ -226,6 +235,8 @@ class RecordActivity : AppCompatActivity(), ActivityRecordView, OnMapReadyCallba
 
                         startLocationUpdates()
                         countUpTimer.start()
+                        isRecording = true
+                        toggleViews(true)
                     }
                 }
             } catch (e: SecurityException) {
@@ -278,15 +289,49 @@ class RecordActivity : AppCompatActivity(), ActivityRecordView, OnMapReadyCallba
         compressBitmapAsync!!.execute(bitmap)
     }
 
+    private var isRecording = false
+
     override fun onClick(v: View?) {
         v?.let {
             when (it.id) {
                 R.id.ivStop -> {
                     googleMap?.snapshot(this@RecordActivity)
                 }
+                R.id.ivPause -> {
+                    toggleViews(show = false, handlePauseAction = {
+                        countUpTimer.stop()
+                    })
+                    isRecording = false
+                }
+                R.id.ivResume -> {
+                    toggleViews(show = true, handleResumeAction = {
+                        countUpTimer.start()
+                    })
+                    isRecording = true
+                }
                 else -> {}
             }
         }
+    }
+
+    private fun toggleViews(show: Boolean, handlePauseAction: (() -> Unit)? = null, handleResumeAction: (() -> Unit)? = null ) {
+        if (show) {
+            ivPause.visible()
+            ivPause.enable()
+            ivResume.invisible()
+            ivResume.disable()
+            ivStop.invisible()
+            ivStop.disable()
+        } else {
+            ivPause.invisible()
+            ivPause.disable()
+            ivResume.visible()
+            ivResume.enable()
+            ivStop.visible()
+            ivStop.enable()
+        }
+        handlePauseAction?.invoke()
+        handleResumeAction?.invoke()
     }
 
     class CompressBitmapAsync(
