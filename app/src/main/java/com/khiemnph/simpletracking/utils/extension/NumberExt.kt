@@ -22,4 +22,4 @@ fun Float.toTextKilometrePerHour(): String = String.format("%.1f(km/h)", this)
 
 fun Float.toMetre(): String = String.format("%.3f(m)", this)
 
-fun Float.toTextSpeed(): String = String.format("%.2f(km/h)", this)
+fun Float.toTextSpeed(): String = if (this < 0) "-.-(km/h)" else String.format("%.2f(km/h)", this)
