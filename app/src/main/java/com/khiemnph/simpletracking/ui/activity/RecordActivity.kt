@@ -56,10 +56,15 @@ class RecordActivity : AppCompatActivity(), ActivityRecordView, OnMapReadyCallba
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private lateinit var placesClient: PlacesClient
     private var totalDistanceInKiloMetre = 0f
-    private var speed = 0f
+    private var avgSpeed = 0f
+    private var totalElapsedTime = 0L
+    private var currentSpeed = 0f
+    private var totalSpeed = 0f
     private var cameraPosition: CameraPosition? = null
     private var lastKnownLocation: Location? = null
     private var trackingRoute: ArrayList<Location> = ArrayList()
+
+
 
     private val countUpTimer = object : CountUpTimer() {
         override fun onTick(displayedTime: String) {
@@ -81,20 +86,29 @@ class RecordActivity : AppCompatActivity(), ActivityRecordView, OnMapReadyCallba
 
     private fun onLocationUpdated(locations: List<Location>) {
         googleMap?.let { map ->
-            locations.forEach { lastLocation ->
+            locations.forEachIndexed { index, lastLocation ->
+                if (isRecording) {
+                    totalSpeed += lastLocation.speed
+                }
                 if (!trackingRoute.contains(lastLocation))
                     trackingRoute.add(lastLocation)
                 val size = trackingRoute.size
+                avgSpeed = totalSpeed / size
                 if (size >= 2) {
                     val from = trackingRoute[size - 2]
                     val to = trackingRoute[size - 1]
-                    totalDistanceInKiloMetre += from.distanceTo(to).toKiloMetreUnit()
-                    tvTotalDistance.text = totalDistanceInKiloMetre.toTextKilometre()
-                    speed = totalDistanceInKiloMetre / (countUpTimer.getElapsedTime() / (60 * 60 * 1000))
-                    if (speed.isInfinite() || speed.isNaN()) speed = 0f
-                    tvSpeed.text = speed.toTextSpeed()
+                    if (isRecording) {
+                        totalDistanceInKiloMetre += from.distanceTo(to).toKiloMetreUnit()
+                        tvTotalDistance.text = totalDistanceInKiloMetre.toTextKilometre()
+                    } else {
+                        tvTotalDistance.text = "--.--(km)"
+                    }
+
+                    currentSpeed = if (isRecording) lastLocation.speed else -1f
+                    if (currentSpeed.isInfinite() || currentSpeed.isNaN()) currentSpeed = 0f
+                    tvSpeed.text = currentSpeed.toTextSpeed()
                     val lineOptions = PolylineOptions().apply {
-                        color(Color.BLUE)
+                        color(if (isRecording) Color.BLUE else Color.YELLOW)
                         jointType(JointType.ROUND)
                         startCap(RoundCap())
                         endCap(RoundCap())
@@ -135,7 +149,9 @@ class RecordActivity : AppCompatActivity(), ActivityRecordView, OnMapReadyCallba
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as? SupportMapFragment
         mapFragment?.getMapAsync(this)
 
+        ivResume.setOnClickListener(this)
         ivStop.setOnClickListener(this)
+        ivPause.setOnClickListener(this)
     }
 
     override fun onResume() {
@@ -145,15 +161,23 @@ class RecordActivity : AppCompatActivity(), ActivityRecordView, OnMapReadyCallba
 
     override fun onPause() {
         super.onPause()
-        stopLocationUpdates()
     }
 
     override fun onDestroy() {
+        resetEverything()
+        super.onDestroy()
+    }
+
+    private fun resetEverything() {
+        totalSpeed = 0f
+        avgSpeed = 0f
+        currentSpeed = 0f
+        totalElapsedTime = 0L
+        totalDistanceInKiloMetre = 0f
         trackingRoute.clear()
         stopLocationUpdates()
         countUpTimer.destroy()
         if (compressBitmapAsync?.isCancelled == false) compressBitmapAsync?.cancel(true)
-        super.onDestroy()
     }
 
     @SuppressLint("MissingPermission")
@@ -211,6 +235,8 @@ class RecordActivity : AppCompatActivity(), ActivityRecordView, OnMapReadyCallba
 
                         startLocationUpdates()
                         countUpTimer.start()
+                        isRecording = true
+                        toggleViews(true)
                     }
                 }
             } catch (e: SecurityException) {
@@ -259,24 +285,76 @@ class RecordActivity : AppCompatActivity(), ActivityRecordView, OnMapReadyCallba
     private var compressBitmapAsync: CompressBitmapAsync? = null
 
     override fun onSnapshotReady(bitmap: Bitmap?) {
-        compressBitmapAsync = CompressBitmapAsync(totalDistanceInKiloMetre, speed, countUpTimer.getElapsedTime(), presenter)
+        compressBitmapAsync = CompressBitmapAsync(totalDistanceInKiloMetre, currentSpeed, avgSpeed, countUpTimer.getElapsedTime(), presenter)
         compressBitmapAsync!!.execute(bitmap)
     }
+
+    private var isRecording = false
 
     override fun onClick(v: View?) {
         v?.let {
             when (it.id) {
                 R.id.ivStop -> {
-                    googleMap?.snapshot(this@RecordActivity)
+                    googleMap?.let { map ->
+                        val firstLocation = trackingRoute.first()
+                        val lastLocation = trackingRoute.last()
+                        try {
+                            map.moveCamera(
+                                CameraUpdateFactory.newLatLngBounds(
+                                    LatLngBounds(
+                                        LatLng(firstLocation.latitude, firstLocation.longitude),
+                                        LatLng(lastLocation.latitude, lastLocation.longitude)
+                                    ), 10.dp
+                                )
+                            )
+                        }  catch (e: Exception) {
+
+                        }
+
+                        map.snapshot(this@RecordActivity)
+                    }
+                }
+                R.id.ivPause -> {
+                    toggleViews(show = false, handlePauseAction = {
+                        countUpTimer.stop()
+                    })
+                    isRecording = false
+                }
+                R.id.ivResume -> {
+                    toggleViews(show = true, handleResumeAction = {
+                        countUpTimer.start()
+                    })
+                    isRecording = true
                 }
                 else -> {}
             }
         }
     }
 
+    private fun toggleViews(show: Boolean, handlePauseAction: (() -> Unit)? = null, handleResumeAction: (() -> Unit)? = null ) {
+        if (show) {
+            ivPause.visible()
+            ivPause.enable()
+            ivResume.invisible()
+            ivResume.disable()
+            ivStop.invisible()
+            ivStop.disable()
+        } else {
+            ivPause.invisible()
+            ivPause.disable()
+            ivResume.visible()
+            ivResume.enable()
+            ivStop.visible()
+            ivStop.enable()
+        }
+        handlePauseAction?.invoke()
+        handleResumeAction?.invoke()
+    }
+
     class CompressBitmapAsync(
         val totalDistance: Float,
         val speed: Float,
+        val avgSpeed: Float,
         val elapsedTime: Long,
         presenter: ActivityRecordPresenter
     ) : AsyncTask<Bitmap, Void, ByteArray>() {
@@ -303,6 +381,7 @@ class RecordActivity : AppCompatActivity(), ActivityRecordView, OnMapReadyCallba
                             recordThumbByteArr = thumbByteArr,
                             totalDistance = totalDistance,
                             speed = speed,
+                            avgSpeed = avgSpeed,
                             elapsedTime = elapsedTime)
                     )
                 }

@@ -11,6 +11,7 @@ import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.view.View
 import android.widget.RelativeLayout
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.updateLayoutParams
@@ -23,6 +24,7 @@ import com.khiemnph.simpletracking.SimpleTrackingApp
 import com.khiemnph.simpletracking.di.component.DaggerMainComponent
 import com.khiemnph.simpletracking.presenter.MainPresenter
 import com.khiemnph.simpletracking.ui.adapter.RecordAdapter
+import com.khiemnph.simpletracking.ui.adapter.RecordItemDecoration
 import com.khiemnph.simpletracking.ui.view.MainView
 import com.khiemnph.simpletracking.utils.UIUtil
 import com.khiemnph.simpletracking.utils.extension.gone
@@ -61,6 +63,7 @@ class MainActivity : AppCompatActivity(), MainView {
         with(rv) {
             layoutManager = LinearLayoutManager(this@MainActivity, LinearLayoutManager.VERTICAL, false)
             adapter       = RecordAdapter().also { this@MainActivity.adapter = it }
+            addItemDecoration(RecordItemDecoration())
         }
     }
 
@@ -119,11 +122,12 @@ class MainActivity : AppCompatActivity(), MainView {
     }
 
     override fun toggleError(error: Throwable?) {
-        rv.visible()
+        rv.gone()
         loading.gone()
         if (error != null) {
             tvNoData.visible()
             tvNoData.text = "Something went wrong \n ${error?.localizedMessage ?: ""}"
+            Toast.makeText(this, error.localizedMessage, Toast.LENGTH_SHORT).show()
         } else {
             tvNoData.gone()
         }

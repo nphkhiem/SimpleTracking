@@ -14,7 +14,7 @@ import java.lang.Exception
  * Created by Khiem Nguyen on 1/3/2021.
  */
 class DatabaseHelper(
-    private val context: Context
+    context: Context
 ) : SQLiteOpenHelper(context, DatabaseDefines.DB_NAME, null, DatabaseDefines.DB_VERSION) {
 
     companion object {
@@ -50,6 +50,7 @@ class DatabaseHelper(
                     "${TblActivityRecord.recordThumb} BLOB, " +
                     "${TblActivityRecord.totalDistance} REAL, " +
                     "${TblActivityRecord.speed} REAL, " +
+                    "${TblActivityRecord.avgSpeed} REAL, " +
                     "${TblActivityRecord.elapsedTime} INTEGER, " +
                     "${TblActivityRecord.date} INTEGER, PRIMARY KEY (${TblActivityRecord.recordId}))"
             )
@@ -58,18 +59,18 @@ class DatabaseHelper(
 
     fun addNewRecord(activityRecord: ActivityRecord): Completable {
         try {
-            val result: Long
-            val db = writableDatabase
-            val value = ContentValues()
-            value.put(TblActivityRecord.recordId, activityRecord.id)
-            value.put(TblActivityRecord.recordThumb, activityRecord.recordThumbByteArr)
-            value.put(TblActivityRecord.totalDistance, activityRecord.totalDistance)
-            value.put(TblActivityRecord.speed, activityRecord.speed)
-            value.put(TblActivityRecord.elapsedTime, activityRecord.elapsedTime)
-            value.put(TblActivityRecord.date, activityRecord.recordDate)
-            result = db.insert(DatabaseDefines.TBL_RECORD, null, value)
-            db.close()
             return Completable.fromCallable {
+                val result: Long
+                val db = writableDatabase
+                val value = ContentValues()
+                value.put(TblActivityRecord.recordId, activityRecord.id)
+                value.put(TblActivityRecord.recordThumb, activityRecord.recordThumbByteArr)
+                value.put(TblActivityRecord.totalDistance, activityRecord.totalDistance)
+                value.put(TblActivityRecord.speed, activityRecord.speed)
+                value.put(TblActivityRecord.avgSpeed, activityRecord.avgSpeed)
+                value.put(TblActivityRecord.elapsedTime, activityRecord.elapsedTime)
+                value.put(TblActivityRecord.date, activityRecord.recordDate)
+                result = db.insert(DatabaseDefines.TBL_RECORD, null, value)
                 return@fromCallable result
             }
         } catch (e: Exception) {
@@ -81,35 +82,39 @@ class DatabaseHelper(
 
     fun getRecordById(recordId: String): Single<ActivityRecord> {
         try {
-            val record = ActivityRecord()
-            val db = readableDatabase
-            val queriedColumns = arrayOf(
-                TblActivityRecord.recordId,
-                TblActivityRecord.recordThumb,
-                TblActivityRecord.totalDistance,
-                TblActivityRecord.speed,
-                TblActivityRecord.elapsedTime,
-                TblActivityRecord.date
-            )
-            val whereClause = "${TblActivityRecord.recordId} = ?"
-            val whereArgs   = arrayOf(recordId)
-            val cursor = db.query(
-                DatabaseDefines.TBL_RECORD,
-                queriedColumns,
-                whereClause, whereArgs,
-                null, null, "${TblActivityRecord.recordId} DESC"
-            )
-            while (cursor.moveToNext()) {
-                record.id = cursor.getString(cursor.getColumnIndex(TblActivityRecord.recordId))
-                record.recordThumbByteArr = cursor.getBlobOrNull(cursor.getColumnIndex(TblActivityRecord.recordThumb))
-                record.totalDistance = cursor.getFloat(cursor.getColumnIndex(TblActivityRecord.totalDistance))
-                record.speed = cursor.getFloat(cursor.getColumnIndex(TblActivityRecord.speed))
-                record.elapsedTime = cursor.getLong(cursor.getColumnIndex(TblActivityRecord.elapsedTime))
-                record.recordDate = cursor.getLong(cursor.getColumnIndex(TblActivityRecord.date))
+            return Single.fromCallable {
+                val record = ActivityRecord()
+                val db = readableDatabase
+                val queriedColumns = arrayOf(
+                    TblActivityRecord.recordId,
+                    TblActivityRecord.recordThumb,
+                    TblActivityRecord.totalDistance,
+                    TblActivityRecord.speed,
+                    TblActivityRecord.avgSpeed,
+                    TblActivityRecord.elapsedTime,
+                    TblActivityRecord.date
+                )
+                val whereClause = "${TblActivityRecord.recordId} = ?"
+                val whereArgs   = arrayOf(recordId)
+                val cursor = db.query(
+                    DatabaseDefines.TBL_RECORD,
+                    queriedColumns,
+                    whereClause, whereArgs,
+                    null, null, "${TblActivityRecord.recordId} DESC"
+                )
+                while (cursor.moveToNext()) {
+                    record.id = cursor.getString(cursor.getColumnIndex(TblActivityRecord.recordId))
+                    record.recordThumbByteArr = cursor.getBlobOrNull(cursor.getColumnIndex(TblActivityRecord.recordThumb))
+                    record.totalDistance = cursor.getFloat(cursor.getColumnIndex(TblActivityRecord.totalDistance))
+                    record.speed = cursor.getFloat(cursor.getColumnIndex(TblActivityRecord.speed))
+                    record.avgSpeed = cursor.getFloat(cursor.getColumnIndex(TblActivityRecord.avgSpeed))
+                    record.elapsedTime = cursor.getLong(cursor.getColumnIndex(TblActivityRecord.elapsedTime))
+                    record.recordDate = cursor.getLong(cursor.getColumnIndex(TblActivityRecord.date))
+                }
+                cursor.close()
+
+                return@fromCallable record
             }
-            db.close()
-            cursor.close()
-            return Single.just(record)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -119,39 +124,43 @@ class DatabaseHelper(
 
     fun getAllRecords(): Single<ArrayList<ActivityRecord>> {
         try {
-            val records = ArrayList<ActivityRecord>()
-            val db = readableDatabase
-            val queriedColumns = arrayOf(
-                TblActivityRecord.recordId,
-                TblActivityRecord.recordThumb,
-                TblActivityRecord.totalDistance,
-                TblActivityRecord.speed,
-                TblActivityRecord.elapsedTime,
-                TblActivityRecord.date
-            )
+            return Single.fromCallable {
+                val records = ArrayList<ActivityRecord>()
+                val db = readableDatabase
+                val queriedColumns = arrayOf(
+                    TblActivityRecord.recordId,
+                    TblActivityRecord.recordThumb,
+                    TblActivityRecord.totalDistance,
+                    TblActivityRecord.speed,
+                    TblActivityRecord.avgSpeed,
+                    TblActivityRecord.elapsedTime,
+                    TblActivityRecord.date
+                )
 
-            val cursor = db.query(
-                DatabaseDefines.TBL_RECORD,
-                queriedColumns,
-                null, null,
-                null, null, null
-            )
+                val cursor = db.query(
+                    DatabaseDefines.TBL_RECORD,
+                    queriedColumns,
+                    null, null,
+                    null, null, "${TblActivityRecord.date} DESC"
+                )
 
-            if (cursor.moveToFirst()) {
-                do {
-                    val record = ActivityRecord()
-                    record.id = cursor.getString(cursor.getColumnIndex(TblActivityRecord.recordId))
-                    record.recordThumbByteArr = cursor.getBlobOrNull(cursor.getColumnIndex(TblActivityRecord.recordThumb))
-                    record.totalDistance = cursor.getFloat(cursor.getColumnIndex(TblActivityRecord.totalDistance))
-                    record.speed = cursor.getFloat(cursor.getColumnIndex(TblActivityRecord.speed))
-                    record.elapsedTime = cursor.getLong(cursor.getColumnIndex(TblActivityRecord.elapsedTime))
-                    record.recordDate = cursor.getLong(cursor.getColumnIndex(TblActivityRecord.date))
-                    records.add(record)
-                } while (cursor.moveToNext())
+                if (cursor.moveToFirst()) {
+                    do {
+                        val record = ActivityRecord()
+                        record.id = cursor.getString(cursor.getColumnIndex(TblActivityRecord.recordId))
+                        record.recordThumbByteArr = cursor.getBlobOrNull(cursor.getColumnIndex(TblActivityRecord.recordThumb))
+                        record.totalDistance = cursor.getFloat(cursor.getColumnIndex(TblActivityRecord.totalDistance))
+                        record.speed = cursor.getFloat(cursor.getColumnIndex(TblActivityRecord.speed))
+                        record.avgSpeed = cursor.getFloat(cursor.getColumnIndex(TblActivityRecord.avgSpeed))
+                        record.elapsedTime = cursor.getLong(cursor.getColumnIndex(TblActivityRecord.elapsedTime))
+                        record.recordDate = cursor.getLong(cursor.getColumnIndex(TblActivityRecord.date))
+                        records.add(record)
+                    } while (cursor.moveToNext())
+                }
+                cursor.close()
+
+                return@fromCallable records
             }
-            db.close()
-            cursor.close()
-            return Single.just(records)
         } catch (e: Exception) {
             e.printStackTrace()
         }
