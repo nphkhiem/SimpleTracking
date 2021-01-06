@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">SimpleTracking</string>
     <string name="duration">%s:%s:%s</string>
+    <string name="total_distance">Total Distance\n%s</string>
+    <string name="avg_speed">Avg Speed\n%s</string>
+    <string name="total_elapsed_time">Elapsed Time\n%s</string>
 </resources>
