@@ -36,6 +36,7 @@ import com.khiemnph.simpletracking.utils.UIUtil
 import com.khiemnph.simpletracking.utils.extension.*
 import kotlinx.android.synthetic.main.activity_record.*
 import java.io.ByteArrayOutputStream
+import java.lang.Exception
 import java.lang.ref.WeakReference
 import java.util.*
 import javax.inject.Inject
@@ -160,7 +161,6 @@ class RecordActivity : AppCompatActivity(), ActivityRecordView, OnMapReadyCallba
 
     override fun onPause() {
         super.onPause()
-        stopLocationUpdates()
     }
 
     override fun onDestroy() {
@@ -295,7 +295,24 @@ class RecordActivity : AppCompatActivity(), ActivityRecordView, OnMapReadyCallba
         v?.let {
             when (it.id) {
                 R.id.ivStop -> {
-                    googleMap?.snapshot(this@RecordActivity)
+                    googleMap?.let { map ->
+                        val firstLocation = trackingRoute.first()
+                        val lastLocation = trackingRoute.last()
+                        try {
+                            map.moveCamera(
+                                CameraUpdateFactory.newLatLngBounds(
+                                    LatLngBounds(
+                                        LatLng(firstLocation.latitude, firstLocation.longitude),
+                                        LatLng(lastLocation.latitude, lastLocation.longitude)
+                                    ), 10.dp
+                                )
+                            )
+                        }  catch (e: Exception) {
+
+                        }
+
+                        map.snapshot(this@RecordActivity)
+                    }
                 }
                 R.id.ivPause -> {
                     toggleViews(show = false, handlePauseAction = {
