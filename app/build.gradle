@@ -1,20 +1,19 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
-apply plugin: 'kotlin-kapt'
-
-def cfg = rootProject.ext
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
+}
 
 android {
-    compileSdkVersion cfg.compileSdk
-    buildToolsVersion cfg.buildTools
+    namespace = 'com.khiemnph.simpletracking'
+    compileSdk = libs.versions.compileSdk.get().toInteger()
 
     defaultConfig {
-        applicationId "com.khiemnph.simpletracking"
-        minSdkVersion cfg.minSdk
-        targetSdkVersion cfg.targetSdk
-        versionCode 1
-        versionName "1.0"
+        applicationId = "com.khiemnph.simpletracking"
+        minSdk = libs.versions.minSdk.get().toInteger()
+        targetSdk = libs.versions.targetSdk.get().toInteger()
+        versionCode = 1
+        versionName = "1.0"
 
         Properties properties = new Properties()
         if (rootProject.file("local.properties").exists()) {
@@ -23,54 +22,56 @@ android {
 
         manifestPlaceholders = [ mapsApiKey : properties.getProperty("MAPS_API_KEY", "") ]
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "1.8"
+
+    buildFeatures {
+        viewBinding = true
     }
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled = false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     api project(":data")
-    implementation fileTree(dir: "libs", include: ["*.jar"])
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    implementation "androidx.core:core-ktx:${cfg.androidKTX}"
+    implementation libs.androidx.core.ktx
 
     // layout
-    implementation "androidx.appcompat:appcompat:${cfg.appCompat}"
-    implementation "androidx.recyclerview:recyclerview:${cfg.rv}"
-    implementation "androidx.constraintlayout:constraintlayout:${cfg.constraint}"
+    implementation libs.androidx.appcompat
+    implementation libs.androidx.recyclerview
+    implementation libs.androidx.constraintlayout
 
-    //google map sdk
-    implementation "com.google.android.gms:play-services-maps:${cfg.googleMapSDK}"
-    implementation "com.google.android.libraries.places:places:${cfg.googlePlaces}"
+    // navigation
+    implementation libs.androidx.navigation.fragment.ktx
+    implementation libs.androidx.navigation.ui.ktx
 
-    //glide
-    kapt "com.github.bumptech.glide:compiler:$cfg.glide"
-    implementation "com.github.bumptech.glide:glide:$cfg.glide"
+    // image loading
+    implementation libs.coil
 
-    //dagger 2
-    // dagger
-    kapt "com.google.dagger:dagger-compiler:$cfg.dagger"
-    kapt "com.google.dagger:dagger-android-processor:$cfg.dagger"
+    // google play services
+    implementation libs.play.services.location
+    implementation libs.play.services.maps
 
+    // hilt
+    implementation libs.hilt.android
+    ksp libs.hilt.compiler
 
-    testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+    testImplementation libs.junit
+    testImplementation libs.mockk
+    testImplementation libs.turbine
+    testImplementation libs.robolectric
+    testImplementation libs.androidx.core.testing
+    testImplementation libs.androidx.room.testing
+
+    androidTestImplementation libs.androidx.test.ext.junit
+    androidTestImplementation libs.androidx.espresso.core
 }
