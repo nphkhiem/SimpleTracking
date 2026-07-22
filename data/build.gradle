@@ -1,36 +1,29 @@
-apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
-apply plugin: "kotlin-kapt"
-apply plugin: 'kotlin-android-extensions'
-
-def cfg = rootProject.ext
+plugins {
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
+}
 
 android {
-    compileSdkVersion cfg.compileSdk
-    buildToolsVersion cfg.buildTools
+    namespace = 'com.khiemnph.data'
+    compileSdk = libs.versions.compileSdk.get().toInteger()
 
     defaultConfig {
-        minSdkVersion cfg.minSdk
-        targetSdkVersion cfg.targetSdk
-        versionCode 1
-        versionName "1.0"
+        minSdk = libs.versions.minSdk.get().toInteger()
+        targetSdk = libs.versions.targetSdk.get().toInteger()
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-
-    kotlinOptions {
-        jvmTarget = "1.8"
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled = false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -38,23 +31,18 @@ android {
 
 dependencies {
     api project(":domain")
-    implementation fileTree(dir: "libs", include: ["*.jar"])
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    implementation "androidx.core:core-ktx:${cfg.androidKTX}"
-    implementation "androidx.appcompat:appcompat:${cfg.appCompat}"
+    implementation libs.androidx.core.ktx
 
-    // dagger
-    kapt "com.google.dagger:dagger-compiler:$cfg.dagger"
-    kapt "com.google.dagger:dagger-android-processor:$cfg.dagger"
+    implementation libs.androidx.room.runtime
+    implementation libs.androidx.room.ktx
+    ksp libs.androidx.room.compiler
 
-    //room
-    kapt "androidx.room:room-compiler:${cfg.room}"
-    implementation "androidx.room:room-runtime:${cfg.room}"
-    implementation "androidx.room:room-ktx:${cfg.room}"
-    implementation "androidx.room:room-rxjava2:${cfg.room}"
+    implementation libs.hilt.android
+    ksp libs.hilt.compiler
 
-    testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+    implementation libs.kotlinx.coroutines.android
 
+    testImplementation libs.junit
+    androidTestImplementation libs.androidx.test.ext.junit
+    androidTestImplementation libs.androidx.espresso.core
 }
