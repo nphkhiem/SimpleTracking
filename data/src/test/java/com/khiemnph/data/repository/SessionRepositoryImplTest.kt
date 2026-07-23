@@ -289,7 +289,7 @@ class SessionRepositoryImplTest {
             val summaries = repository.observeSessionSummaries().first()
 
             assertEquals(1, summaries.size)
-            // duration = stopped(8000) - start(0) - pausedDuration(5000, folded in at stop time) = 5000, NOT 8000.
+            // duration = stopped(8000) - start(0) - pausedDuration(3000, folded in at stop time) = 5000, NOT 8000.
             assertEquals(5_000L, summaries.first().durationMillis)
         }
 
