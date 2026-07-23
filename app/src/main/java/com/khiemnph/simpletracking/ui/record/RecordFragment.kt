@@ -12,8 +12,11 @@ import com.khiemnph.simpletracking.databinding.FragmentRecordBinding
 /**
  * Placeholder destination for an in-progress tracking session, reached from
  * [com.khiemnph.simpletracking.ui.MainActivity] either via user navigation or its cold-start
- * active-session recovery check. Phase 6 replaces this with the real recording UI; this exists
- * purely to be a valid, testable destination that proves the [args] Safe Args argument arrives.
+ * active-session recovery check, or from
+ * [com.khiemnph.simpletracking.ui.history.HistoryFragment]'s Record button to start a brand-new
+ * session (no id yet, hence [RecordFragmentArgs.sessionId] is nullable). Phase 6 replaces this
+ * with the real recording UI; this exists purely to be a valid, testable destination that proves
+ * the [args] Safe Args argument arrives.
  */
 class RecordFragment : Fragment() {
 
@@ -33,7 +36,8 @@ class RecordFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding.recordPlaceholderText.text = getString(R.string.record_placeholder_text, args.sessionId)
+        val sessionLabel = args.sessionId ?: getString(R.string.record_placeholder_new_session)
+        binding.recordPlaceholderText.text = getString(R.string.record_placeholder_text, sessionLabel)
     }
 
     override fun onDestroyView() {

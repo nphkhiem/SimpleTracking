@@ -13,4 +13,5 @@
     <string name="history_placeholder_text">History</string>
     <string name="record_title">Record</string>
     <string name="record_placeholder_text">Record: %1$s</string>
+    <string name="record_placeholder_new_session">new session</string>
 </resources>
