@@ -94,6 +94,9 @@ class MockedSessionRepository : SessionRepository {
     override suspend fun getPointsForSession(sessionId: String): List<LocationPoint> =
         pointsBySessionId[sessionId].orEmpty().toList()
 
+    override suspend fun getMostRecentPoint(sessionId: String): LocationPoint? =
+        pointsBySessionId[sessionId]?.lastOrNull()
+
     override suspend fun recordLocationPoint(point: LocationPoint) {
         pointsBySessionId.getOrPut(point.sessionId) { mutableListOf() }.add(point)
         if (sessionsById.containsKey(point.sessionId)) {

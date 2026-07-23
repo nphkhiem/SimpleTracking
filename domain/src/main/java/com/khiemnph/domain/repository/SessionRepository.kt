@@ -28,5 +28,7 @@ interface SessionRepository {
 
     suspend fun getPointsForSession(sessionId: String): List<LocationPoint>
 
+    suspend fun getMostRecentPoint(sessionId: String): LocationPoint?
+
     suspend fun recordLocationPoint(point: LocationPoint)
 }

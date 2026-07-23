@@ -15,8 +15,7 @@ import com.khiemnph.domain.util.GpsFixValidator
 class RecordLocationFixUseCase(private val sessionRepository: SessionRepository) {
 
     suspend operator fun invoke(fix: RawLocationFix) {
-        val previousPoints = sessionRepository.getPointsForSession(fix.sessionId)
-        val previousAccepted = previousPoints.lastOrNull()
+        val previousAccepted = sessionRepository.getMostRecentPoint(fix.sessionId)
 
         val decision = GpsFixValidator.validate(fix, previousAccepted)
         if (decision == GpsFixValidator.Decision.REJECTED) return
