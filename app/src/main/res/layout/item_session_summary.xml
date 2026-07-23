@@ -14,7 +14,6 @@
         android:layout_marginTop="14dp"
         android:layout_marginBottom="14dp"
         android:background="@drawable/bg_thumbnail_placeholder"
-        android:clipToOutline="true"
         android:contentDescription="@string/history_item_thumbnail_content_description"
         android:scaleType="centerCrop"
         app:layout_constraintBottom_toBottomOf="parent"

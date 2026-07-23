@@ -39,6 +39,14 @@ class HistoryAdapter : ListAdapter<HistorySummaryUiModel, HistoryAdapter.ViewHol
 
     class ViewHolder(private val binding: ItemSessionSummaryBinding) : RecyclerView.ViewHolder(binding.root) {
 
+        init {
+            // android:clipToOutline is only honored from the XML layout on API 31+; setting it
+            // programmatically works back to API 21, which is what actually clips the loaded
+            // thumbnail to bg_thumbnail_placeholder's rounded-corner outline on this app's
+            // minSdk 29 devices.
+            binding.historyItemThumbnail.clipToOutline = true
+        }
+
         fun bind(item: HistorySummaryUiModel) {
             binding.historyItemDistance.text = item.distanceLabel
             binding.historyItemDuration.text = item.durationLabel
