@@ -44,6 +44,7 @@ android {
 dependencies {
     api project(":data")
     implementation libs.androidx.core.ktx
+    implementation libs.kotlinx.coroutines.android
 
     // layout
     implementation libs.androidx.appcompat
