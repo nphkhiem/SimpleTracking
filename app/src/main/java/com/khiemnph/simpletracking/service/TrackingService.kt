@@ -53,6 +53,7 @@ class TrackingService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val sessionId = intent?.getStringExtra(EXTRA_SESSION_ID)
         if (sessionId != null) {
+            promoteToForeground(sessionId)
             when (intent.action) {
                 ACTION_START -> handleStart(sessionId)
                 ACTION_PAUSE -> handlePause(sessionId)
@@ -68,7 +69,18 @@ class TrackingService : Service() {
         super.onDestroy()
     }
 
-    private fun handleStart(sessionId: String) {
+    /**
+     * Registers this Service as a foreground service, unconditionally, before any action is
+     * dispatched below. This must fire for every action - not only ACTION_START - because this
+     * Service returns START_REDELIVER_INTENT and never calls stopSelf(startId), so the *last
+     * delivered* intent the OS holds for redelivery-after-kill can just as easily be ACTION_PAUSE
+     * or ACTION_RESUME as ACTION_START. A freshly-created instance redelivered, say, ACTION_RESUME
+     * must still promote itself to the foreground, or it's vulnerable to background-execution
+     * limits immediately after restarting collection. ServiceCompat.startForeground is safe to
+     * call repeatedly per Android docs; handlePause/handleResume refine the notification's
+     * paused/running content afterward.
+     */
+    private fun promoteToForeground(sessionId: String) {
         val notification = notificationFactory.buildNotification(sessionId, isPaused = false)
         ServiceCompat.startForeground(
             this,
@@ -76,6 +88,9 @@ class TrackingService : Service() {
             notification,
             ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION,
         )
+    }
+
+    private fun handleStart(sessionId: String) {
         startCollectingIfNeeded(sessionId)
     }
 

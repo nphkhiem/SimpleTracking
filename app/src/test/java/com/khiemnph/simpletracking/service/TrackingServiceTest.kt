@@ -236,6 +236,33 @@ class TrackingServiceTest {
     }
 
     @Test
+    fun givenServiceKilledAndRestarted_whenResumeActionRedelivered_thenServiceStartsForegroundInFreshInstance() = runTest {
+        val fakeRepository = MockedLocationTrackingRepository()
+
+        // First instance: starts, then pauses (a realistic pre-kill state), then gets killed by the OS.
+        val firstDispatcher = StandardTestDispatcher(testScheduler)
+        val firstService = buildService(firstDispatcher, fakeRepository)
+        val firstController = attach(firstService, TrackingService.startIntent(context, sessionId))
+        firstService.onStartCommand(firstController.intent, 0, 1)
+        runCurrent()
+        firstService.onStartCommand(TrackingService.pauseIntent(context, sessionId), 0, 2)
+        runCurrent()
+        firstController.destroy()
+
+        // Fresh instance: the OS redelivers the last-held intent, which is ACTION_RESUME - not
+        // ACTION_START - since that's what the killed instance was last handling.
+        val secondDispatcher = StandardTestDispatcher(testScheduler)
+        val secondService = buildService(secondDispatcher, fakeRepository)
+        val redeliveredResumeIntent = TrackingService.resumeIntent(context, sessionId)
+        val secondController = attach(secondService, redeliveredResumeIntent)
+
+        secondService.onStartCommand(secondController.intent, 0, 1)
+        runCurrent()
+
+        assertEquals(TrackingNotificationFactory.NOTIFICATION_ID, shadowOf(secondService).lastForegroundNotificationId)
+    }
+
+    @Test
     fun givenNoAction_whenOnBindCalled_thenReturnsNull() {
         val dispatcher = StandardTestDispatcher()
         val service = buildService(dispatcher)
