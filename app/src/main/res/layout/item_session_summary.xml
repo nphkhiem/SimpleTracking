@@ -7,18 +7,30 @@
     android:paddingStart="16dp"
     android:paddingEnd="16dp">
 
+    <TextView
+        android:id="@+id/history_item_recorded_at"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:textColor="@color/history_ink_soft"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Tue, 7:12 AM" />
+
     <ImageView
         android:id="@+id/history_item_thumbnail"
         android:layout_width="56dp"
         android:layout_height="56dp"
-        android:layout_marginTop="14dp"
+        android:layout_marginTop="10dp"
         android:layout_marginBottom="14dp"
         android:background="@drawable/bg_thumbnail_placeholder"
         android:contentDescription="@string/history_item_thumbnail_content_description"
         android:scaleType="centerCrop"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/history_item_recorded_at"
         tools:src="@drawable/bg_thumbnail_placeholder" />
 
     <TextView
@@ -26,13 +38,13 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
-        android:layout_marginTop="14dp"
+        android:layout_marginTop="10dp"
         android:textColor="@color/history_ink"
         android:textSize="18sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/history_item_thumbnail"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/history_item_recorded_at"
         tools:text="5.42 km" />
 
     <LinearLayout

@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.khiemnph.domain.fake.MockedSessionRepository
 import com.khiemnph.domain.interactor.ObserveSessionHistoryUseCase
 import com.khiemnph.domain.model.SessionSummary
+import java.time.ZoneId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -37,13 +38,14 @@ class HistoryViewModelTest {
         durationMillis: Long = 60_000L,
         averageSpeedMps: Float = 1f,
         thumbnailPath: String? = null,
+        recordedAt: Long = 0L,
     ) = SessionSummary(
         id = id,
         distanceMeters = distanceMeters,
         durationMillis = durationMillis,
         averageSpeedMps = averageSpeedMps,
         thumbnailPath = thumbnailPath,
-        recordedAt = 0L,
+        recordedAt = recordedAt,
     )
 
     private suspend fun stopASession(): String {
@@ -102,6 +104,16 @@ class HistoryViewModelTest {
         val uiModel = sessionSummary(averageSpeedMps = 2.5f).toHistorySummaryUiModel()
 
         assertEquals("9.0 km/h avg", uiModel.averageSpeedLabel)
+    }
+
+    @Test
+    fun givenSummaryWithKnownRecordedAt_whenMappedToUiModel_thenRecordedAtLabelIsFormattedAsDayAndTime() {
+        // 2024-01-02T07:12:00Z is a Tuesday; a fixed UTC zone keeps this test timezone-independent.
+        val recordedAtMillis = 1_704_179_520_000L
+        val uiModel = sessionSummary(recordedAt = recordedAtMillis)
+            .toHistorySummaryUiModel(zoneId = ZoneId.of("UTC"))
+
+        assertEquals("Tue, 7:12 AM", uiModel.recordedAtLabel)
     }
 
     @Test

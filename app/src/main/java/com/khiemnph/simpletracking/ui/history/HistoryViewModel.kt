@@ -5,6 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.khiemnph.domain.interactor.ObserveSessionHistoryUseCase
 import com.khiemnph.domain.model.SessionSummary
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +20,7 @@ private const val SECONDS_PER_MILLIS_DIVISOR = 1_000L
 private const val SECONDS_PER_MINUTE = 60L
 private const val SECONDS_PER_HOUR = 3_600L
 private const val MPS_TO_KMH_FACTOR = 3.6f
+private val RECORDED_AT_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("EEE, h:mm a", Locale.US)
 
 /**
  * Exposes [ObserveSessionHistoryUseCase]'s session summaries as pre-formatted
@@ -28,6 +32,9 @@ private const val MPS_TO_KMH_FACTOR = 3.6f
  * longer - GPS tracking sessions (runs, rides) plausibly exceed an hour, and this mirrors the
  * common stopwatch/timer convention (e.g. Android's own `DateUtils.formatElapsedTime`) of not
  * zero-padding the leading unit.
+ *
+ * `recordedAt` (epoch millis) is formatted as `"EEE, h:mm a"` (e.g. `"Tue, 7:12 AM"`), matching
+ * the reviewed mockup's per-row date/time label, resolved against the device's default time zone.
  */
 @HiltViewModel
 class HistoryViewModel @Inject constructor(
@@ -46,13 +53,19 @@ class HistoryViewModel @Inject constructor(
     }
 }
 
-fun SessionSummary.toHistorySummaryUiModel(): HistorySummaryUiModel = HistorySummaryUiModel(
+fun SessionSummary.toHistorySummaryUiModel(
+    zoneId: ZoneId = ZoneId.systemDefault(),
+): HistorySummaryUiModel = HistorySummaryUiModel(
     id = id,
+    recordedAtLabel = formatRecordedAt(recordedAt, zoneId),
     distanceLabel = formatDistanceKm(distanceMeters),
     durationLabel = formatDuration(durationMillis),
     averageSpeedLabel = formatAverageSpeedKmh(averageSpeedMps),
     thumbnailPath = thumbnailPath,
 )
+
+private fun formatRecordedAt(recordedAtMillis: Long, zoneId: ZoneId): String =
+    Instant.ofEpochMilli(recordedAtMillis).atZone(zoneId).format(RECORDED_AT_FORMATTER)
 
 private fun formatDistanceKm(distanceMeters: Double): String =
     String.format(Locale.US, "%.2f km", distanceMeters / METERS_PER_KILOMETER)

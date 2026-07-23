@@ -7,6 +7,7 @@ package com.khiemnph.simpletracking.ui.history
  */
 data class HistorySummaryUiModel(
     val id: String,
+    val recordedAtLabel: String,
     val distanceLabel: String,
     val durationLabel: String,
     val averageSpeedLabel: String,

@@ -48,6 +48,7 @@ class HistoryAdapter : ListAdapter<HistorySummaryUiModel, HistoryAdapter.ViewHol
         }
 
         fun bind(item: HistorySummaryUiModel) {
+            binding.historyItemRecordedAt.text = item.recordedAtLabel
             binding.historyItemDistance.text = item.distanceLabel
             binding.historyItemDuration.text = item.durationLabel
             binding.historyItemAverageSpeed.text = item.averageSpeedLabel

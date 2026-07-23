@@ -8,11 +8,12 @@ class HistoryAdapterDiffTest {
 
     private fun uiModel(
         id: String,
+        recordedAtLabel: String = "Tue, 7:12 AM",
         distanceLabel: String = "5.42 km",
         durationLabel: String = "32:18",
         averageSpeedLabel: String = "10.1 km/h avg",
         thumbnailPath: String? = null,
-    ) = HistorySummaryUiModel(id, distanceLabel, durationLabel, averageSpeedLabel, thumbnailPath)
+    ) = HistorySummaryUiModel(id, recordedAtLabel, distanceLabel, durationLabel, averageSpeedLabel, thumbnailPath)
 
     @Test
     fun givenSameId_whenAreItemsTheSameChecked_thenReturnsTrueEvenIfContentDiffers() {
