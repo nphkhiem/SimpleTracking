@@ -108,7 +108,7 @@ class SessionRepositoryImpl @Inject constructor(
         return SessionSummary(
             id = sessionId,
             distanceMeters = finalDistanceMeters,
-            durationMillis = stoppedTimestamp - current.startTimestamp - current.pausedDurationMillis,
+            durationMillis = elapsedMillis(current, stoppedTimestamp),
             averageSpeedMps = finalAverageSpeedMps,
             thumbnailPath = thumbnailPath,
             recordedAt = stoppedTimestamp,
@@ -138,10 +138,26 @@ class SessionRepositoryImpl @Inject constructor(
         return ActiveSessionState(
             session = entity.toDomain(),
             distanceMeters = DistanceCalculator.totalDistanceMeters(route),
-            elapsedDurationMillis = clock.nowMillis() - entity.startTimestamp - entity.pausedDurationMillis,
+            elapsedDurationMillis = elapsedMillis(entity, clock.nowMillis()),
             currentSpeedMps = points.lastOrNull()?.speedMetersPerSec ?: 0f,
             averageSpeedMps = if (points.isEmpty()) 0f else points.map { it.speedMetersPerSec }.average().toFloat(),
             route = route,
         )
+    }
+
+    /**
+     * Elapsed session duration as of [now]: wall-clock time since start, minus all completed
+     * paused intervals ([SessionEntity.pausedDurationMillis]), minus the in-progress paused
+     * interval if the session is currently [SessionStatus.PAUSED] (from [SessionEntity.pausedAtTimestamp]
+     * up to [now]). Without this last term, a session sitting paused would keep accruing elapsed
+     * time as if it were still running.
+     */
+    private fun elapsedMillis(entity: SessionEntity, now: Long): Long {
+        val ongoingPauseMillis = if (entity.status == SessionStatus.PAUSED.name && entity.pausedAtTimestamp != null) {
+            now - entity.pausedAtTimestamp
+        } else {
+            0L
+        }
+        return now - entity.startTimestamp - entity.pausedDurationMillis - ongoingPauseMillis
     }
 }

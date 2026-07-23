@@ -227,6 +227,53 @@ class SessionRepositoryImplTest {
         assertEquals(7_000L, summary.durationMillis)
     }
 
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @Test
+    fun givenSessionPaused_whenObserveActiveSessionTicksWhileStillPaused_thenElapsedDurationStaysFrozen() = runTest {
+        clock.currentMillis = 0L
+        val sessionId = repository.startSession()
+
+        clock.currentMillis = 5_000L
+        repository.pauseSession(sessionId)
+
+        val emissions = mutableListOf<Long?>()
+        val job = launch { repository.observeActiveSession().collect { emissions.add(it?.elapsedDurationMillis) } }
+        runCurrent()
+
+        clock.currentMillis = 7_000L
+        advanceTimeBy(1_001L)
+        runCurrent()
+
+        clock.currentMillis = 10_000L
+        advanceTimeBy(3_000L)
+        runCurrent()
+
+        job.cancel()
+
+        assertTrue(
+            "Expected at least 3 emissions from the ticker, got ${emissions.size}",
+            emissions.size >= 3,
+        )
+        // Frozen at pause point: elapsed = pausedAt(5000) - start(0) - pausedDuration(0) = 5000,
+        // for every ticker emission while still paused, regardless of wall-clock advancement.
+        assertEquals(listOf(5_000L, 5_000L, 5_000L), emissions.take(3))
+    }
+
+    @Test
+    fun givenSessionPausedAndNeverResumed_whenStopSessionCalled_thenDurationExcludesOngoingPauseInterval() = runTest {
+        clock.currentMillis = 0L
+        val sessionId = repository.startSession()
+
+        clock.currentMillis = 5_000L
+        repository.pauseSession(sessionId)
+
+        clock.currentMillis = 8_000L
+        val summary = repository.stopSession(sessionId, null, 0.0, 0f)
+
+        // duration = pausedAt(5000) - start(0) - pausedDuration(0) = 5000, NOT 8000.
+        assertEquals(5_000L, summary.durationMillis)
+    }
+
     @Test
     fun givenPointRecorded_whenGetMostRecentPointAndGetPointsForSession_thenDelegatesToDao() = runTest {
         val sessionId = repository.startSession()
