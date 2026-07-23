@@ -39,6 +39,12 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
@@ -72,6 +78,9 @@ dependencies {
     testImplementation libs.robolectric
     testImplementation libs.androidx.core.testing
     testImplementation libs.androidx.room.testing
+    testImplementation libs.kotlinx.coroutines.test
+    testImplementation libs.androidx.test.ext.junit
+    testImplementation testFixtures(project(":domain"))
 
     androidTestImplementation libs.androidx.test.ext.junit
     androidTestImplementation libs.androidx.espresso.core
