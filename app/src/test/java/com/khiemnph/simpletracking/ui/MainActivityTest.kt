@@ -149,6 +149,31 @@ class MainActivityTest {
     }
 
     @Test
+    fun givenObserveActiveSessionUseCaseThrows_whenActivityStarted_thenActivityDoesNotCrashAndNoNavigationOccurs() {
+        mockedSessionRepository.throwOnObserveActiveSession(RuntimeException("Simulated Room query failure"))
+        val capturedThrowables = mutableListOf<Throwable>()
+        val previousUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { _, throwable -> capturedThrowables += throwable }
+
+        try {
+            ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+                idleMainLooper()
+
+                assertTrue(
+                    "Expected the active-session check failure to be caught, but it crashed with: $capturedThrowables",
+                    capturedThrowables.isEmpty(),
+                )
+                scenario.onActivity { activity ->
+                    val navController = navControllerOf(activity)
+                    assertEquals(R.id.historyFragment, navController.currentDestination?.id)
+                }
+            }
+        } finally {
+            Thread.setDefaultUncaughtExceptionHandler(previousUncaughtExceptionHandler)
+        }
+    }
+
+    @Test
     fun givenActiveSessionExistsAtLaunch_whenRecordFragmentCreated_thenSessionIdArgumentArrivesViaNavArgs() {
         seedActiveSession()
 

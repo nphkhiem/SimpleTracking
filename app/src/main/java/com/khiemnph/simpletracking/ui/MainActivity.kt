@@ -1,6 +1,7 @@
 package com.khiemnph.simpletracking.ui
 
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
@@ -11,6 +12,7 @@ import com.khiemnph.simpletracking.databinding.ActivityMainBinding
 import com.khiemnph.simpletracking.ui.history.HistoryFragmentDirections
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -39,12 +41,20 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         lifecycleScope.launch {
-            val activeSession = observeActiveSessionUseCase().first()
-            val navController = navController()
-            if (activeSession != null && navController.currentDestination?.id != R.id.recordFragment) {
-                navController.navigate(
-                    HistoryFragmentDirections.actionHistoryFragmentToRecordFragment(activeSession.session.id),
-                )
+            try {
+                val activeSession = observeActiveSessionUseCase().first()
+                val navController = navController()
+                if (activeSession != null && navController.currentDestination?.id != R.id.recordFragment) {
+                    navController.navigate(
+                        HistoryFragmentDirections.actionHistoryFragmentToRecordFragment(activeSession.session.id),
+                    )
+                }
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (error: Exception) {
+                // Non-fatal: skip the recovery-navigation attempt for this onStart cycle and let
+                // the user land on/stay on HistoryFragment, which is always a safe fallback.
+                Log.e(TAG, "Failed to check for an active session on startup", error)
             }
         }
     }
@@ -52,5 +62,9 @@ class MainActivity : AppCompatActivity() {
     private fun navController(): NavController {
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         return navHostFragment.navController
+    }
+
+    private companion object {
+        private const val TAG = "MainActivity"
     }
 }
