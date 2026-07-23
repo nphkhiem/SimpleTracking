@@ -1,6 +1,7 @@
 package com.khiemnph.simpletracking.di
 
 import com.khiemnph.domain.interactor.ObserveActiveSessionUseCase
+import com.khiemnph.domain.interactor.ObserveSessionHistoryUseCase
 import com.khiemnph.domain.interactor.PauseSessionUseCase
 import com.khiemnph.domain.interactor.RecordLocationFixUseCase
 import com.khiemnph.domain.interactor.ResumeSessionUseCase
@@ -25,10 +26,12 @@ import javax.inject.Singleton
  * test method creates, which is what makes `coVerify` against the test's field a valid check of
  * what the Service actually invoked.
  *
- * [ObserveActiveSessionUseCase] is deliberately NOT mocked here: it's wired exactly the way
- * [UseCaseModule] wires it in production, delegating to whatever [SessionRepository] the graph
- * provides (the in-memory fake from [TestRepositoryModule]), because
- * [com.khiemnph.simpletracking.ui.MainActivityTest] depends on its real state-based behavior.
+ * [ObserveActiveSessionUseCase] and [ObserveSessionHistoryUseCase] are deliberately NOT mocked
+ * here: they're wired exactly the way [UseCaseModule] wires them in production, delegating to
+ * whatever [SessionRepository] the graph provides (the in-memory fake from
+ * [TestRepositoryModule]), because [com.khiemnph.simpletracking.ui.MainActivityTest] and
+ * [com.khiemnph.simpletracking.ui.history.HistoryFragment] (via `HistoryViewModel`) depend on
+ * their real state-based behavior.
  */
 @Module
 @TestInstallIn(components = [SingletonComponent::class], replaces = [UseCaseModule::class])
@@ -54,4 +57,9 @@ object TestUseCaseModule {
     @Singleton
     fun provideObserveActiveSessionUseCase(sessionRepository: SessionRepository): ObserveActiveSessionUseCase =
         ObserveActiveSessionUseCase(sessionRepository)
+
+    @Provides
+    @Singleton
+    fun provideObserveSessionHistoryUseCase(sessionRepository: SessionRepository): ObserveSessionHistoryUseCase =
+        ObserveSessionHistoryUseCase(sessionRepository)
 }
