@@ -5,7 +5,6 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
-import com.khiemnph.domain.fake.MockedSessionRepository
 import com.khiemnph.domain.model.RawLocationFix
 import io.mockk.every
 import io.mockk.mockk
@@ -16,7 +15,6 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -65,18 +63,17 @@ class FusedLocationTrackingRepositoryTest {
     }
 
     @Test
-    fun givenActiveSessionAndIncomingLocation_whenLocationUpdates_thenEmitsFixTaggedWithActiveSessionId() = runTest {
+    fun givenSessionIdAndIncomingLocation_whenLocationUpdates_thenEmitsFixTaggedWithThatSessionId() = runTest {
         val fusedLocationClient = mockk<FusedLocationProviderClient>(relaxed = true)
-        val sessionRepository = MockedSessionRepository()
-        val sessionId = sessionRepository.startSession()
+        val sessionId = "session-1"
         val callbackSlot = slot<LocationCallback>()
         every {
             fusedLocationClient.requestLocationUpdates(any<LocationRequest>(), capture(callbackSlot), any())
         } returns mockk(relaxed = true)
-        val repository = FusedLocationTrackingRepository(fusedLocationClient, sessionRepository)
+        val repository = FusedLocationTrackingRepository(fusedLocationClient)
 
         val results = mutableListOf<RawLocationFix>()
-        val collectJob = launch { repository.locationUpdates().toList(results) }
+        val collectJob = launch { repository.locationUpdates(sessionId).toList(results) }
         // Let the flow builder run and register the callback before delivering an update.
         runCurrent()
 
@@ -91,17 +88,16 @@ class FusedLocationTrackingRepositoryTest {
     }
 
     @Test
-    fun givenNoActiveSession_whenLocationUpdates_thenFixIsDropped() = runTest {
+    fun givenLocationWithoutSpeed_whenLocationUpdates_thenEmittedFixHasNullSpeed() = runTest {
         val fusedLocationClient = mockk<FusedLocationProviderClient>(relaxed = true)
-        val sessionRepository = MockedSessionRepository()
         val callbackSlot = slot<LocationCallback>()
         every {
             fusedLocationClient.requestLocationUpdates(any<LocationRequest>(), capture(callbackSlot), any())
         } returns mockk(relaxed = true)
-        val repository = FusedLocationTrackingRepository(fusedLocationClient, sessionRepository)
+        val repository = FusedLocationTrackingRepository(fusedLocationClient)
 
         val results = mutableListOf<RawLocationFix>()
-        val collectJob = launch { repository.locationUpdates().toList(results) }
+        val collectJob = launch { repository.locationUpdates("session-1").toList(results) }
         runCurrent()
 
         callbackSlot.captured.onLocationResult(LocationResult.create(listOf(locationOf(1.0, 2.0, 500L))))
@@ -109,6 +105,7 @@ class FusedLocationTrackingRepositoryTest {
         runCurrent()
 
         collectJob.cancel()
-        assertTrue(results.isEmpty())
+        assertEquals(1, results.size)
+        assertNull(results.first().speedMetersPerSec)
     }
 }

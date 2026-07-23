@@ -5,5 +5,5 @@ import kotlinx.coroutines.flow.Flow
 
 interface LocationTrackingRepository {
 
-    fun locationUpdates(): Flow<RawLocationFix>
+    fun locationUpdates(sessionId: String): Flow<RawLocationFix>
 }

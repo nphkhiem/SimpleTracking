@@ -10,12 +10,10 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.Priority
 import com.khiemnph.domain.model.RawLocationFix
 import com.khiemnph.domain.repository.LocationTrackingRepository
-import com.khiemnph.domain.repository.SessionRepository
 import javax.inject.Inject
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.launch
 
 /**
  * Maps raw `FusedLocationProviderClient` updates to domain [RawLocationFix]es. Deliberately does
@@ -23,25 +21,19 @@ import kotlinx.coroutines.launch
  * job. `android.location.Location` and `com.google.android.gms.location.*` types never leak past
  * this class.
  *
- * Each fix is tagged with whatever session is currently active per [sessionRepository]. A fix
- * arriving with no active session (e.g. a stray update after tracking stopped, before the OS has
- * torn down the callback) is dropped rather than emitted with a bogus session id — there is
- * nothing meaningful to attach it to.
+ * Each fix is tagged with the [sessionId] the caller passes to [locationUpdates] — this class has
+ * no notion of session lifecycle of its own.
  */
 class FusedLocationTrackingRepository @Inject constructor(
     private val fusedLocationClient: FusedLocationProviderClient,
-    private val sessionRepository: SessionRepository,
 ) : LocationTrackingRepository {
 
     @SuppressLint("MissingPermission")
-    override fun locationUpdates(): Flow<RawLocationFix> = callbackFlow {
+    override fun locationUpdates(sessionId: String): Flow<RawLocationFix> = callbackFlow {
         val callback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
                 for (location in result.locations) {
-                    launch {
-                        val sessionId = sessionRepository.getActiveSessionId() ?: return@launch
-                        trySend(location.toRawLocationFix(sessionId))
-                    }
+                    trySend(location.toRawLocationFix(sessionId))
                 }
             }
         }
