@@ -32,7 +32,8 @@ interface SessionDao {
     @Query(
         """
         UPDATE session
-        SET status = :status, stoppedTimestamp = :stoppedTimestamp, finalDistanceMeters = :finalDistanceMeters,
+        SET status = :status, stoppedTimestamp = :stoppedTimestamp, pausedDurationMillis = :pausedDurationMillis,
+            pausedAtTimestamp = NULL, finalDistanceMeters = :finalDistanceMeters,
             finalAverageSpeedMps = :finalAverageSpeedMps, thumbnailPath = :thumbnailPath
         WHERE id = :sessionId
         """,
@@ -41,6 +42,7 @@ interface SessionDao {
         sessionId: String,
         status: String,
         stoppedTimestamp: Long,
+        pausedDurationMillis: Long,
         finalDistanceMeters: Double,
         finalAverageSpeedMps: Float,
         thumbnailPath: String?,

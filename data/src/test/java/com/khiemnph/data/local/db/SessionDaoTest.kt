@@ -87,6 +87,7 @@ class SessionDaoTest {
             sessionId = "s1",
             status = "STOPPED",
             stoppedTimestamp = 5_000L,
+            pausedDurationMillis = 1_500L,
             finalDistanceMeters = 123.4,
             finalAverageSpeedMps = 2.5f,
             thumbnailPath = "/path/thumb.png",
@@ -98,6 +99,25 @@ class SessionDaoTest {
         assertEquals(123.4, summaries.first().finalDistanceMeters)
         assertEquals(2.5f, summaries.first().finalAverageSpeedMps)
         assertEquals("/path/thumb.png", summaries.first().thumbnailPath)
+        assertEquals(1_500L, summaries.first().pausedDurationMillis)
+    }
+
+    @Test
+    fun givenSessionPaused_whenWriteFinalStats_thenClearsPausedAtTimestamp() = runTest {
+        dao.upsert(sessionEntity(id = "s1", status = "PAUSED", pausedAtTimestamp = 2_000L))
+
+        dao.writeFinalStats(
+            sessionId = "s1",
+            status = "STOPPED",
+            stoppedTimestamp = 5_000L,
+            pausedDurationMillis = 2_000L,
+            finalDistanceMeters = 0.0,
+            finalAverageSpeedMps = 0f,
+            thumbnailPath = null,
+        )
+
+        val updated = dao.getById("s1")
+        assertNull(updated?.pausedAtTimestamp)
     }
 
     @Test

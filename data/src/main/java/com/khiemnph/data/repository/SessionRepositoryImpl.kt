@@ -101,6 +101,7 @@ class SessionRepositoryImpl @Inject constructor(
             sessionId = sessionId,
             status = SessionStatus.STOPPED.name,
             stoppedTimestamp = stoppedTimestamp,
+            pausedDurationMillis = finalPausedDurationMillis(current, stoppedTimestamp),
             finalDistanceMeters = finalDistanceMeters,
             finalAverageSpeedMps = finalAverageSpeedMps,
             thumbnailPath = thumbnailPath,
@@ -152,12 +153,22 @@ class SessionRepositoryImpl @Inject constructor(
      * up to [now]). Without this last term, a session sitting paused would keep accruing elapsed
      * time as if it were still running.
      */
-    private fun elapsedMillis(entity: SessionEntity, now: Long): Long {
+    private fun elapsedMillis(entity: SessionEntity, now: Long): Long =
+        now - entity.startTimestamp - finalPausedDurationMillis(entity, now)
+
+    /**
+     * Total paused time across the whole session as of [now]: all completed paused intervals
+     * ([SessionEntity.pausedDurationMillis]) plus the in-progress paused interval if the session
+     * is currently [SessionStatus.PAUSED] (from [SessionEntity.pausedAtTimestamp] up to [now]).
+     * When [now] is the stop timestamp, this is also the value to persist so a later read of the
+     * stopped row (e.g. via `toSummary()`) doesn't need its own paused-state branch.
+     */
+    private fun finalPausedDurationMillis(entity: SessionEntity, now: Long): Long {
         val ongoingPauseMillis = if (entity.status == SessionStatus.PAUSED.name && entity.pausedAtTimestamp != null) {
             now - entity.pausedAtTimestamp
         } else {
             0L
         }
-        return now - entity.startTimestamp - entity.pausedDurationMillis - ongoingPauseMillis
+        return entity.pausedDurationMillis + ongoingPauseMillis
     }
 }

@@ -275,6 +275,25 @@ class SessionRepositoryImplTest {
     }
 
     @Test
+    fun givenSessionPausedAndNeverResumed_whenReadBackViaObserveSessionSummaries_thenDurationExcludesOngoingPauseInterval() =
+        runTest {
+            clock.currentMillis = 0L
+            val sessionId = repository.startSession()
+
+            clock.currentMillis = 5_000L
+            repository.pauseSession(sessionId)
+
+            clock.currentMillis = 8_000L
+            repository.stopSession(sessionId, null, 0.0, 0f)
+
+            val summaries = repository.observeSessionSummaries().first()
+
+            assertEquals(1, summaries.size)
+            // duration = stopped(8000) - start(0) - pausedDuration(5000, folded in at stop time) = 5000, NOT 8000.
+            assertEquals(5_000L, summaries.first().durationMillis)
+        }
+
+    @Test
     fun givenPointRecorded_whenGetMostRecentPointAndGetPointsForSession_thenDelegatesToDao() = runTest {
         val sessionId = repository.startSession()
         val point = LocationPoint(sessionId, 1.0, 2.0, 1_000L, 5f, 3f)
