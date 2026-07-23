@@ -41,20 +41,23 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         lifecycleScope.launch {
-            try {
-                val activeSession = observeActiveSessionUseCase().first()
-                val navController = navController()
-                if (activeSession != null && navController.currentDestination?.id != R.id.recordFragment) {
-                    navController.navigate(
-                        HistoryFragmentDirections.actionHistoryFragmentToRecordFragment(activeSession.session.id),
-                    )
-                }
+            // Only the use-case fetch is guarded - a navigation-guard regression must still crash
+            // loudly in tests/debug builds rather than being silently absorbed here.
+            val activeSession = try {
+                observeActiveSessionUseCase().first()
             } catch (cancellation: CancellationException) {
                 throw cancellation
             } catch (error: Exception) {
                 // Non-fatal: skip the recovery-navigation attempt for this onStart cycle and let
                 // the user land on/stay on HistoryFragment, which is always a safe fallback.
                 Log.e(TAG, "Failed to check for an active session on startup", error)
+                return@launch
+            }
+            val navController = navController()
+            if (activeSession != null && navController.currentDestination?.id != R.id.recordFragment) {
+                navController.navigate(
+                    HistoryFragmentDirections.actionHistoryFragmentToRecordFragment(activeSession.session.id),
+                )
             }
         }
     }
