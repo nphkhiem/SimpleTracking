@@ -27,6 +27,12 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
@@ -42,7 +48,16 @@ dependencies {
 
     implementation libs.kotlinx.coroutines.android
 
+    implementation libs.play.services.location
+
     testImplementation libs.junit
+    testImplementation libs.mockk
+    testImplementation libs.turbine
+    testImplementation libs.kotlinx.coroutines.test
+    testImplementation libs.robolectric
+    testImplementation libs.androidx.test.ext.junit
+    testImplementation testFixtures(project(":domain"))
+
     androidTestImplementation libs.androidx.test.ext.junit
     androidTestImplementation libs.androidx.espresso.core
 }
