@@ -1,7 +1,7 @@
 package com.khiemnph.domain.fake
 
 import app.cash.turbine.test
-import com.khiemnph.domain.model.LocationPoint
+import com.khiemnph.domain.model.RawLocationFix
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -12,7 +12,7 @@ class MockedLocationTrackingRepositoryTest {
 
     @Test
     fun givenFixEmitted_whenCollectLocationUpdates_thenReceivesEmittedFix() = runTest {
-        val point = LocationPoint(
+        val fix = RawLocationFix(
             sessionId = "session-1",
             latitude = 10.7626,
             longitude = 106.6602,
@@ -22,9 +22,9 @@ class MockedLocationTrackingRepositoryTest {
         )
 
         repository.locationUpdates().test {
-            repository.emitFix(point)
+            repository.emitFix(fix)
 
-            assertEquals(point, awaitItem())
+            assertEquals(fix, awaitItem())
         }
     }
 }
