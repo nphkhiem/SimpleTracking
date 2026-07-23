@@ -3,4 +3,17 @@
     <color name="colorPrimary">#6200EE</color>
     <color name="colorPrimaryDark">#3700B3</color>
     <color name="colorAccent">#03DAC5</color>
+
+    <!--
+      History screen tokens (light), taken from the reviewed UI mockup's Variant A design system
+      (https://claude.ai/code/artifact/0fdcd862-be87-4a06-b3d0-548142852ca1?screen=history&hv=a).
+      Kept separate from the legacy colorPrimary/colorAccent above, which style the action bar and
+      are unrelated to this design.
+    -->
+    <color name="history_surface">#FFFFFF</color>
+    <color name="history_ink">#211C19</color>
+    <color name="history_ink_soft">#8B7F77</color>
+    <color name="history_border">#14211C19</color>
+    <color name="history_accent">#E2432E</color>
+    <color name="history_neutral_chip">#EFE6E0</color>
 </resources>
