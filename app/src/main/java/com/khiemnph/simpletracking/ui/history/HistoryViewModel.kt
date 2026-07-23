@@ -1,0 +1,73 @@
+package com.khiemnph.simpletracking.ui.history
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.khiemnph.domain.interactor.ObserveSessionHistoryUseCase
+import com.khiemnph.domain.model.SessionSummary
+import dagger.hilt.android.lifecycle.HiltViewModel
+import java.util.Locale
+import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+
+private const val METERS_PER_KILOMETER = 1_000.0
+private const val SECONDS_PER_MILLIS_DIVISOR = 1_000L
+private const val SECONDS_PER_MINUTE = 60L
+private const val SECONDS_PER_HOUR = 3_600L
+private const val MPS_TO_KMH_FACTOR = 3.6f
+
+/**
+ * Exposes [ObserveSessionHistoryUseCase]'s session summaries as pre-formatted
+ * [HistorySummaryUiModel]s for [HistoryFragment]/[HistoryAdapter]. Ordering is pass-through: the
+ * underlying repository query already orders by `stoppedTimestamp DESC`, so this list is never
+ * re-sorted here.
+ *
+ * Duration is formatted `m:ss` when under an hour and `h:mm:ss` once a session runs an hour or
+ * longer - GPS tracking sessions (runs, rides) plausibly exceed an hour, and this mirrors the
+ * common stopwatch/timer convention (e.g. Android's own `DateUtils.formatElapsedTime`) of not
+ * zero-padding the leading unit.
+ */
+@HiltViewModel
+class HistoryViewModel @Inject constructor(
+    observeSessionHistoryUseCase: ObserveSessionHistoryUseCase,
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow<List<HistorySummaryUiModel>>(emptyList())
+    val uiState: StateFlow<List<HistorySummaryUiModel>> = _uiState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            observeSessionHistoryUseCase().collect { summaries ->
+                _uiState.value = summaries.map { it.toHistorySummaryUiModel() }
+            }
+        }
+    }
+}
+
+fun SessionSummary.toHistorySummaryUiModel(): HistorySummaryUiModel = HistorySummaryUiModel(
+    id = id,
+    distanceLabel = formatDistanceKm(distanceMeters),
+    durationLabel = formatDuration(durationMillis),
+    averageSpeedLabel = formatAverageSpeedKmh(averageSpeedMps),
+    thumbnailPath = thumbnailPath,
+)
+
+private fun formatDistanceKm(distanceMeters: Double): String =
+    String.format(Locale.US, "%.2f km", distanceMeters / METERS_PER_KILOMETER)
+
+private fun formatDuration(durationMillis: Long): String {
+    val totalSeconds = durationMillis / SECONDS_PER_MILLIS_DIVISOR
+    val hours = totalSeconds / SECONDS_PER_HOUR
+    val minutes = (totalSeconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE
+    val seconds = totalSeconds % SECONDS_PER_MINUTE
+    return if (hours > 0) {
+        String.format(Locale.US, "%d:%02d:%02d", hours, minutes, seconds)
+    } else {
+        String.format(Locale.US, "%d:%02d", minutes, seconds)
+    }
+}
+
+private fun formatAverageSpeedKmh(averageSpeedMps: Float): String =
+    String.format(Locale.US, "%.1f km/h avg", averageSpeedMps * MPS_TO_KMH_FACTOR)
