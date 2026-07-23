@@ -2,6 +2,7 @@ package com.khiemnph.data.local.db
 
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import java.util.concurrent.Executor
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -24,6 +25,8 @@ class SessionDaoTest {
     fun setUp() {
         database = Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext(), AppDatabase::class.java)
             .allowMainThreadQueries()
+            .setQueryExecutor(Executor { it.run() })
+            .setTransactionExecutor(Executor { it.run() })
             .build()
         dao = database.sessionDao()
     }
