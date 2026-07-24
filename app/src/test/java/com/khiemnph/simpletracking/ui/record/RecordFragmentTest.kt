@@ -513,6 +513,9 @@ class RecordFragmentTest {
         )
     }
 
+    private fun registeredLocationServiceReceiverCount(appContext: Application): Int =
+        shadowOf(appContext).registeredReceivers.count { it.intentFilter.hasAction(LocationManager.PROVIDERS_CHANGED_ACTION) }
+
     @Test
     fun givenRecordFragmentStarted_whenFragmentDisplayed_thenLocationServiceReceiverIsRegistered() {
         seedActiveSession()
@@ -522,8 +525,7 @@ class RecordFragmentTest {
 
             val appContext = ApplicationProvider.getApplicationContext<Application>()
             scenario.onActivity {
-                val receivers = shadowOf(appContext).getReceiversForIntent(Intent(LocationManager.PROVIDERS_CHANGED_ACTION))
-                assertEquals(1, receivers.size)
+                assertEquals(1, registeredLocationServiceReceiverCount(appContext))
             }
         }
     }
@@ -544,8 +546,7 @@ class RecordFragmentTest {
             idleMainLooper()
 
             scenario.onActivity {
-                val receivers = shadowOf(appContext).getReceiversForIntent(Intent(LocationManager.PROVIDERS_CHANGED_ACTION))
-                assertEquals(0, receivers.size)
+                assertEquals(0, registeredLocationServiceReceiverCount(appContext))
             }
         }
     }
