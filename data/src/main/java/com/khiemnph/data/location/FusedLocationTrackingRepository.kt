@@ -37,17 +37,22 @@ class FusedLocationTrackingRepository @Inject constructor(
                 }
             }
         }
-        val request = LocationRequest.Builder(LOCATION_UPDATE_INTERVAL_MILLIS)
-            .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
-            .build()
-        fusedLocationClient.requestLocationUpdates(request, callback, Looper.getMainLooper())
+        fusedLocationClient.requestLocationUpdates(buildTrackingLocationRequest(), callback, Looper.getMainLooper())
         awaitClose { fusedLocationClient.removeLocationUpdates(callback) }
     }
-
-    private companion object {
-        const val LOCATION_UPDATE_INTERVAL_MILLIS = 2_000L
-    }
 }
+
+private const val LOCATION_UPDATE_INTERVAL_MILLIS = 2_000L
+
+/**
+ * The exact request shape this app tracks a session with - shared with
+ * `com.khiemnph.simpletracking.location.LocationSettingsChecker` so its device Location-Service
+ * check reflects what will actually be requested, rather than an independently-maintained
+ * approximation of it.
+ */
+fun buildTrackingLocationRequest(): LocationRequest = LocationRequest.Builder(LOCATION_UPDATE_INTERVAL_MILLIS)
+    .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+    .build()
 
 internal fun Location.toRawLocationFix(sessionId: String): RawLocationFix = RawLocationFix(
     sessionId = sessionId,
