@@ -23,7 +23,7 @@ android {
 
         manifestPlaceholders = [ mapsApiKey : properties.getProperty("MAPS_API_KEY", "") ]
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.khiemnph.simpletracking.HiltTestRunner"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -87,5 +87,9 @@ dependencies {
     testImplementation testFixtures(project(":domain"))
 
     androidTestImplementation libs.androidx.test.ext.junit
+    androidTestImplementation libs.androidx.test.rules
     androidTestImplementation libs.androidx.espresso.core
+    androidTestImplementation libs.hilt.android.testing
+    androidTestImplementation testFixtures(project(":domain"))
+    kspAndroidTest libs.hilt.compiler
 }
