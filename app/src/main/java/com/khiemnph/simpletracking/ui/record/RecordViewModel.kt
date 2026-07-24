@@ -77,22 +77,34 @@ class RecordViewModel @Inject constructor(
         if (sessionId != null) return
         EspressoIdlingResource.increment()
         viewModelScope.launch {
-            val id = existingSessionId ?: startSessionUseCase()
-            sessionId = id
-            ContextCompat.startForegroundService(context, TrackingService.startIntent(context, id))
-            observeActiveSessionUseCase().collect { state ->
-                try {
-                    if (state != null) updateUiState(state)
-                } finally {
-                    // Balances this call's own increment above, plus one increment per subsequent
-                    // state-changing action (onPauseOrResumeClicked, or a test feeding a fix
-                    // straight through the fake LocationTrackingRepository) - every mutation this
-                    // app makes to the active session's state ultimately surfaces as exactly one
-                    // emission here, which is what makes Espresso's IdlingRegistry check reliably
-                    // wait until this Flow-driven UI has actually caught up, instead of racing the
-                    // async hop off TrackingService's background dispatcher.
-                    EspressoIdlingResource.decrement()
+            // reachedFirstEmission tracks whether collect's own per-emission finally below has
+            // taken over balancing this method's increment. If startSessionUseCase() or
+            // startForegroundService throws before collect ever runs - or the coroutine is
+            // cancelled while still suspended waiting for that first emission - this outer finally
+            // is the only thing left to balance it, or the increment would leak forever.
+            var reachedFirstEmission = false
+            try {
+                val id = existingSessionId ?: startSessionUseCase()
+                sessionId = id
+                ContextCompat.startForegroundService(context, TrackingService.startIntent(context, id))
+                observeActiveSessionUseCase().collect { state ->
+                    reachedFirstEmission = true
+                    try {
+                        if (state != null) updateUiState(state)
+                    } finally {
+                        // Balances this call's own increment above, plus one increment per
+                        // subsequent state-changing action (onPauseOrResumeClicked, or a test
+                        // feeding a fix straight through the fake LocationTrackingRepository) -
+                        // every mutation this app makes to the active session's state ultimately
+                        // surfaces as exactly one emission here, which is what makes Espresso's
+                        // IdlingRegistry check reliably wait until this Flow-driven UI has
+                        // actually caught up, instead of racing the async hop off
+                        // TrackingService's background dispatcher.
+                        EspressoIdlingResource.decrement()
+                    }
                 }
+            } finally {
+                if (!reachedFirstEmission) EspressoIdlingResource.decrement()
             }
         }
     }
@@ -100,12 +112,22 @@ class RecordViewModel @Inject constructor(
     fun onPauseOrResumeClicked() {
         val id = sessionId ?: return
         EspressoIdlingResource.increment()
-        val intent = if (_uiState.value.status == SessionStatus.PAUSED) {
-            TrackingService.resumeIntent(context, id)
-        } else {
-            TrackingService.pauseIntent(context, id)
+        try {
+            val intent = if (_uiState.value.status == SessionStatus.PAUSED) {
+                TrackingService.resumeIntent(context, id)
+            } else {
+                TrackingService.pauseIntent(context, id)
+            }
+            ContextCompat.startForegroundService(context, intent)
+        } catch (e: Exception) {
+            // Not a plain `finally`: on success this increment is balanced by the state emission
+            // TrackingService's async pause/resume handling eventually produces (see
+            // resolveSession's collect above), not by this function returning. Only compensate
+            // here when startForegroundService throws before ever reaching TrackingService, since
+            // then no such emission will ever arrive to balance it.
+            EspressoIdlingResource.decrement()
+            throw e
         }
-        ContextCompat.startForegroundService(context, intent)
     }
 
     /**
