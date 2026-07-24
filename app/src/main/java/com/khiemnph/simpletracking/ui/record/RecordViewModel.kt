@@ -12,6 +12,7 @@ import com.khiemnph.domain.model.ActiveSessionState
 import com.khiemnph.domain.model.SessionStatus
 import com.khiemnph.simpletracking.di.ApplicationScope
 import com.khiemnph.simpletracking.service.TrackingService
+import com.khiemnph.simpletracking.util.EspressoIdlingResource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -74,18 +75,31 @@ class RecordViewModel @Inject constructor(
      */
     fun resolveSession(existingSessionId: String?) {
         if (sessionId != null) return
+        EspressoIdlingResource.increment()
         viewModelScope.launch {
             val id = existingSessionId ?: startSessionUseCase()
             sessionId = id
             ContextCompat.startForegroundService(context, TrackingService.startIntent(context, id))
             observeActiveSessionUseCase().collect { state ->
-                if (state != null) updateUiState(state)
+                try {
+                    if (state != null) updateUiState(state)
+                } finally {
+                    // Balances this call's own increment above, plus one increment per subsequent
+                    // state-changing action (onPauseOrResumeClicked, or a test feeding a fix
+                    // straight through the fake LocationTrackingRepository) - every mutation this
+                    // app makes to the active session's state ultimately surfaces as exactly one
+                    // emission here, which is what makes Espresso's IdlingRegistry check reliably
+                    // wait until this Flow-driven UI has actually caught up, instead of racing the
+                    // async hop off TrackingService's background dispatcher.
+                    EspressoIdlingResource.decrement()
+                }
             }
         }
     }
 
     fun onPauseOrResumeClicked() {
         val id = sessionId ?: return
+        EspressoIdlingResource.increment()
         val intent = if (_uiState.value.status == SessionStatus.PAUSED) {
             TrackingService.resumeIntent(context, id)
         } else {
