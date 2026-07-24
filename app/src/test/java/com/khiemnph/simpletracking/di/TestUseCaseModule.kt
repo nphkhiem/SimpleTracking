@@ -5,6 +5,7 @@ import com.khiemnph.domain.interactor.ObserveSessionHistoryUseCase
 import com.khiemnph.domain.interactor.PauseSessionUseCase
 import com.khiemnph.domain.interactor.RecordLocationFixUseCase
 import com.khiemnph.domain.interactor.ResumeSessionUseCase
+import com.khiemnph.domain.interactor.StartSessionUseCase
 import com.khiemnph.domain.interactor.StopSessionUseCase
 import com.khiemnph.domain.repository.SessionRepository
 import dagger.Module
@@ -26,12 +27,13 @@ import javax.inject.Singleton
  * test method creates, which is what makes `coVerify` against the test's field a valid check of
  * what the Service actually invoked.
  *
- * [ObserveActiveSessionUseCase] and [ObserveSessionHistoryUseCase] are deliberately NOT mocked
- * here: they're wired exactly the way [UseCaseModule] wires them in production, delegating to
- * whatever [SessionRepository] the graph provides (the in-memory fake from
- * [TestRepositoryModule]), because [com.khiemnph.simpletracking.ui.MainActivityTest] and
- * [com.khiemnph.simpletracking.ui.history.HistoryFragment] (via `HistoryViewModel`) depend on
- * their real state-based behavior.
+ * [ObserveActiveSessionUseCase], [ObserveSessionHistoryUseCase], and [StartSessionUseCase] are
+ * deliberately NOT mocked here: they're wired exactly the way [UseCaseModule] wires them in
+ * production, delegating to whatever [SessionRepository] the graph provides (the in-memory fake
+ * from [TestRepositoryModule]), because [com.khiemnph.simpletracking.ui.MainActivityTest],
+ * [com.khiemnph.simpletracking.ui.history.HistoryFragment] (via `HistoryViewModel`), and
+ * [com.khiemnph.simpletracking.ui.record.RecordFragment] (via `RecordViewModel`) depend on their
+ * real state-based behavior.
  */
 @Module
 @TestInstallIn(components = [SingletonComponent::class], replaces = [UseCaseModule::class])
@@ -62,4 +64,9 @@ object TestUseCaseModule {
     @Singleton
     fun provideObserveSessionHistoryUseCase(sessionRepository: SessionRepository): ObserveSessionHistoryUseCase =
         ObserveSessionHistoryUseCase(sessionRepository)
+
+    @Provides
+    @Singleton
+    fun provideStartSessionUseCase(sessionRepository: SessionRepository): StartSessionUseCase =
+        StartSessionUseCase(sessionRepository)
 }

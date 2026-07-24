@@ -13,4 +13,7 @@
     <color name="history_border">#1AF4ECE6</color>
     <color name="history_accent">#FF6D52</color>
     <color name="history_neutral_chip">#352C26</color>
+
+    <color name="record_accent_ink">#1C0D09</color>
+    <color name="record_paused_ink">#E3A349</color>
 </resources>

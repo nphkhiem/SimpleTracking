@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Translucent black circle behind the Record screen's floating back button - fixed regardless of
+  theme (like ic_record_dot), since it floats over a map whose colors vary independently of the
+  app's own light/dark theme and needs to stay legible against both.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="#52000000" />
+</shape>

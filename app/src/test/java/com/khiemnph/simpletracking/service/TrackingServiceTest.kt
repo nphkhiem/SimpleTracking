@@ -166,6 +166,36 @@ class TrackingServiceTest {
     }
 
     @Test
+    fun givenStopIntentWithThumbnailPath_whenOnStartCommandCalled_thenStopSessionUseCaseInvokedWithThatPath() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val thumbnailPath = "/data/thumbnails/$sessionId.png"
+        coEvery { stopSessionUseCase(any(), any()) } returns mockk(relaxed = true)
+        val controller = launchService(
+            dispatcher,
+            TrackingService.stopIntent(context, sessionId, thumbnailPath = thumbnailPath),
+        )
+        val service = controller.get()
+
+        service.onStartCommand(controller.intent, 0, 1)
+        runCurrent()
+
+        coVerify(exactly = 1) { stopSessionUseCase(sessionId, thumbnailPath) }
+    }
+
+    @Test
+    fun givenStopIntentWithoutThumbnailPath_whenOnStartCommandCalled_thenStopSessionUseCaseInvokedWithNull() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        coEvery { stopSessionUseCase(any(), any()) } returns mockk(relaxed = true)
+        val controller = launchService(dispatcher, TrackingService.stopIntent(context, sessionId))
+        val service = controller.get()
+
+        service.onStartCommand(controller.intent, 0, 1)
+        runCurrent()
+
+        coVerify(exactly = 1) { stopSessionUseCase(sessionId, null) }
+    }
+
+    @Test
     fun givenLocationTrackingRepositoryEmitsAFix_whenServiceRunning_thenRecordLocationFixUseCaseInvokedOnce() = runTest {
         val dispatcher = StandardTestDispatcher(testScheduler)
         val controller = launchService(dispatcher, TrackingService.startIntent(context, sessionId))

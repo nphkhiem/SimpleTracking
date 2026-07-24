@@ -128,6 +128,24 @@ class MockedSessionRepository : SessionRepository {
         pendingObserveActiveSessionError = error
     }
 
+    /**
+     * Test-only hook: re-emits [sessionId]'s current active-session state with [elapsedDurationMillis]
+     * bumped but no new route point, simulating the real repository's once-per-second ticker
+     * re-emission that keeps duration advancing without a new GPS fix. [currentSpeedMps] optionally
+     * overrides the carried-over value so a test can prove a consumer ignores it on a ticker-only
+     * emission - the real repository never actually changes this value between fixes, but tests
+     * need to distinguish "ignored because unchanged" from "ignored because keyed off route, not
+     * this field" (see the [com.khiemnph.simpletracking.ui.record.RecordViewModel] smoothing tests).
+     */
+    fun emitTickerTick(sessionId: String, elapsedDurationMillis: Long, currentSpeedMps: Float? = null) {
+        val current = activeSessionStateFlow.value ?: return
+        if (current.session.id != sessionId) return
+        activeSessionStateFlow.value = current.copy(
+            elapsedDurationMillis = elapsedDurationMillis,
+            currentSpeedMps = currentSpeedMps ?: current.currentSpeedMps,
+        )
+    }
+
     private fun refreshActiveSessionState(sessionId: String) {
         val session = sessionsById[sessionId] ?: return
         if (session.status == SessionStatus.STOPPED) {
