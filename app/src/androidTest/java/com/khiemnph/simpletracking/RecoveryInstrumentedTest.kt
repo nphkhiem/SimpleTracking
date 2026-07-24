@@ -6,6 +6,7 @@ import android.content.Intent
 import androidx.navigation.fragment.NavHostFragment
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.espresso.Espresso.onIdle
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.IdlingRegistry
 import androidx.test.espresso.action.ViewActions.click
@@ -143,6 +144,17 @@ class RecoveryInstrumentedTest {
         // persisted, exactly mirroring what a relaunch after a real process kill would read.
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            // ActivityScenario.onActivity {} is a raw runOnMainSync callback, not an Espresso
+            // ViewInteraction - it never consults IdlingRegistry, so it can run before MainActivity's
+            // onStart recovery coroutine (correctly instrumented via EspressoIdlingResource) has
+            // finished. Espresso.onIdle() runs the exact same IdlingRegistry synchronization
+            // ViewInteraction.perform()/check() use internally, but without matching any view, so
+            // it can't race the outgoing/incoming Activity windows during this relaunch the way an
+            // onView(withId(...)) check briefly could (confirmed empirically: that approach hit an
+            // AmbiguousViewMatcherException from a transient second nav_host_fragment window during
+            // the Activity transition). This guarantees the recovery coroutine has fully resolved
+            // before the onActivity assertion below ever runs.
+            onIdle()
             scenario.onActivity { activity ->
                 val navHostFragment =
                     activity.supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
