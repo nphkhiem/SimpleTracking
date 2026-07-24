@@ -41,6 +41,7 @@ import kotlinx.coroutines.runBlocking
 import org.hamcrest.CoreMatchers.not
 import org.junit.After
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -67,7 +68,10 @@ import org.junit.runner.RunWith
  * use cases built against that *earlier* method's now-discarded `SessionRepository`, silently
  * dropping every later method's Pause/Resume/location-fix intents against a repository that no
  * longer has the session id at all (this was an actual, initially-mysterious test failure during
- * development, not a hypothetical).
+ * development, not a hypothetical). [Context.stopService] only requests the stop and returns
+ * immediately, well before [TrackingService.onDestroy] actually runs, so [tearDown] also awaits
+ * [TrackingService.awaitDestroyed] - a real synchronization point on `onDestroy` completing, not a
+ * fixed sleep - before letting the next test method's own `startForegroundService` call proceed.
  *
  * [FakeRepositoryModule] is nested inside this class rather than a shared top-level
  * `@TestInstallIn` module (contrast the JVM-side `app/src/test`'s `TestRepositoryModule`, shared by
@@ -138,6 +142,10 @@ class RecordFlowInstrumentedTest {
         // current, instead of silently keeping this test's now-stale SessionRepository reference.
         ApplicationProvider.getApplicationContext<Context>()
             .stopService(Intent(ApplicationProvider.getApplicationContext(), TrackingService::class.java))
+        // stopService() only requests the stop and returns immediately - awaitDestroyed() blocks
+        // until TrackingService.onDestroy() has genuinely finished, so the next test method's own
+        // startForegroundService call can never race this still-tearing-down instance.
+        assertTrue("Expected TrackingService.onDestroy() to finish before teardown returns", TrackingService.awaitDestroyed())
         IdlingRegistry.getInstance().unregister(EspressoIdlingResource.countingIdlingResource)
     }
 

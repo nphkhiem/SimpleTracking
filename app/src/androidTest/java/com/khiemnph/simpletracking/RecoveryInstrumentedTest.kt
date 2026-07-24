@@ -40,6 +40,7 @@ import kotlinx.coroutines.runBlocking
 import org.hamcrest.CoreMatchers.not
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -126,8 +127,12 @@ class RecoveryInstrumentedTest {
         // See RecordFlowInstrumentedTest.tearDown()'s doc: TrackingService outlives this one test
         // method as a real Android Service, so it must be stopped explicitly or a later test's
         // Service instance would silently keep this test's now-discarded SessionRepository.
+        // stopService() only requests the stop and returns immediately, well before onDestroy()
+        // actually runs, so awaitDestroyed() blocks on that real synchronization point before the
+        // next test method's own startForegroundService call can proceed.
         ApplicationProvider.getApplicationContext<Context>()
             .stopService(Intent(ApplicationProvider.getApplicationContext(), TrackingService::class.java))
+        assertTrue("Expected TrackingService.onDestroy() to finish before teardown returns", TrackingService.awaitDestroyed())
         IdlingRegistry.getInstance().unregister(EspressoIdlingResource.countingIdlingResource)
     }
 
