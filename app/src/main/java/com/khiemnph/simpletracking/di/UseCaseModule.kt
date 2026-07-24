@@ -5,6 +5,7 @@ import com.khiemnph.domain.interactor.ObserveSessionHistoryUseCase
 import com.khiemnph.domain.interactor.PauseSessionUseCase
 import com.khiemnph.domain.interactor.RecordLocationFixUseCase
 import com.khiemnph.domain.interactor.ResumeSessionUseCase
+import com.khiemnph.domain.interactor.StartSessionUseCase
 import com.khiemnph.domain.interactor.StopSessionUseCase
 import com.khiemnph.domain.repository.SessionRepository
 import dagger.Module
@@ -32,6 +33,10 @@ object UseCaseModule {
     @Provides
     fun provideStopSessionUseCase(sessionRepository: SessionRepository): StopSessionUseCase =
         StopSessionUseCase(sessionRepository)
+
+    @Provides
+    fun provideStartSessionUseCase(sessionRepository: SessionRepository): StartSessionUseCase =
+        StartSessionUseCase(sessionRepository)
 
     @Provides
     fun provideRecordLocationFixUseCase(sessionRepository: SessionRepository): RecordLocationFixUseCase =
