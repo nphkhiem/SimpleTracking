@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Small decorative pill shown at the top of the Record screen's bottom sheet. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/history_border" />
+    <corners android:radius="999dp" />
+</shape>

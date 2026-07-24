@@ -16,9 +16,11 @@ kotlin {
 
 dependencies {
     implementation libs.kotlinx.coroutines.core
+    testFixturesImplementation libs.kotlinx.coroutines.core
 
     testImplementation libs.junit
     testImplementation libs.mockk
     testImplementation libs.kotlinx.coroutines.test
     testImplementation libs.turbine
+    testImplementation testFixtures(project(":domain"))
 }

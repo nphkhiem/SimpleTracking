@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Neutral rounded-square placeholder shown by Coil while a session thumbnail loads, on load
+  failure, and for sessions with no thumbnail at all (a normal case - stopped via notification with
+  no live map to snapshot).
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/history_neutral_chip" />
+    <corners android:radius="14dp" />
+</shape>
