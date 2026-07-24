@@ -1,11 +1,13 @@
 package com.khiemnph.simpletracking.ui.record
 
 import android.Manifest
+import android.app.Application
 import android.os.Looper
 import android.view.View
 import android.widget.TextView
 import androidx.navigation.fragment.NavHostFragment
 import androidx.test.core.app.ActivityScenario
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.khiemnph.domain.fake.MockedSessionRepository
@@ -14,6 +16,7 @@ import com.khiemnph.domain.model.Session
 import com.khiemnph.domain.model.SessionStatus
 import com.khiemnph.domain.repository.SessionRepository
 import com.khiemnph.simpletracking.R
+import com.khiemnph.simpletracking.service.TrackingService
 import com.khiemnph.simpletracking.ui.MainActivity
 import com.khiemnph.simpletracking.ui.history.HistoryFragmentDirections
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -162,6 +165,48 @@ class RecordFragmentTest {
 
     private fun runBlockingSessionStillActive() = runBlocking {
         assertEquals(sessionId, mockedSessionRepository.getActiveSessionId())
+    }
+
+    /**
+     * Under Robolectric, [com.google.android.gms.maps.GoogleMap]'s snapshot callback never fires
+     * (see phase 6 report - no `shadows-play-services` shadow on this classpath), so
+     * `RecordFragment.googleMap` stays `null` for the fragment's whole lifetime here. This
+     * exercises the `googleMap == null` branch of `handleStopClicked` - the only Stop path
+     * Robolectric can reach - and is the regression test for the fix that moved the Stop intent
+     * dispatch off `viewModelScope` and onto the injected application-scoped
+     * [com.khiemnph.simpletracking.di.ApplicationScope] [kotlinx.coroutines.CoroutineScope]: it
+     * proves the Stop button still both navigates back to History AND reliably sends the Stop
+     * intent to [TrackingService].
+     */
+    @Test
+    fun givenStopButtonClicked_whenInvoked_thenNavigatesBackToHistoryAndSendsStopIntentToTrackingService() {
+        seedActiveSession()
+
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            idleMainLooper()
+
+            scenario.onActivity { activity ->
+                recordFragmentOf(activity).view
+                    ?.findViewById<View>(R.id.record_stop_button)
+                    ?.performClick()
+            }
+            idleMainLooper()
+
+            scenario.onActivity { activity ->
+                val navHostFragment =
+                    activity.supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+                assertEquals(R.id.historyFragment, navHostFragment.navController.currentDestination?.id)
+            }
+        }
+
+        val appContext = ApplicationProvider.getApplicationContext<Application>()
+        val expectedStopIntent = TrackingService.stopIntent(appContext, sessionId)
+        // The queue also holds the earlier Start intent resolveSession sent on entry, so drain
+        // every started-service intent and find the Stop one rather than assuming queue position.
+        val startedIntents = generateSequence { shadowOf(appContext).nextStartedService }.toList()
+        val actualStopIntent = startedIntents.find { it.action == expectedStopIntent.action }
+        assertNotNull("Expected a Stop intent to have been sent to TrackingService", actualStopIntent)
+        assertEquals(expectedStopIntent.component, actualStopIntent?.component)
     }
 
     @Test

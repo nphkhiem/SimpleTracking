@@ -10,10 +10,12 @@ import com.khiemnph.domain.interactor.ObserveActiveSessionUseCase
 import com.khiemnph.domain.interactor.StartSessionUseCase
 import com.khiemnph.domain.model.ActiveSessionState
 import com.khiemnph.domain.model.SessionStatus
+import com.khiemnph.simpletracking.di.ApplicationScope
 import com.khiemnph.simpletracking.service.TrackingService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,6 +39,7 @@ class RecordViewModel @Inject constructor(
     private val observeActiveSessionUseCase: ObserveActiveSessionUseCase,
     private val thumbnailFileStore: ThumbnailFileStore,
     @ApplicationContext private val context: Context,
+    @ApplicationScope private val applicationScope: CoroutineScope,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(RecordUiState())
@@ -88,10 +91,17 @@ class RecordViewModel @Inject constructor(
      * [bitmap] is a best-effort map snapshot the Fragment attempts before calling this - `null`
      * when the map wasn't ready/available, which simply results in the Stop intent carrying no
      * thumbnail path (a normal placeholder case in History, not an error).
+     *
+     * Launched on [applicationScope], not `viewModelScope`, deliberately: the Fragment fires the
+     * map snapshot asynchronously and never waits for it before popping the back stack, so this
+     * can be invoked after that pop has already destroyed the Fragment and cleared this ViewModel
+     * (cancelling `viewModelScope`). Using the process-lifetime [applicationScope] instead means
+     * the thumbnail save and the Stop intent still reliably complete even then - otherwise the
+     * Stop intent would silently never reach [TrackingService] and tracking would keep running.
      */
     fun onStopClicked(bitmap: Bitmap?) {
         val id = sessionId ?: return
-        viewModelScope.launch {
+        applicationScope.launch {
             val thumbnailPath = bitmap?.let { thumbnailFileStore.save(id, it) }
             ContextCompat.startForegroundService(context, TrackingService.stopIntent(context, id, thumbnailPath))
         }

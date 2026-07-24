@@ -5,6 +5,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import androidx.lifecycle.ViewModelStore
 import androidx.test.core.app.ApplicationProvider
 import com.khiemnph.data.thumbnail.ThumbnailFileStore
 import com.khiemnph.domain.fake.MockedSessionRepository
@@ -16,7 +17,9 @@ import com.khiemnph.simpletracking.service.TrackingService
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -50,6 +53,14 @@ class RecordViewModelTest {
     private val startSessionUseCase = mockk<StartSessionUseCase>()
     private val thumbnailFileStore = mockk<ThumbnailFileStore>()
 
+    /**
+     * A separate [CoroutineScope] instance from `viewModelScope`, deliberately not tied to
+     * [Dispatchers.Main] - proves [RecordViewModel.onStopClicked] keeps working off of this scope
+     * independently of whatever happens to `viewModelScope` (see
+     * `givenViewModelClearedBeforeStopCallbackFires_...` below).
+     */
+    private val applicationScope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher())
+
     @Before
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
@@ -65,6 +76,7 @@ class RecordViewModelTest {
         observeActiveSessionUseCase = ObserveActiveSessionUseCase(repository),
         thumbnailFileStore = thumbnailFileStore,
         context = context,
+        applicationScope = applicationScope,
     )
 
     private fun nextStartedServiceIntent(): Intent? = shadowOf(context as Application).nextStartedService
@@ -253,6 +265,35 @@ class RecordViewModelTest {
         viewModel.onStopClicked(null)
 
         coVerify(exactly = 0) { thumbnailFileStore.save(any(), any()) }
+        assertSameIntent(TrackingService.stopIntent(context, sessionId), nextStartedServiceIntent())
+    }
+
+    /**
+     * Regression test for the real-world race this fixes: [RecordFragment.handleStopClicked]
+     * fires `googleMap.snapshot { ... }` (a genuinely async, rendering-dependent callback) and
+     * pops the back stack immediately after, without waiting for it - destroying the Fragment and
+     * clearing this ViewModel (cancelling `viewModelScope`) possibly before that callback ever
+     * runs. [androidx.lifecycle.ViewModelStore.clear] is used here (not a mock, not reflection) to
+     * trigger the exact same `onCleared()`/`viewModelScope` cancellation Android performs when a
+     * ViewModel's owner is destroyed - then [RecordViewModel.onStopClicked] is invoked afterward,
+     * simulating the snapshot callback firing late. If `onStopClicked` still launched on
+     * `viewModelScope`, this coroutine would launch onto an already-cancelled Job and its body -
+     * including sending the Stop intent - would silently never run, so this test would fail
+     * without the [com.khiemnph.simpletracking.di.ApplicationScope] fix.
+     */
+    @Test
+    fun givenViewModelClearedBeforeStopCallbackFires_whenStopClicked_thenStopIntentStillReachesTrackingService() = runTest {
+        val sessionId = repository.startSession()
+        val viewModel = createViewModel()
+        viewModel.resolveSession(sessionId)
+        nextStartedServiceIntent() // drain the start intent
+
+        val viewModelStore = ViewModelStore()
+        viewModelStore.put("record", viewModel)
+        viewModelStore.clear() // mirrors popBackStack() destroying the Fragment/ViewModel
+
+        viewModel.onStopClicked(null) // mirrors the snapshot callback firing after that teardown
+
         assertSameIntent(TrackingService.stopIntent(context, sessionId), nextStartedServiceIntent())
     }
 
