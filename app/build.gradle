@@ -57,6 +57,7 @@ dependencies {
     implementation libs.androidx.appcompat
     implementation libs.androidx.recyclerview
     implementation libs.androidx.constraintlayout
+    implementation libs.google.material
 
     // navigation
     implementation libs.androidx.navigation.fragment.ktx
