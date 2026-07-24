@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.IBinder
+import androidx.annotation.VisibleForTesting
 import androidx.core.app.ServiceCompat
 import com.khiemnph.domain.interactor.PauseSessionUseCase
 import com.khiemnph.domain.interactor.RecordLocationFixUseCase
@@ -12,6 +13,8 @@ import com.khiemnph.domain.interactor.ResumeSessionUseCase
 import com.khiemnph.domain.interactor.StopSessionUseCase
 import com.khiemnph.domain.repository.LocationTrackingRepository
 import dagger.hilt.android.AndroidEntryPoint
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -50,6 +53,11 @@ class TrackingService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    override fun onCreate() {
+        super.onCreate()
+        destroyLatch = CountDownLatch(1)
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val sessionId = intent?.getStringExtra(EXTRA_SESSION_ID)
         if (sessionId != null) {
@@ -67,6 +75,7 @@ class TrackingService : Service() {
     override fun onDestroy() {
         serviceScope.cancel()
         super.onDestroy()
+        destroyLatch.countDown()
     }
 
     /**
@@ -141,6 +150,30 @@ class TrackingService : Service() {
         private const val ACTION_STOP = "com.khiemnph.simpletracking.action.STOP"
         private const val EXTRA_SESSION_ID = "com.khiemnph.simpletracking.extra.SESSION_ID"
         private const val EXTRA_THUMBNAIL_PATH = "com.khiemnph.simpletracking.extra.THUMBNAIL_PATH"
+
+        /**
+         * Counted down by [onDestroy] and replaced with a fresh, un-counted latch by [onCreate] -
+         * a companion-level (not per-instance) field because instrumented tests calling
+         * [Context.stopService] have no reference to the live [TrackingService] instance to await
+         * on directly. Starts pre-counted-down so [awaitDestroyed] is a no-op if no instance was
+         * ever created.
+         */
+        @Volatile
+        private var destroyLatch = CountDownLatch(0)
+
+        /**
+         * Test-only synchronization point for instrumented-test teardown: [Context.stopService]
+         * only *requests* a stop and returns immediately, well before [onDestroy] actually runs on
+         * the main thread, so a test that calls `stopService()` and returns without waiting for
+         * this can race the next test method's own `startForegroundService` call against this
+         * still-tearing-down instance. Call this right after `stopService()` in `@After` to block
+         * until `onDestroy` has genuinely finished. Returns `false` (rather than throwing) on
+         * timeout so the caller can turn it into a clear test assertion failure instead of a
+         * confusing hang.
+         */
+        @VisibleForTesting
+        fun awaitDestroyed(timeoutMillis: Long = 5_000L): Boolean =
+            destroyLatch.await(timeoutMillis, TimeUnit.MILLISECONDS)
 
         fun startIntent(context: Context, sessionId: String): Intent = intentFor(context, ACTION_START, sessionId)
 

@@ -23,7 +23,7 @@ android {
 
         manifestPlaceholders = [ mapsApiKey : properties.getProperty("MAPS_API_KEY", "") ]
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.khiemnph.simpletracking.HiltTestRunner"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -74,6 +74,12 @@ dependencies {
     implementation libs.hilt.android
     ksp libs.hilt.compiler
 
+    // Espresso's CountingIdlingResource - a tiny, dependency-free artifact safe to ship in the
+    // production APK (unlike espresso-core). RecordViewModel increments/decrements it around the
+    // async state updates androidTest's IdlingRegistry needs to synchronize with; it costs nothing
+    // when no test ever registers it with IdlingRegistry.
+    implementation libs.androidx.espresso.idling.resource
+
     testImplementation libs.junit
     testImplementation libs.mockk
     testImplementation libs.turbine
@@ -87,5 +93,9 @@ dependencies {
     testImplementation testFixtures(project(":domain"))
 
     androidTestImplementation libs.androidx.test.ext.junit
+    androidTestImplementation libs.androidx.test.rules
     androidTestImplementation libs.androidx.espresso.core
+    androidTestImplementation libs.hilt.android.testing
+    androidTestImplementation testFixtures(project(":domain"))
+    kspAndroidTest libs.hilt.compiler
 }
