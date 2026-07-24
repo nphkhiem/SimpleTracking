@@ -109,6 +109,22 @@ class MockedSessionRepository : SessionRepository {
         }
     }
 
+    /**
+     * Test-only hook: clears all in-memory state back to a pristine instance. Defensive rather
+     * than strictly required today (each `@HiltAndroidTest` method gets its own freshly-built
+     * Hilt component, and therefore a brand-new instance of this fake, in practice) - calling it
+     * from a test's own setup costs nothing and removes any dependency on that lifecycle detail
+     * staying true across Hilt/AndroidX Test versions.
+     */
+    fun reset() {
+        sessionsById.clear()
+        pointsBySessionId.clear()
+        activeSessionStateFlow.value = null
+        sessionSummariesFlow.value = emptyList()
+        nextSessionId = 1
+        pendingObserveActiveSessionError = null
+    }
+
     /** Test-only hook: seeds a session directly, bypassing [startSession]. */
     fun seedSession(session: Session) {
         sessionsById[session.id] = session
