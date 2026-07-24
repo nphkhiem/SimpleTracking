@@ -16,4 +16,13 @@
     <color name="history_border">#14211C19</color>
     <color name="history_accent">#E2432E</color>
     <color name="history_neutral_chip">#EFE6E0</color>
+
+    <!--
+      Record screen tokens (light), same reviewed mockup's design system, Record/Variant C
+      (https://claude.ai/code/artifact/0fdcd862-be87-4a06-b3d0-548142852ca1?screen=record&rv=c).
+      history_surface/history_ink/history_ink_soft/history_border/history_accent above are reused
+      as-is for Record - these two are the only tokens that screen needs beyond those.
+    -->
+    <color name="record_accent_ink">#FFF8F6</color>
+    <color name="record_paused_ink">#B9822A</color>
 </resources>

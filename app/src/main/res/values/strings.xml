@@ -14,6 +14,15 @@
     <string name="history_item_thumbnail_content_description">Session route thumbnail</string>
     <string name="history_item_stats_separator">" · "</string>
     <string name="record_title">Record</string>
-    <string name="record_placeholder_text">Record: %1$s</string>
-    <string name="record_placeholder_new_session">new session</string>
+    <string name="record_back_content_description">Back to History</string>
+    <string name="record_paused_tag">Paused</string>
+    <string name="record_distance_unit">km</string>
+    <string name="record_current_speed_unit">km/h</string>
+    <string name="record_duration_unit">time</string>
+    <string name="record_pause_content_description">Pause</string>
+    <string name="record_resume_content_description">Resume</string>
+    <string name="record_stop_content_description">Stop</string>
+    <string name="record_start_marker_title">Start</string>
+    <string name="record_current_marker_title">Current position</string>
+    <string name="record_location_permission_denied_message">Location permission is needed to record a session.</string>
 </resources>
