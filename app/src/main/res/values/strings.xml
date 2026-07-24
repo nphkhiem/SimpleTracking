@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">SimpleTracking</string>
+    <string name="app_name">Chạy Ngay Đi</string>
 
     <string name="tracking_notification_channel_name">Tracking</string>
     <string name="tracking_notification_title">Tracking your session</string>
