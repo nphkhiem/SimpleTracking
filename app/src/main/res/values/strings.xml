@@ -10,7 +10,10 @@
     <string name="tracking_notification_action_stop">Stop</string>
 
     <string name="history_title">History</string>
-    <string name="history_placeholder_text">History</string>
+    <string name="history_record_button_text">Record</string>
+    <string name="history_item_thumbnail_content_description">Session route thumbnail</string>
+    <string name="history_item_stats_separator">" · "</string>
     <string name="record_title">Record</string>
     <string name="record_placeholder_text">Record: %1$s</string>
+    <string name="record_placeholder_new_session">new session</string>
 </resources>

@@ -24,7 +24,9 @@
 
         <argument
             android:name="sessionId"
-            app:argType="string" />
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
     </fragment>
 
 </navigation>

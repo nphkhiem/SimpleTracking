@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Dark-theme overrides for the History screen tokens defined in values/colors.xml, taken from
+      the same reviewed UI mockup's dark-mode design tokens. The app's current theme
+      (Theme.AppCompat.Light.DarkActionBar) always resolves to "notnight", so these aren't reachable
+      yet, but are defined now so the History screen picks them up automatically once a future
+      phase adopts a DayNight theme, without any further changes here.
+    -->
+    <color name="history_surface">#221C18</color>
+    <color name="history_ink">#F4ECE6</color>
+    <color name="history_ink_soft">#B3A89F</color>
+    <color name="history_border">#1AF4ECE6</color>
+    <color name="history_accent">#FF6D52</color>
+    <color name="history_neutral_chip">#352C26</color>
+</resources>
