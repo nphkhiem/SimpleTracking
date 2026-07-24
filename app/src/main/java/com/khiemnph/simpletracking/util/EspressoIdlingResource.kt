@@ -22,6 +22,17 @@ import androidx.test.espresso.idling.CountingIdlingResource
  * instrumented tests (e.g. the existing Robolectric suite, which drives the fake repository
  * directly and emits several states per action with no matching increment at all) that ratio is
  * never 1:1 - decrementing an already-idle counter would otherwise throw.
+ *
+ * The idle check and the real decrement below must happen as one atomic step: [isIdleNow] and
+ * [CountingIdlingResource.decrement] are two separate, unsynchronized calls against the same
+ * underlying [AtomicInteger][java.util.concurrent.atomic.AtomicInteger] counter, so two threads
+ * racing this method while the counter sits at 1 could both observe `isIdleNow == false` and both
+ * proceed to the real decrement - the second one would then underflow the counter, which
+ * [CountingIdlingResource] itself turns into a thrown `IllegalStateException`. `synchronized`
+ * (rather than mirroring the counter in a second, parallel `AtomicInteger`) is enough here: nothing
+ * outside this object ever calls [CountingIdlingResource.decrement] directly, so serializing every
+ * call through this one method fully closes the race without duplicating state that could itself
+ * drift out of sync with the real counter.
  */
 object EspressoIdlingResource {
 
@@ -33,6 +44,7 @@ object EspressoIdlingResource {
         countingIdlingResource.increment()
     }
 
+    @Synchronized
     fun decrement() {
         if (!countingIdlingResource.isIdleNow) countingIdlingResource.decrement()
     }
