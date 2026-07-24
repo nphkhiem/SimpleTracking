@@ -58,7 +58,7 @@ class TrackingService : Service() {
                 ACTION_START -> handleStart(sessionId)
                 ACTION_PAUSE -> handlePause(sessionId)
                 ACTION_RESUME -> handleResume(sessionId)
-                ACTION_STOP -> handleStop(sessionId)
+                ACTION_STOP -> handleStop(sessionId, intent.getStringExtra(EXTRA_THUMBNAIL_PATH))
             }
         }
         return START_REDELIVER_INTENT
@@ -106,11 +106,11 @@ class TrackingService : Service() {
         notificationFactory.updateNotification(sessionId, isPaused = false)
     }
 
-    private fun handleStop(sessionId: String) {
+    private fun handleStop(sessionId: String, thumbnailPath: String?) {
         stopCollecting()
         currentSessionId = null
         serviceScope.launch {
-            stopSessionUseCase(sessionId, thumbnailPath = null)
+            stopSessionUseCase(sessionId, thumbnailPath)
             stopSelf()
         }
     }
@@ -140,6 +140,7 @@ class TrackingService : Service() {
         private const val ACTION_RESUME = "com.khiemnph.simpletracking.action.RESUME"
         private const val ACTION_STOP = "com.khiemnph.simpletracking.action.STOP"
         private const val EXTRA_SESSION_ID = "com.khiemnph.simpletracking.extra.SESSION_ID"
+        private const val EXTRA_THUMBNAIL_PATH = "com.khiemnph.simpletracking.extra.THUMBNAIL_PATH"
 
         fun startIntent(context: Context, sessionId: String): Intent = intentFor(context, ACTION_START, sessionId)
 
@@ -147,7 +148,16 @@ class TrackingService : Service() {
 
         fun resumeIntent(context: Context, sessionId: String): Intent = intentFor(context, ACTION_RESUME, sessionId)
 
-        fun stopIntent(context: Context, sessionId: String): Intent = intentFor(context, ACTION_STOP, sessionId)
+        /**
+         * [thumbnailPath] is optional: a UI-triggered Stop has a live map to snapshot and can pass
+         * one, while the notification's own Stop action (and any other Service-triggered path)
+         * has no map available and omits it, which [handleStop] reads back as `null` - a normal
+         * placeholder case in History, not an error.
+         */
+        fun stopIntent(context: Context, sessionId: String, thumbnailPath: String? = null): Intent =
+            intentFor(context, ACTION_STOP, sessionId).apply {
+                if (thumbnailPath != null) putExtra(EXTRA_THUMBNAIL_PATH, thumbnailPath)
+            }
 
         private fun intentFor(context: Context, action: String, sessionId: String): Intent =
             Intent(context, TrackingService::class.java).apply {
