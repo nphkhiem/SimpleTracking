@@ -24,7 +24,6 @@
     <string name="record_stop_content_description">Stop</string>
     <string name="record_start_marker_title">Start</string>
     <string name="record_current_marker_title">Current position</string>
-    <string name="record_location_permission_denied_message">Location permission is needed to record a session.</string>
     <string name="record_location_service_unresolvable_message">Turn on your device\'s Location Service to record a session.</string>
 
     <string name="permission_location_rationale_title">Location access needed</string>

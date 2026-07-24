@@ -2,9 +2,13 @@ package com.khiemnph.simpletracking.ui.record
 
 import android.Manifest
 import android.app.Application
+import android.app.PendingIntent
+import android.content.Intent
+import android.location.LocationManager
 import android.os.Looper
 import android.view.View
 import android.widget.TextView
+import androidx.appcompat.R as AppCompatR
 import androidx.navigation.fragment.NavHostFragment
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
@@ -16,6 +20,10 @@ import com.khiemnph.domain.model.Session
 import com.khiemnph.domain.model.SessionStatus
 import com.khiemnph.domain.repository.SessionRepository
 import com.khiemnph.simpletracking.R
+import com.khiemnph.simpletracking.location.FakeLocationSettingsChecker
+import com.khiemnph.simpletracking.location.LocationSettingsChecker
+import com.khiemnph.simpletracking.location.LocationSettingsResult
+import com.khiemnph.simpletracking.permission.LocationPermissionAskTracker
 import com.khiemnph.simpletracking.service.TrackingService
 import com.khiemnph.simpletracking.ui.MainActivity
 import com.khiemnph.simpletracking.ui.history.HistoryFragmentDirections
@@ -28,6 +36,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -35,6 +44,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowDialog
 import org.robolectric.util.ReflectionHelpers
 
 /**
@@ -55,8 +65,17 @@ class RecordFragmentTest {
     @Inject
     lateinit var sessionRepository: SessionRepository
 
+    @Inject
+    lateinit var locationPermissionAskTracker: LocationPermissionAskTracker
+
+    @Inject
+    lateinit var locationSettingsChecker: LocationSettingsChecker
+
     private val mockedSessionRepository: MockedSessionRepository
         get() = sessionRepository as MockedSessionRepository
+
+    private val fakeLocationSettingsChecker: FakeLocationSettingsChecker
+        get() = locationSettingsChecker as FakeLocationSettingsChecker
 
     private val sessionId = "session-42"
 
@@ -103,6 +122,33 @@ class RecordFragmentTest {
             shadowInstrumentation,
             if (granted) "grantPermissions" else "denyPermissions",
             ReflectionHelpers.ClassParameter.from(Array<String>::class.java, permissions),
+        )
+    }
+
+    /** Grants or denies a single permission - unlike [setLocationPermissionGranted], which always
+     * moves both permissions together, this lets a test set `ACCESS_FINE_LOCATION` and
+     * `POST_NOTIFICATIONS` independently. */
+    private fun setPermissionGranted(permission: String, granted: Boolean) {
+        val shadowInstrumentation = shadowOf(InstrumentationRegistry.getInstrumentation())
+        ReflectionHelpers.callInstanceMethod<Unit>(
+            shadowInstrumentation,
+            if (granted) "grantPermissions" else "denyPermissions",
+            ReflectionHelpers.ClassParameter.from(Array<String>::class.java, arrayOf(permission)),
+        )
+    }
+
+    private fun fakeIntentSender() = PendingIntent.getActivity(
+        ApplicationProvider.getApplicationContext(),
+        0,
+        Intent(),
+        PendingIntent.FLAG_IMMUTABLE,
+    ).intentSender
+
+    private fun navigateToNewRecordSession(activity: MainActivity) {
+        val navHostFragment =
+            activity.supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        navHostFragment.navController.navigate(
+            HistoryFragmentDirections.actionHistoryFragmentToRecordFragment(sessionId = null),
         )
     }
 
@@ -256,6 +302,251 @@ class RecordFragmentTest {
                 "Expected no session to be created when location permission is denied",
                 mockedSessionRepository.getActiveSessionId(),
             )
+        }
+    }
+
+    @Test
+    fun givenFirstEverPermissionRequest_whenRecordTappedForNewSession_thenSystemRequestLaunchedWithoutRationale() {
+        setPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION, granted = false)
+
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            idleMainLooper()
+
+            scenario.onActivity { activity -> navigateToNewRecordSession(activity) }
+            idleMainLooper()
+
+            scenario.onActivity { activity ->
+                assertNull(
+                    "Expected no rationale/Settings dialog before the very first-ever ask",
+                    ShadowDialog.getLatestDialog(),
+                )
+                val requestedPermissions = shadowOf(activity).lastRequestedPermission?.requestedPermissions
+                assertTrue(
+                    "Expected the system permission request to have been launched directly",
+                    requestedPermissions?.contains(Manifest.permission.ACCESS_FINE_LOCATION) == true,
+                )
+            }
+        }
+    }
+
+    @Test
+    fun givenPreviouslyDeniedOnce_whenRecordTappedForNewSession_thenRationaleDialogShownBeforeSystemRequest() {
+        setPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION, granted = false)
+        locationPermissionAskTracker.markAsked()
+
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            idleMainLooper()
+
+            scenario.onActivity { activity ->
+                shadowOf(activity.packageManager).setShouldShowRequestPermissionRationale(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    true,
+                )
+                navigateToNewRecordSession(activity)
+            }
+            idleMainLooper()
+
+            scenario.onActivity { activity ->
+                val dialog = ShadowDialog.getLatestDialog()
+                assertNotNull("Expected the rationale dialog to be shown", dialog)
+                assertEquals(
+                    activity.getString(R.string.permission_location_rationale_title),
+                    dialog?.findViewById<TextView>(AppCompatR.id.alertTitle)?.text.toString(),
+                )
+                assertNull(
+                    "Expected no system permission request before the rationale dialog is accepted",
+                    shadowOf(activity).lastRequestedPermission,
+                )
+            }
+        }
+    }
+
+    @Test
+    fun givenPermanentlyDenied_whenRecordTappedForNewSession_thenSettingsDeepLinkDialogShownInsteadOfSystemRequest() {
+        setPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION, granted = false)
+        locationPermissionAskTracker.markAsked()
+
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            idleMainLooper()
+
+            scenario.onActivity { activity ->
+                shadowOf(activity.packageManager).setShouldShowRequestPermissionRationale(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    false,
+                )
+                navigateToNewRecordSession(activity)
+            }
+            idleMainLooper()
+
+            scenario.onActivity { activity ->
+                val dialog = ShadowDialog.getLatestDialog()
+                assertNotNull("Expected the Settings deep-link dialog to be shown", dialog)
+                assertEquals(
+                    activity.getString(R.string.permission_location_permanently_denied_title),
+                    dialog?.findViewById<TextView>(AppCompatR.id.alertTitle)?.text.toString(),
+                )
+                assertNull(
+                    "Expected no system permission request when permanently denied",
+                    shadowOf(activity).lastRequestedPermission,
+                )
+            }
+        }
+    }
+
+    @Test
+    fun givenLocationPermissionGrantedButLocationServiceDisabled_whenStartingNewSession_thenResolutionPromptLaunchedBeforeSessionStarts() {
+        setLocationPermissionGranted(true)
+        fakeLocationSettingsChecker.result = LocationSettingsResult.ResolutionRequired(fakeIntentSender())
+
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            idleMainLooper()
+
+            scenario.onActivity { activity -> navigateToNewRecordSession(activity) }
+            idleMainLooper()
+
+            scenario.onActivity { activity ->
+                assertNotNull(
+                    "Expected the Location-Service resolution prompt to have been launched",
+                    shadowOf(activity).lastIntentSenderRequest,
+                )
+            }
+        }
+
+        runBlocking {
+            assertNull(
+                "Expected no session to be created before the Location-Service resolution is accepted",
+                mockedSessionRepository.getActiveSessionId(),
+            )
+        }
+    }
+
+    @Test
+    fun givenNotificationPermissionDenied_whenLocationAlreadyGranted_thenSessionStartsAnyway() {
+        setPermissionGranted(Manifest.permission.ACCESS_FINE_LOCATION, granted = true)
+        setPermissionGranted(Manifest.permission.POST_NOTIFICATIONS, granted = false)
+
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            idleMainLooper()
+
+            scenario.onActivity { activity -> navigateToNewRecordSession(activity) }
+            idleMainLooper()
+        }
+
+        runBlocking {
+            assertNotNull(
+                "Expected the session to start even though the notification permission was denied",
+                mockedSessionRepository.getActiveSessionId(),
+            )
+        }
+    }
+
+    /** [RecordViewModel] never mutates [SessionRepository] directly - every pause goes through a
+     * `TrackingService` intent (see [RecordViewModel.onPauseOrResumeClicked]), the same as the
+     * Pause button itself. This drains the full started-service queue - matching
+     * [givenStopButtonClicked_whenInvoked_thenNavigatesBackToHistoryAndSendsStopIntentToTrackingService]'s
+     * approach - so it must only be called once all broadcasts for a test have already fired. */
+    private fun pauseIntentsSentToTrackingService(appContext: Application): List<Intent> {
+        val expectedAction = TrackingService.pauseIntent(appContext, sessionId).action
+        return generateSequence { shadowOf(appContext).nextStartedService }.filter { it.action == expectedAction }.toList()
+    }
+
+    @Test
+    fun givenLocationServiceBecomesUnsatisfiedWhileSessionRunning_whenProvidersChangedBroadcastReceived_thenPauseIntentSentToTrackingService() {
+        seedActiveSession()
+        fakeLocationSettingsChecker.result = LocationSettingsResult.ResolutionRequired(fakeIntentSender())
+        val appContext = ApplicationProvider.getApplicationContext<Application>()
+
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            idleMainLooper()
+
+            scenario.onActivity { appContext.sendBroadcast(Intent(LocationManager.PROVIDERS_CHANGED_ACTION)) }
+            idleMainLooper()
+        }
+
+        assertEquals(1, pauseIntentsSentToTrackingService(appContext).size)
+    }
+
+    /**
+     * Two [LocationManager.PROVIDERS_CHANGED_ACTION] broadcasts in a row - before this Fragment's
+     * own `RUNNING`-only guard has a chance to see a real pause take effect (there is no live
+     * `TrackingService` consuming intents in this harness) - reproduce the exact race the auto-pause
+     * behaviour relies on [com.khiemnph.domain.interactor.PauseSessionUseCase]'s own idempotency
+     * (Phase 1) for, rather than a guard of its own: both broadcasts must be handled the same way,
+     * without error, each sending its own Pause intent.
+     */
+    @Test
+    fun givenTwoProvidersChangedBroadcastsInARowWhileStillRunning_whenReceived_thenEachSendsAPauseIntentWithoutError() {
+        seedActiveSession()
+        fakeLocationSettingsChecker.result = LocationSettingsResult.ResolutionRequired(fakeIntentSender())
+        val appContext = ApplicationProvider.getApplicationContext<Application>()
+
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            idleMainLooper()
+
+            scenario.onActivity { appContext.sendBroadcast(Intent(LocationManager.PROVIDERS_CHANGED_ACTION)) }
+            idleMainLooper()
+            scenario.onActivity { appContext.sendBroadcast(Intent(LocationManager.PROVIDERS_CHANGED_ACTION)) }
+            idleMainLooper()
+        }
+
+        assertEquals(2, pauseIntentsSentToTrackingService(appContext).size)
+    }
+
+    @Test
+    fun givenSessionIsPausedNotRunning_whenProvidersChangedBroadcastReceived_thenLocationServiceIsNotReChecked() {
+        seedActiveSession()
+
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            idleMainLooper()
+            scenario.onActivity { runBlocking { mockedSessionRepository.pauseSession(sessionId) } }
+            idleMainLooper()
+
+            val appContext = ApplicationProvider.getApplicationContext<Application>()
+            scenario.onActivity { appContext.sendBroadcast(Intent(LocationManager.PROVIDERS_CHANGED_ACTION)) }
+            idleMainLooper()
+        }
+
+        assertEquals(
+            "Expected the RUNNING-only guard to skip re-checking the Location Service while paused",
+            0,
+            fakeLocationSettingsChecker.checkCallCount,
+        )
+    }
+
+    @Test
+    fun givenRecordFragmentStarted_whenFragmentDisplayed_thenLocationServiceReceiverIsRegistered() {
+        seedActiveSession()
+
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            idleMainLooper()
+
+            val appContext = ApplicationProvider.getApplicationContext<Application>()
+            scenario.onActivity {
+                val receivers = shadowOf(appContext).getReceiversForIntent(Intent(LocationManager.PROVIDERS_CHANGED_ACTION))
+                assertEquals(1, receivers.size)
+            }
+        }
+    }
+
+    @Test
+    fun givenRecordFragmentStopped_whenNavigatingBackToHistory_thenLocationServiceReceiverIsUnregistered() {
+        seedActiveSession()
+
+        val appContext = ApplicationProvider.getApplicationContext<Application>()
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            idleMainLooper()
+
+            scenario.onActivity { activity ->
+                recordFragmentOf(activity).view
+                    ?.findViewById<View>(R.id.record_back_button)
+                    ?.performClick()
+            }
+            idleMainLooper()
+
+            scenario.onActivity {
+                val receivers = shadowOf(appContext).getReceiversForIntent(Intent(LocationManager.PROVIDERS_CHANGED_ACTION))
+                assertEquals(0, receivers.size)
+            }
         }
     }
 

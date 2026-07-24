@@ -47,6 +47,13 @@ class RecordViewModel @Inject constructor(
 
     private var sessionId: String? = null
 
+    /** True once [resolveSession] has resolved a session id - lets [RecordFragment] skip
+     * re-running its new-session permission/Location-Service flow on every `onViewCreated` (e.g.
+     * across a configuration change), since this [ViewModel] - unlike the Fragment/View - survives
+     * that recreation. */
+    val hasResolvedSession: Boolean
+        get() = sessionId != null
+
     /**
      * Presentation-only rolling window of the last few genuinely-new [ActiveSessionState.currentSpeedMps]
      * samples - see [isGenuinelyNewSample].

@@ -1,13 +1,22 @@
 package com.khiemnph.simpletracking.ui.record
 
 import android.Manifest
+import android.app.Activity
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.location.LocationManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -29,8 +38,13 @@ import com.khiemnph.domain.model.LatLngPoint
 import com.khiemnph.domain.model.SessionStatus
 import com.khiemnph.simpletracking.R
 import com.khiemnph.simpletracking.databinding.FragmentRecordBinding
+import com.khiemnph.simpletracking.location.LocationSettingsChecker
+import com.khiemnph.simpletracking.location.LocationSettingsResult
+import com.khiemnph.simpletracking.permission.LocationPermissionAskTracker
+import com.khiemnph.simpletracking.permission.PermissionRationaleDialogFactory
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.Locale
+import javax.inject.Inject
 import kotlinx.coroutines.launch
 
 private const val METERS_PER_KILOMETER = 1_000.0
@@ -51,9 +65,26 @@ private const val ROUTE_POLYLINE_WIDTH_PX = 8f
  * Pause/Resume/Stop never call `:domain` use cases from here - [RecordViewModel] routes every one
  * of them through [com.khiemnph.simpletracking.service.TrackingService] intents instead, exactly
  * like the Service's own notification actions do.
+ *
+ * New-session permission flow: `ACCESS_FINE_LOCATION` is blocking (see [proceedWithLocationPermissionCheck]),
+ * `POST_NOTIFICATIONS` is fire-and-forget and never blocks session start (see
+ * [requestNotificationPermissionThenStartSession]). Once location permission is granted, the
+ * device's Location Service (the GPS toggle) is checked once via [locationSettingsChecker] right
+ * before starting; while a session is `RUNNING`, [locationServiceStateReceiver] re-runs that same
+ * check on every [LocationManager.PROVIDERS_CHANGED_ACTION] broadcast and auto-pauses if it stops
+ * being satisfied - resuming afterwards stays a manual user action.
  */
 @AndroidEntryPoint
 class RecordFragment : Fragment() {
+
+    @Inject
+    lateinit var locationPermissionAskTracker: LocationPermissionAskTracker
+
+    @Inject
+    lateinit var permissionRationaleDialogFactory: PermissionRationaleDialogFactory
+
+    @Inject
+    lateinit var locationSettingsChecker: LocationSettingsChecker
 
     private var _binding: FragmentRecordBinding? = null
     private val binding get() = _binding!!
@@ -70,16 +101,48 @@ class RecordFragment : Fragment() {
      * complete - regardless of whether this particular screen instance ends up needing to launch
      * it (Android requires the launcher exist before the Fragment reaches `CREATED`).
      */
-    private val permissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions(),
-    ) { grants ->
-        if (requiredPermissions().all { grants[it] == true }) {
-            viewModel.resolveSession(null)
+    private val locationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted) {
+            checkLocationSettingsThenStartSession()
         } else {
-            view?.let {
-                Snackbar.make(it, R.string.record_location_permission_denied_message, Snackbar.LENGTH_LONG).show()
-            }
+            // Persist right when a denial actually happens, mirroring the platform's own
+            // shouldShowRequestPermissionRationale signal (false pre-first-ask, true after one
+            // denial, false again once permanently denied) - then immediately re-evaluate so a
+            // permanently-denied outcome is reflected without waiting for another Record tap.
+            locationPermissionAskTracker.markAsked()
+            proceedWithLocationPermissionCheck()
         }
+    }
+
+    /** Fire-and-forget: `POST_NOTIFICATIONS` is optional and its outcome never gates session
+     * start, so there is deliberately nothing to react to here. */
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) {}
+
+    private val newSessionLocationSettingsLauncher = registerForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult(),
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) requestNotificationPermissionThenStartSession()
+    }
+
+    /** Re-shown mid-session after [locationServiceStateReceiver] detects the Location Service was
+     * turned off; resuming afterwards is still a manual action via the Resume button regardless
+     * of this resolution's outcome, so there is nothing to do with the result either way. */
+    private val midSessionLocationSettingsLauncher = registerForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult(),
+    ) {}
+
+    /**
+     * Auto-pauses a `RUNNING` session if the device's Location Service stops being satisfied
+     * while this screen is active. Registered in [onStart]/unregistered in [onStop] rather than
+     * tied to the view lifecycle, since monitoring is a Fragment-level concern independent of
+     * whether the view happens to be recreated.
+     */
+    private val locationServiceStateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) = onLocationServiceStateChanged()
     }
 
     override fun onCreateView(
@@ -108,6 +171,21 @@ class RecordFragment : Fragment() {
         }
 
         resolveSessionRespectingPermissions()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        ContextCompat.registerReceiver(
+            requireContext(),
+            locationServiceStateReceiver,
+            IntentFilter(LocationManager.PROVIDERS_CHANGED_ACTION),
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
+    }
+
+    override fun onStop() {
+        super.onStop()
+        requireContext().unregisterReceiver(locationServiceStateReceiver)
     }
 
     override fun onDestroyView() {
@@ -147,21 +225,93 @@ class RecordFragment : Fragment() {
             viewModel.resolveSession(existingSessionId)
             return
         }
-        if (hasAllRequiredPermissions()) {
-            viewModel.resolveSession(null)
-        } else {
-            permissionLauncher.launch(requiredPermissions())
+        // The ViewModel survives view recreation (e.g. a configuration change) even though this
+        // Fragment doesn't - skip re-running the permission/Location-Service dance once a session
+        // has already been resolved for it.
+        if (viewModel.hasResolvedSession) return
+        proceedWithLocationPermissionCheck()
+    }
+
+    private fun proceedWithLocationPermissionCheck() {
+        when {
+            hasLocationPermission() -> checkLocationSettingsThenStartSession()
+            // Standard guidance: never show a rationale before the very first-ever ask.
+            !locationPermissionAskTracker.hasAskedBefore() ->
+                locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION) -> showLocationRationaleDialog()
+            else -> showLocationPermanentlyDeniedDialog()
         }
     }
 
-    private fun hasAllRequiredPermissions(): Boolean = requiredPermissions().all {
-        ContextCompat.checkSelfPermission(requireContext(), it) == PackageManager.PERMISSION_GRANTED
+    private fun hasLocationPermission(): Boolean = ContextCompat.checkSelfPermission(
+        requireContext(),
+        Manifest.permission.ACCESS_FINE_LOCATION,
+    ) == PackageManager.PERMISSION_GRANTED
+
+    private fun showLocationRationaleDialog() {
+        permissionRationaleDialogFactory.locationRationaleDialog(requireContext()) {
+            locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        }.show()
     }
 
-    private fun requiredPermissions(): Array<String> = buildList {
-        add(Manifest.permission.ACCESS_FINE_LOCATION)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) add(Manifest.permission.POST_NOTIFICATIONS)
-    }.toTypedArray()
+    private fun showLocationPermanentlyDeniedDialog() {
+        permissionRationaleDialogFactory.locationPermanentlyDeniedDialog(requireContext()) {
+            startActivity(
+                Intent(
+                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.fromParts("package", requireContext().packageName, null),
+                ),
+            )
+        }.show()
+    }
+
+    /** Checked once, right before a brand-new session actually starts - not on every permission
+     * grant in general - since this is the point where the app is about to request location
+     * updates for real. */
+    private fun checkLocationSettingsThenStartSession() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            when (val result = locationSettingsChecker.check()) {
+                LocationSettingsResult.Satisfied -> requestNotificationPermissionThenStartSession()
+                is LocationSettingsResult.ResolutionRequired -> newSessionLocationSettingsLauncher.launch(
+                    IntentSenderRequest.Builder(result.intentSender).build(),
+                )
+                LocationSettingsResult.Unresolvable -> showLocationServiceUnresolvableMessage()
+            }
+        }
+    }
+
+    private fun showLocationServiceUnresolvableMessage() {
+        view?.let { Snackbar.make(it, R.string.record_location_service_unresolvable_message, Snackbar.LENGTH_LONG).show() }
+    }
+
+    /** `POST_NOTIFICATIONS` is optional: this fires the request (API 33+ only, and only if not
+     * already granted) without waiting for its outcome, then starts the session unconditionally
+     * either way. */
+    private fun requestNotificationPermissionThenStartSession() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.POST_NOTIFICATIONS,
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+        viewModel.resolveSession(null)
+    }
+
+    private fun onLocationServiceStateChanged() {
+        if (viewModel.uiState.value.status != SessionStatus.RUNNING) return
+        lifecycleScope.launch {
+            when (val result = locationSettingsChecker.check()) {
+                LocationSettingsResult.Satisfied -> Unit
+                is LocationSettingsResult.ResolutionRequired -> {
+                    viewModel.onPauseOrResumeClicked()
+                    midSessionLocationSettingsLauncher.launch(IntentSenderRequest.Builder(result.intentSender).build())
+                }
+                LocationSettingsResult.Unresolvable -> viewModel.onPauseOrResumeClicked()
+            }
+        }
+    }
 
     private fun handleStopClicked() {
         val map = googleMap
