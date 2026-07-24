@@ -11,6 +11,7 @@ import com.khiemnph.domain.util.DistanceCalculator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flow
 
 /**
  * In-memory fake of [SessionRepository] for tests. Not thread-safe — intended for
@@ -23,8 +24,12 @@ class MockedSessionRepository : SessionRepository {
     private val activeSessionStateFlow = MutableStateFlow<ActiveSessionState?>(null)
     private val sessionSummariesFlow = MutableStateFlow<List<SessionSummary>>(emptyList())
     private var nextSessionId = 1
+    private var pendingObserveActiveSessionError: Throwable? = null
 
-    override fun observeActiveSession(): Flow<ActiveSessionState?> = activeSessionStateFlow.asStateFlow()
+    override fun observeActiveSession(): Flow<ActiveSessionState?> {
+        val error = pendingObserveActiveSessionError
+        return if (error != null) flow { throw error } else activeSessionStateFlow.asStateFlow()
+    }
 
     override suspend fun startSession(): String {
         val id = "mocked-session-${nextSessionId++}"
@@ -116,6 +121,11 @@ class MockedSessionRepository : SessionRepository {
     /** Test-only hook: seeds persisted points directly, bypassing [recordLocationPoint]. */
     fun seedPoints(sessionId: String, points: List<LocationPoint>) {
         pointsBySessionId.getOrPut(sessionId) { mutableListOf() }.addAll(points)
+    }
+
+    /** Test-only hook: makes the next [observeActiveSession] collection throw [error] instead of emitting state. */
+    fun throwOnObserveActiveSession(error: Throwable) {
+        pendingObserveActiveSessionError = error
     }
 
     private fun refreshActiveSessionState(sessionId: String) {

@@ -8,4 +8,9 @@
     <string name="tracking_notification_action_pause">Pause</string>
     <string name="tracking_notification_action_resume">Resume</string>
     <string name="tracking_notification_action_stop">Stop</string>
+
+    <string name="history_title">History</string>
+    <string name="history_placeholder_text">History</string>
+    <string name="record_title">Record</string>
+    <string name="record_placeholder_text">Record: %1$s</string>
 </resources>
