@@ -1,65 +1,24 @@
-apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
-apply plugin: "kotlin-kapt"
+plugins {
+    alias(libs.plugins.kotlin.jvm)
+    id 'java-test-fixtures'
+}
 
-def cfg = rootProject.ext
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
 
-android {
-    compileSdkVersion cfg.compileSdk
-    buildToolsVersion cfg.buildTools
-
-    defaultConfig {
-        minSdkVersion cfg.minSdk
-        targetSdkVersion cfg.targetSdk
-        versionCode 1
-        versionName "1.0"
-
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        consumerProguardFiles "consumer-rules.pro"
-    }
-
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
-
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
     }
 }
 
 dependencies {
-    implementation fileTree(dir: "libs", include: ["*.jar"])
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    implementation "androidx.core:core-ktx:${cfg.androidKTX}"
-    implementation "androidx.appcompat:appcompat:${cfg.appCompat}"
+    implementation libs.kotlinx.coroutines.core
 
-    //google map services
-    implementation "com.google.android.gms:play-services-maps:${cfg.googleMapSDK}"
-
-    //gson
-    api "com.google.code.gson:gson:$cfg.gson"
-
-    //dagger 2
-    api "com.google.dagger:dagger:$cfg.dagger"
-    kapt "com.google.dagger:dagger-compiler:$cfg.dagger"
-    kapt "com.google.dagger:dagger-android-processor:$cfg.dagger"
-
-    //rxJava2, rxAndroid, rxKotlin
-    api "io.reactivex.rxjava2:rxkotlin:$cfg.rxKotlin"
-    api "io.reactivex.rxjava2:rxjava:$cfg.rxJava"
-    api "io.reactivex.rxjava2:rxandroid:$cfg.rxAndroid"
-
-    testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
-
+    testImplementation libs.junit
+    testImplementation libs.mockk
+    testImplementation libs.kotlinx.coroutines.test
+    testImplementation libs.turbine
 }

@@ -2,6 +2,7 @@
 # Covers files to be ignored for android development using Android Studio.
 *.iml
 .idea
+.superpowers/
 # Built application files
 *.apk
 *.ap_
