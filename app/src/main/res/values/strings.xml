@@ -27,7 +27,7 @@
     <string name="record_location_service_unresolvable_message">Turn on your device\'s Location Service to record a session.</string>
 
     <string name="permission_location_rationale_title">Location access needed</string>
-    <string name="permission_location_rationale_message">SimpleTracking needs location access to record your route while you track a session.</string>
+    <string name="permission_location_rationale_message">Chạy Ngay Đi needs location access to record your route while you track a session.</string>
     <string name="permission_location_rationale_positive">Continue</string>
     <string name="permission_location_rationale_negative">Not now</string>
     <string name="permission_location_permanently_denied_title">Location permission turned off</string>
