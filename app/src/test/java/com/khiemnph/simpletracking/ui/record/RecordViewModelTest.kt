@@ -106,6 +106,19 @@ class RecordViewModelTest {
     }
 
     @Test
+    fun givenResolveSessionAlreadyCalled_whenCalledAgain_thenSecondCallIsANoOp() = runTest {
+        coEvery { startSessionUseCase() } returns "new-session-id"
+        val viewModel = createViewModel()
+
+        viewModel.resolveSession(null)
+        nextStartedServiceIntent() // drain the first call's start intent
+        viewModel.resolveSession(null)
+
+        coVerify(exactly = 1) { startSessionUseCase() }
+        assertNull("A second resolveSession call must not send another start intent", nextStartedServiceIntent())
+    }
+
+    @Test
     fun givenNonNullExistingSessionId_whenResolveSessionCalled_thenStartSessionUseCaseNeverInvokedButServiceStartIntentStillSent() = runTest {
         val sessionId = repository.startSession()
         val viewModel = createViewModel()

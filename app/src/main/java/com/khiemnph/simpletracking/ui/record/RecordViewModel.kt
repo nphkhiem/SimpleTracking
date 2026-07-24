@@ -56,8 +56,14 @@ class RecordViewModel @Inject constructor(
      * for it and begins observing its live state. Must only be called once the Fragment has
      * already resolved any required permission check for the "brand-new session" case; the
      * "resume an existing session" case ([existingSessionId] non-null) skips that check entirely.
+     *
+     * A no-op if a session was already resolved - [RecordFragment] calls this from
+     * `onViewCreated`, which re-runs after the view (not the ViewModel) is recreated across a
+     * configuration change, and re-collecting [observeActiveSessionUseCase] a second time would
+     * race two collectors against the same mutable smoothing state.
      */
     fun resolveSession(existingSessionId: String?) {
+        if (sessionId != null) return
         viewModelScope.launch {
             val id = existingSessionId ?: startSessionUseCase()
             sessionId = id
