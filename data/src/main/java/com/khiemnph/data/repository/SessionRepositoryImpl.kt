@@ -22,6 +22,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Room is the single source of truth: elapsed duration and distance are always derived from
@@ -34,6 +36,13 @@ class SessionRepositoryImpl @Inject constructor(
     private val locationPointDao: LocationPointDao,
     private val clock: Clock,
 ) : SessionRepository {
+
+    /**
+     * Serialises the read-modify-write in pause/resume/stop. The DAO's status guards are what make
+     * a stale write inert, but they cannot stop two in-flight commands from both reading the same
+     * `pausedDurationMillis` and one losing its update; this orders them within the process.
+     */
+    private val sessionWriteMutex = Mutex()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun observeActiveSession(): Flow<ActiveSessionState?> =
@@ -67,35 +76,45 @@ class SessionRepositoryImpl @Inject constructor(
         return id
     }
 
-    override suspend fun pauseSession(sessionId: String) {
-        val current = sessionDao.getById(sessionId) ?: return
-        sessionDao.updateStatus(
+    override suspend fun pauseSession(sessionId: String) = sessionWriteMutex.withLock {
+        val current = sessionDao.getById(sessionId) ?: return@withLock
+        sessionDao.updateStatusIfCurrent(
             sessionId = sessionId,
+            expectedCurrentStatus = SessionStatus.RUNNING.name,
             status = SessionStatus.PAUSED.name,
             pausedDurationMillis = current.pausedDurationMillis,
             pausedAtTimestamp = clock.nowMillis(),
         )
+        Unit
     }
 
-    override suspend fun resumeSession(sessionId: String) {
-        val current = sessionDao.getById(sessionId) ?: return
+    override suspend fun resumeSession(sessionId: String) = sessionWriteMutex.withLock {
+        val current = sessionDao.getById(sessionId) ?: return@withLock
         val pausedAt = current.pausedAtTimestamp
         val additionalPausedMillis = if (pausedAt != null) clock.nowMillis() - pausedAt else 0L
-        sessionDao.updateStatus(
+        sessionDao.updateStatusIfCurrent(
             sessionId = sessionId,
+            expectedCurrentStatus = SessionStatus.PAUSED.name,
             status = SessionStatus.RUNNING.name,
             pausedDurationMillis = current.pausedDurationMillis + additionalPausedMillis,
             pausedAtTimestamp = null,
         )
+        Unit
     }
 
+    /**
+     * Idempotent: stopping an already-stopped session returns what was persisted rather than
+     * recomputing it, so a redelivered stop cannot extend a finished session's duration.
+     */
     override suspend fun stopSession(
         sessionId: String,
         thumbnailPath: String?,
         finalDistanceMeters: Double,
         finalAverageSpeedMps: Float,
-    ): SessionSummary {
+    ): SessionSummary = sessionWriteMutex.withLock {
         val current = requireNotNull(sessionDao.getById(sessionId)) { "Unknown session: $sessionId" }
+        if (current.status == SessionStatus.STOPPED.name) return@withLock current.toSummary()
+
         val stoppedTimestamp = clock.nowMillis()
         sessionDao.writeFinalStats(
             sessionId = sessionId,
@@ -106,7 +125,7 @@ class SessionRepositoryImpl @Inject constructor(
             finalAverageSpeedMps = finalAverageSpeedMps,
             thumbnailPath = thumbnailPath,
         )
-        return SessionSummary(
+        SessionSummary(
             id = sessionId,
             distanceMeters = finalDistanceMeters,
             durationMillis = elapsedMillis(current, stoppedTimestamp),

@@ -175,6 +175,78 @@ class SessionRepositoryImplTest {
     }
 
     @Test
+    fun givenSessionAlreadyStopped_whenLatePauseArrives_thenSessionStaysStopped() = runTest {
+        // The real sequence: a Pause coroutine reads status == RUNNING, a Stop lands while it is
+        // still suspended, and the Pause write arrives afterwards. It must not resurrect the row.
+        val sessionId = repository.startSession()
+        clock.currentMillis = 10_000L
+        repository.stopSession(sessionId, "/thumb.png", finalDistanceMeters = 500.0, finalAverageSpeedMps = 2f)
+
+        repository.pauseSession(sessionId)
+
+        assertNull("A stopped session must never come back as the active session", repository.getActiveSessionId())
+        assertEquals(SessionStatus.STOPPED, sessionDao.getById(sessionId)!!.status.let(SessionStatus::valueOf))
+    }
+
+    @Test
+    fun givenSessionAlreadyStopped_whenLateResumeArrives_thenSessionStaysStopped() = runTest {
+        val sessionId = repository.startSession()
+        clock.currentMillis = 10_000L
+        repository.stopSession(sessionId, null, finalDistanceMeters = 500.0, finalAverageSpeedMps = 2f)
+
+        repository.resumeSession(sessionId)
+
+        assertNull(repository.getActiveSessionId())
+    }
+
+    @Test
+    fun givenSessionAlreadyStopped_whenLatePauseArrives_thenFinalStatsAreNotOverwritten() = runTest {
+        val sessionId = repository.startSession()
+        clock.currentMillis = 10_000L
+        repository.stopSession(sessionId, "/thumb.png", finalDistanceMeters = 500.0, finalAverageSpeedMps = 2f)
+
+        clock.currentMillis = 99_000L
+        repository.pauseSession(sessionId)
+
+        val row = sessionDao.getById(sessionId)!!
+        assertEquals(10_000L, row.stoppedTimestamp)
+        assertEquals(500.0, row.finalDistanceMeters!!, 0.0001)
+        assertNull("A stopped session must not carry an in-progress pause marker", row.pausedAtTimestamp)
+    }
+
+    @Test
+    fun givenPauseAndStopDispatchedConcurrently_whenBothComplete_thenTerminalStateIsStopped() = runTest {
+        val sessionId = repository.startSession()
+        clock.currentMillis = 10_000L
+
+        val pause = launch { repository.pauseSession(sessionId) }
+        val stop = launch { repository.stopSession(sessionId, null, finalDistanceMeters = 1.0, finalAverageSpeedMps = 1f) }
+        pause.join()
+        stop.join()
+
+        assertEquals(SessionStatus.STOPPED, sessionDao.getById(sessionId)!!.status.let(SessionStatus::valueOf))
+        assertNull(repository.getActiveSessionId())
+    }
+
+    @Test
+    fun givenMoreThanOneActiveSessionRow_whenObserveActiveSession_thenMostRecentlyStartedWins() = runTest {
+        clock.currentMillis = 1_000L
+        val older = repository.startSession()
+        sessionDao.updateStatusIfCurrent(
+            sessionId = older,
+            expectedCurrentStatus = SessionStatus.RUNNING.name,
+            status = SessionStatus.PAUSED.name,
+            pausedDurationMillis = 0L,
+            pausedAtTimestamp = 1_000L,
+        )
+        clock.currentMillis = 5_000L
+        val newer = repository.startSession()
+
+        assertEquals(newer, repository.getActiveSessionId())
+        assertEquals(newer, repository.observeActiveSession().first()!!.session.id)
+    }
+
+    @Test
     fun givenNoRecordedPoints_whenObserveActiveSession_thenSpeedsAndDistanceAreZero() = runTest {
         val sessionId = repository.startSession()
 
