@@ -55,6 +55,9 @@ private const val SECONDS_PER_HOUR = 3_600L
 private const val MAP_INITIAL_ZOOM = 17f
 private const val ROUTE_POLYLINE_WIDTH_PX = 8f
 
+/** Upper bound on waiting for the map snapshot before stopping without a thumbnail. */
+private const val SNAPSHOT_TIMEOUT_MILLIS = 2_000L
+
 /**
  * The live-tracking destination, reached either from
  * [com.khiemnph.simpletracking.ui.history.HistoryFragment]'s Record button (a brand-new session,
@@ -94,6 +97,8 @@ class RecordFragment : Fragment() {
     private val viewModel: RecordViewModel by viewModels()
 
     private var googleMap: GoogleMap? = null
+
+    private var stopDispatched = false
     private var hasCenteredCameraOnce = false
 
     /**
@@ -313,13 +318,43 @@ class RecordFragment : Fragment() {
         }
     }
 
+    /**
+     * Captures the route thumbnail, then stops the session and leaves.
+     *
+     * Navigation must wait for the snapshot rather than run alongside it. `popBackStack()` detaches
+     * this Fragment and backgrounds the map, and the Maps SDK's snapshot runnable — already queued
+     * on the main looper — then throws `IllegalStateException: Can't take a snapshot while
+     * executing in the background`, killing the process before [RecordViewModel.onStopClicked] ever
+     * runs. The session stays `RUNNING`, the foreground service and its notification survive, and
+     * the user lands on the launcher believing they stopped.
+     *
+     * [SNAPSHOT_TIMEOUT_MILLIS] bounds the wait: the Maps SDK gives no delivery guarantee, so a
+     * callback that never arrives must not strand the user on a screen whose Stop button appears
+     * dead. Losing the thumbnail is always preferable to losing the stop.
+     */
     private fun handleStopClicked() {
+        if (stopDispatched) return
+
         val map = googleMap
-        if (map != null) {
-            map.snapshot { bitmap -> viewModel.onStopClicked(bitmap) }
-        } else {
-            viewModel.onStopClicked(null)
+        if (map == null) {
+            dispatchStop(null)
+            return
         }
+
+        val onSnapshotTimeout = Runnable { dispatchStop(null) }
+        view?.postDelayed(onSnapshotTimeout, SNAPSHOT_TIMEOUT_MILLIS)
+        map.snapshot { bitmap ->
+            view?.removeCallbacks(onSnapshotTimeout)
+            dispatchStop(bitmap)
+        }
+    }
+
+    /** Idempotent: whichever of the snapshot callback or its timeout arrives first wins. */
+    private fun dispatchStop(bitmap: Bitmap?) {
+        if (stopDispatched) return
+        stopDispatched = true
+
+        viewModel.onStopClicked(bitmap)
         findNavController().popBackStack()
     }
 
