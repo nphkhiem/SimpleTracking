@@ -39,7 +39,8 @@ class RecordLocationFixUseCaseTest {
     fun givenSubsequentFixWithNoReportedSpeed_whenRecord_thenFallbackSpeedIsDistanceOverTime() = runTest {
         val sessionId = repository.startSession()
         useCase(rawFix(sessionId, 10.7626, 106.6602, 1_000L, speedMetersPerSec = 0f))
-        val second = rawFix(sessionId, 10.7626, 106.6700, timestamp = 11_000L, speedMetersPerSec = null)
+        // ~98 m over 10 s ≈ 9.8 m/s — a fast run, and within the plausible-speed ceiling.
+        val second = rawFix(sessionId, 10.7626, 106.6611, timestamp = 11_000L, speedMetersPerSec = null)
 
         useCase(second)
 
