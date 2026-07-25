@@ -151,6 +151,30 @@ class SessionRepositoryImplTest {
     }
 
     @Test
+    fun givenStationaryJitterPoints_whenObserveActiveSession_thenDistanceExcludesDrift() = runTest {
+        clock.currentMillis = 0L
+        val sessionId = repository.startSession()
+        // A phone sitting still: sub-metre wobble arriving every second.
+        repeat(6) { index ->
+            repository.recordLocationPoint(
+                LocationPoint(
+                    sessionId = sessionId,
+                    latitude = 10.7626 + 0.0000045 * index,
+                    longitude = 106.6602,
+                    timestamp = 1_000L + index * 1_000L,
+                    horizontalAccuracyMeters = 5f,
+                    speedMetersPerSec = 0.1f,
+                ),
+            )
+        }
+
+        val state = repository.observeActiveSession().first()
+
+        assertEquals(0.0, state!!.distanceMeters, 0.0001)
+        assertEquals(6, state.route.size)
+    }
+
+    @Test
     fun givenNoRecordedPoints_whenObserveActiveSession_thenSpeedsAndDistanceAreZero() = runTest {
         val sessionId = repository.startSession()
 

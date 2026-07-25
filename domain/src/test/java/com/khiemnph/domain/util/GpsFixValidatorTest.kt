@@ -88,8 +88,37 @@ class GpsFixValidatorTest {
 
     @Test
     fun givenConsecutivePointsFarApart_whenValidate_thenAccepted() {
+        // ~111 m over 20 s ≈ 5.6 m/s — far apart, and a plausible pace.
         val candidate = rawFix(
             latitude = previousPoint.latitude + 0.001,
+            longitude = previousPoint.longitude,
+            timestamp = previousPoint.timestamp + 20_000L,
+        )
+
+        val decision = GpsFixValidator.validate(candidate, previousPoint)
+
+        assertEquals(Decision.ACCEPTED, decision)
+    }
+
+    @Test
+    fun givenImpliedSpeedAbovePlausibleMaximum_whenValidate_thenFixRejected() {
+        // ~1.1 km in 1 s — a cold-start network fix or a cell-tower fallback, not movement.
+        val candidate = rawFix(
+            latitude = previousPoint.latitude + 0.01,
+            longitude = previousPoint.longitude,
+            timestamp = previousPoint.timestamp + 1_000L,
+        )
+
+        val decision = GpsFixValidator.validate(candidate, previousPoint)
+
+        assertEquals(Decision.REJECTED, decision)
+    }
+
+    @Test
+    fun givenImpliedSpeedJustBelowPlausibleMaximum_whenValidate_thenAccepted() {
+        // ~22 m in 1 s ≈ 22 m/s (80 km/h) — fast, but reachable on a descent.
+        val candidate = rawFix(
+            latitude = previousPoint.latitude + 0.0002,
             longitude = previousPoint.longitude,
             timestamp = previousPoint.timestamp + 1_000L,
         )
@@ -97,5 +126,19 @@ class GpsFixValidatorTest {
         val decision = GpsFixValidator.validate(candidate, previousPoint)
 
         assertEquals(Decision.ACCEPTED, decision)
+    }
+
+    @Test
+    fun givenNonPositiveElapsedTimeAndRealJump_whenValidate_thenFixRejected() {
+        // Duplicate or out-of-order timestamp: no elapsed time to travel a real distance in.
+        val candidate = rawFix(
+            latitude = previousPoint.latitude + 0.001,
+            longitude = previousPoint.longitude,
+            timestamp = previousPoint.timestamp,
+        )
+
+        val decision = GpsFixValidator.validate(candidate, previousPoint)
+
+        assertEquals(Decision.REJECTED, decision)
     }
 }

@@ -41,6 +41,20 @@ class StopSessionUseCaseTest {
     }
 
     @Test
+    fun givenStationaryJitterPoints_whenStop_thenFinalDistanceExcludesDrift() = runTest {
+        val sessionId = repository.startSession()
+        // A phone sitting still: sub-metre wobble arriving every second.
+        val points = (0..5).map { index ->
+            point(10.7626 + 0.0000045 * index, 106.6602, 1_000L + index * 1_000L, 0.1f)
+        }
+        repository.seedPoints(sessionId, points)
+
+        val summary = useCase(sessionId, thumbnailPath = null)
+
+        assertEquals(0.0, summary.distanceMeters, 0.0001)
+    }
+
+    @Test
     fun givenMultipleAcceptedSpeedSamples_whenStop_thenAverageSpeedEqualsArithmeticMeanNotTotalDistanceOverDuration() = runTest {
         val sessionId = repository.startSession()
         // Speeds chosen so the arithmetic mean (2.0) differs sharply from distance/duration,

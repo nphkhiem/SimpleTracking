@@ -138,7 +138,9 @@ class SessionRepositoryImpl @Inject constructor(
         val route = points.map { LatLngPoint(it.latitude, it.longitude) }
         return ActiveSessionState(
             session = entity.toDomain(),
-            distanceMeters = DistanceCalculator.totalDistanceMeters(route),
+            // Drift-aware: every recorded point stays in `route` for the trace, but hops that are
+            // GPS wobble rather than movement must not inflate the distance readout.
+            distanceMeters = DistanceCalculator.travelledDistanceMeters(points.map { it.toDomain() }),
             elapsedDurationMillis = elapsedMillis(entity, clock.nowMillis()),
             currentSpeedMps = points.lastOrNull()?.speedMetersPerSec ?: 0f,
             averageSpeedMps = if (points.isEmpty()) 0f else points.map { it.speedMetersPerSec }.average().toFloat(),
