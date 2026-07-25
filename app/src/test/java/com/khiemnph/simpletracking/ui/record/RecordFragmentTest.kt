@@ -159,6 +159,24 @@ class RecordFragmentTest {
     }
 
     @Test
+    fun givenActiveSessionExists_whenRecordFragmentDisplayed_thenMapFragmentIsBound() {
+        seedActiveSession()
+
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            idleMainLooper()
+
+            scenario.onActivity { activity ->
+                assertNotNull(
+                    "Expected RecordFragment to hold the SupportMapFragment it created. A null " +
+                        "reference means getMapAsync was never called, so no route, no camera " +
+                        "centering and no stop-time thumbnail can ever be produced.",
+                    recordFragmentOf(activity).mapFragment(),
+                )
+            }
+        }
+    }
+
+    @Test
     fun givenActiveSessionExists_whenRecordFragmentDisplayed_thenBottomSheetIsNotHideable() {
         seedActiveSession()
 

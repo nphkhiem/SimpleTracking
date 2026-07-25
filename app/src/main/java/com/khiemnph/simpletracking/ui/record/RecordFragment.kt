@@ -98,6 +98,8 @@ class RecordFragment : Fragment() {
 
     private var googleMap: GoogleMap? = null
 
+    private var mapFragment: SupportMapFragment? = null
+
     private var stopDispatched = false
     private var hasCenteredCameraOnce = false
 
@@ -162,7 +164,7 @@ class RecordFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        setUpMap(savedInstanceState)
+        setUpMap()
         setUpBottomSheet()
 
         binding.recordBackButton.setOnClickListener { findNavController().popBackStack() }
@@ -196,6 +198,7 @@ class RecordFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         googleMap = null
+        mapFragment = null
         _binding = null
     }
 
@@ -211,14 +214,31 @@ class RecordFragment : Fragment() {
         }
     }
 
-    private fun setUpMap(savedInstanceState: Bundle?) {
-        if (savedInstanceState == null) {
-            childFragmentManager.beginTransaction()
-                .replace(R.id.record_map_container, SupportMapFragment.newInstance())
-                .commit()
-        }
-        val mapFragment = childFragmentManager.findFragmentById(R.id.record_map_container) as? SupportMapFragment
-        mapFragment?.getMapAsync { map ->
+    /** Test seam: exposes the map fragment this screen is driving, or null if it never bound. */
+    internal fun mapFragment(): SupportMapFragment? = mapFragment
+
+    /**
+     * Binds the map, holding the [SupportMapFragment] this screen drives.
+     *
+     * The instance must be kept rather than looked up again after committing: `commit()` only
+     * *enqueues* the transaction, so a `findFragmentById` on the next line runs before the fragment
+     * is in the FragmentManager's store and returns null. That returned null silently (safe call on
+     * an optional cast), leaving `googleMap` null for the view's entire lifetime — no route, no
+     * camera centering, and a null thumbnail on every stop.
+     *
+     * On a configuration change the FragmentManager restores the child itself, so the existing
+     * instance is adopted instead of replacing it with a second one.
+     */
+    private fun setUpMap() {
+        val fragment = childFragmentManager.findFragmentById(R.id.record_map_container) as? SupportMapFragment
+            ?: SupportMapFragment.newInstance().also {
+                childFragmentManager.beginTransaction()
+                    .replace(R.id.record_map_container, it)
+                    .commit()
+            }
+
+        mapFragment = fragment
+        fragment.getMapAsync { map ->
             googleMap = map
             renderRoute(viewModel.uiState.value.route)
         }
