@@ -17,7 +17,13 @@ interface LocationPointDao {
     @Query("SELECT * FROM location_point WHERE sessionId = :sessionId ORDER BY timestamp ASC")
     suspend fun getPointsForSession(sessionId: String): List<LocationPointEntity>
 
-    /** Indexed `ORDER BY ... LIMIT 1` lookup — must stay O(log n), not a fetch-all-then-take-last. */
+    /**
+     * Runs on every accepted GPS fix, so its cost is paid per fix rather than per session.
+     *
+     * The composite index on `(sessionId, timestamp)` is what keeps this an index seek. With only
+     * `sessionId` indexed, SQLite satisfies the filter but not the `ORDER BY`, and falls back to
+     * materialising and sorting every row of the session, once per fix.
+     */
     @Query("SELECT * FROM location_point WHERE sessionId = :sessionId ORDER BY timestamp DESC LIMIT 1")
     suspend fun getMostRecentPoint(sessionId: String): LocationPointEntity?
 }
