@@ -26,6 +26,9 @@ interface SessionRepository {
         routePolyline: String?,
     ): SessionSummary
 
+    /** Removes a session and everything it recorded. Unknown ids are a no-op, not an error. */
+    suspend fun deleteSession(sessionId: String)
+
     suspend fun getActiveSessionId(): String?
 
     fun observeSessionSummaries(): Flow<List<SessionSummary>>

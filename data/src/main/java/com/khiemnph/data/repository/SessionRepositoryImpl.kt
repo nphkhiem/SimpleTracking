@@ -136,6 +136,10 @@ class SessionRepositoryImpl @Inject constructor(
         )
     }
 
+    override suspend fun deleteSession(sessionId: String) = sessionWriteMutex.withLock {
+        sessionDao.deleteById(sessionId)
+    }
+
     override suspend fun getActiveSessionId(): String? = sessionDao.getActiveSessionId()
 
     override fun observeSessionSummaries(): Flow<List<SessionSummary>> =

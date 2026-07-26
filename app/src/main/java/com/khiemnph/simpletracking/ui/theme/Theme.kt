@@ -47,6 +47,12 @@ private fun colorSchemeFromResources(dark: Boolean): ColorScheme {
         onSurface = colorResource(R.color.md_theme_onSurface),
         surfaceVariant = colorResource(R.color.md_theme_surfaceVariant),
         onSurfaceVariant = colorResource(R.color.md_theme_onSurfaceVariant),
+        // The inverse roles are what a snackbar is built from. Leaving them unmapped is not
+        // neutral: Compose falls back to Material's defaults, and the Undo action renders in
+        // baseline purple against this palette.
+        inversePrimary = colorResource(R.color.md_theme_primaryInverse),
+        inverseSurface = colorResource(R.color.md_theme_surfaceInverse),
+        inverseOnSurface = colorResource(R.color.md_theme_onSurfaceInverse),
         outline = colorResource(R.color.md_theme_outline),
         outlineVariant = colorResource(R.color.md_theme_outlineVariant),
         surfaceContainerLowest = colorResource(R.color.md_theme_surfaceContainerLowest),

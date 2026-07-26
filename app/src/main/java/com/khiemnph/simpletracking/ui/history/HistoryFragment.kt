@@ -40,9 +40,11 @@ class HistoryFragment : Fragment() {
         setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
         setContent {
             ChayNgayDiTheme {
-                val sessions by viewModel.uiState.collectAsStateWithLifecycle()
+                val state by viewModel.uiState.collectAsStateWithLifecycle()
                 HistoryScreen(
-                    sessions = sessions,
+                    state = state,
+                    onSessionSwipedAway = viewModel::onSessionSwipedAway,
+                    onUndoDelete = viewModel::onUndoDelete,
                     onRecordClick = {
                         findNavController().navigate(
                             HistoryFragmentDirections.actionHistoryFragmentToRecordFragment(sessionId = null),

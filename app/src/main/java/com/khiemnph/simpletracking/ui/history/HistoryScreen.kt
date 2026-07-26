@@ -23,6 +23,17 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import kotlinx.coroutines.launch
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.remember
+import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -40,7 +51,10 @@ import com.khiemnph.simpletracking.R
 /** Stable handles for tests, so assertions do not depend on user-visible copy. */
 object HistoryTestTags {
     const val LIST = "history_list"
+    const val EMPTY = "history_empty"
     const val RECORD_BUTTON = "history_record_button"
+
+    fun rowFor(sessionId: String) = "history_row_$sessionId"
     const val DIVIDER = "history_divider"
 }
 
@@ -52,13 +66,21 @@ object HistoryTestTags {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryScreen(
-    sessions: List<HistorySummaryUiModel>,
+    state: HistoryUiState,
     onRecordClick: () -> Unit,
+    onSessionSwipedAway: (String) -> Unit,
+    onUndoDelete: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val deletedMessage = stringResource(R.string.history_session_deleted)
+    val undoLabel = stringResource(R.string.history_undo)
+
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surface,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.history_title)) },
@@ -89,31 +111,129 @@ fun HistoryScreen(
             }
         },
     ) { insets ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .testTag(HistoryTestTags.LIST),
-            contentPadding = PaddingValues(
-                top = insets.calculateTopPadding() + 4.dp,
-                // Clears the floating action button so the last row is never trapped underneath it.
-                bottom = insets.calculateBottomPadding() + 88.dp,
-            ),
-        ) {
-            itemsIndexed(sessions, key = { _, session -> session.id }) { index, session ->
-                SessionRow(session)
-                // No rule after the last row: it would fence off the empty space below rather than
-                // separate two things, which is what a divider is for.
-                if (index < sessions.lastIndex) {
-                    HorizontalDivider(
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                            .testTag(HistoryTestTags.DIVIDER),
-                        thickness = dimensionResource(R.dimen.divider_thickness),
-                        color = MaterialTheme.colorScheme.outlineVariant,
-                    )
-                }
+        val contentPadding = PaddingValues(
+            top = insets.calculateTopPadding() + 4.dp,
+            // Clears the floating action button so the last row is never trapped underneath it.
+            bottom = insets.calculateBottomPadding() + 88.dp,
+        )
+        when (state) {
+            // Nothing is drawn while the database answers. Showing the empty state here would tell
+            // a returning user they have no runs, a moment before their runs appear.
+            HistoryUiState.Loading -> Unit
+            HistoryUiState.Empty -> EmptyHistory(Modifier.padding(contentPadding))
+            is HistoryUiState.Sessions -> SessionList(
+                sessions = state.sessions,
+                contentPadding = contentPadding,
+                onSwipedAway = { sessionId ->
+                    onSessionSwipedAway(sessionId)
+                    scope.launch {
+                        val result = snackbarHostState.showSnackbar(
+                            message = deletedMessage,
+                            actionLabel = undoLabel,
+                            duration = SnackbarDuration.Short,
+                        )
+                        if (result == SnackbarResult.ActionPerformed) onUndoDelete(sessionId)
+                    }
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun SessionList(
+    sessions: List<HistorySummaryUiModel>,
+    contentPadding: PaddingValues,
+    onSwipedAway: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LazyColumn(
+        modifier = modifier
+            .fillMaxSize()
+            .testTag(HistoryTestTags.LIST),
+        contentPadding = contentPadding,
+    ) {
+        itemsIndexed(sessions, key = { _, session -> session.id }) { index, session ->
+            SwipeToDeleteRow(session = session, onSwipedAway = { onSwipedAway(session.id) })
+            // No rule after the last row: it would fence off the empty space below rather than
+            // separate two things, which is what a divider is for.
+            if (index < sessions.lastIndex) {
+                HorizontalDivider(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .testTag(HistoryTestTags.DIVIDER),
+                    thickness = dimensionResource(R.dimen.divider_thickness),
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                )
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SwipeToDeleteRow(
+    session: HistorySummaryUiModel,
+    onSwipedAway: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            val dismissed = value == SwipeToDismissBoxValue.EndToStart
+            if (dismissed) onSwipedAway()
+            dismissed
+        },
+    )
+
+    SwipeToDismissBox(
+        state = dismissState,
+        modifier = modifier.testTag(HistoryTestTags.rowFor(session.id)),
+        // One direction only. A two-way swipe on a list whose only destructive action is delete
+        // makes it twice as easy to lose a run by accident.
+        enableDismissFromStartToEnd = false,
+        backgroundContent = {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.errorContainer)
+                    .padding(horizontal = 24.dp),
+                contentAlignment = Alignment.CenterEnd,
+            ) {
+                Text(
+                    text = stringResource(R.string.history_delete),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                )
+            }
+        },
+    ) {
+        Box(Modifier.background(MaterialTheme.colorScheme.surface)) { SessionRow(session) }
+    }
+}
+
+@Composable
+private fun EmptyHistory(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(horizontal = 40.dp)
+            .testTag(HistoryTestTags.EMPTY),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = stringResource(R.string.history_empty_title),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.history_empty_body),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
     }
 }
 

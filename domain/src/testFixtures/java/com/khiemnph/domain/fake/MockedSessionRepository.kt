@@ -94,6 +94,12 @@ class MockedSessionRepository : SessionRepository {
         return summary
     }
 
+    override suspend fun deleteSession(sessionId: String) {
+        sessionsById.remove(sessionId)
+        pointsBySessionId.remove(sessionId)
+        sessionSummariesFlow.value = sessionSummariesFlow.value.filterNot { it.id == sessionId }
+    }
+
     override suspend fun getActiveSessionId(): String? =
         sessionsById.values.firstOrNull { it.status != SessionStatus.STOPPED }?.id
 

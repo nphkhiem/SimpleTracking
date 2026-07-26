@@ -1,6 +1,8 @@
 package com.khiemnph.simpletracking.ui.history
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -40,8 +42,26 @@ class HistoryScreenTest {
     private fun setScreen(
         sessions: List<HistorySummaryUiModel>,
         onRecordClick: () -> Unit = {},
+        onSessionSwipedAway: (String) -> Unit = {},
+    ) = setState(
+        state = if (sessions.isEmpty()) HistoryUiState.Empty else HistoryUiState.Sessions(sessions),
+        onRecordClick = onRecordClick,
+        onSessionSwipedAway = onSessionSwipedAway,
+    )
+
+    private fun setState(
+        state: HistoryUiState,
+        onRecordClick: () -> Unit = {},
+        onSessionSwipedAway: (String) -> Unit = {},
     ) = composeRule.setContent {
-        ChayNgayDiTheme { HistoryScreen(sessions = sessions, onRecordClick = onRecordClick) }
+        ChayNgayDiTheme {
+            HistoryScreen(
+                state = state,
+                onRecordClick = onRecordClick,
+                onSessionSwipedAway = onSessionSwipedAway,
+                onUndoDelete = {},
+            )
+        }
     }
 
     @Test
@@ -68,6 +88,36 @@ class HistoryScreenTest {
         setScreen(emptyList())
 
         composeRule.onNodeWithTag(HistoryTestTags.RECORD_BUTTON).assertIsDisplayed()
+    }
+
+    @Test
+    fun givenNoSessions_whenScreenRendered_thenTheEmptyStateExplainsWhatToDo() {
+        setScreen(emptyList())
+
+        composeRule.onNodeWithTag(HistoryTestTags.EMPTY).assertIsDisplayed()
+    }
+
+    /**
+     * Loading must not render the empty state. Otherwise a returning user is told they have no runs
+     * for the moment it takes the database to answer, which is the bug this state exists to avoid.
+     */
+    @Test
+    fun givenTheDatabaseHasNotAnsweredYet_whenScreenRendered_thenNoEmptyStateIsShown() {
+        setState(HistoryUiState.Loading)
+
+        composeRule.onNodeWithTag(HistoryTestTags.EMPTY).assertDoesNotExist()
+        composeRule.onNodeWithTag(HistoryTestTags.LIST).assertDoesNotExist()
+    }
+
+    @Test
+    fun givenARowSwipedAway_whenDismissed_thenTheSessionIdIsReported() {
+        var swiped: String? = null
+        setScreen(listOf(session("swipe-me", "5.23 km")), onSessionSwipedAway = { swiped = it })
+
+        composeRule.onNodeWithTag(HistoryTestTags.rowFor("swipe-me")).performTouchInput { swipeLeft() }
+        composeRule.waitForIdle()
+
+        assertEquals("swipe-me", swiped)
     }
 
     @Test

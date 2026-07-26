@@ -1,5 +1,6 @@
 package com.khiemnph.simpletracking.di
 
+import com.khiemnph.domain.interactor.DeleteSessionUseCase
 import com.khiemnph.domain.interactor.ObserveActiveSessionUseCase
 import com.khiemnph.domain.interactor.ObserveSessionHistoryUseCase
 import com.khiemnph.domain.interactor.PauseSessionUseCase
@@ -21,6 +22,10 @@ import dagger.hilt.components.SingletonComponent
 @Module
 @InstallIn(SingletonComponent::class)
 object UseCaseModule {
+
+    @Provides
+    fun provideDeleteSessionUseCase(sessionRepository: SessionRepository): DeleteSessionUseCase =
+        DeleteSessionUseCase(sessionRepository)
 
     @Provides
     fun providePauseSessionUseCase(sessionRepository: SessionRepository): PauseSessionUseCase =

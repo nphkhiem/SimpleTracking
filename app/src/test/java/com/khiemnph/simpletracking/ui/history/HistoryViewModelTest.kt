@@ -2,12 +2,16 @@ package com.khiemnph.simpletracking.ui.history
 
 import app.cash.turbine.test
 import com.khiemnph.domain.fake.MockedSessionRepository
+import com.khiemnph.domain.interactor.DeleteSessionUseCase
 import com.khiemnph.domain.interactor.ObserveSessionHistoryUseCase
 import com.khiemnph.domain.model.SessionSummary
 import java.time.ZoneId
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -21,7 +25,9 @@ import org.junit.Test
 class HistoryViewModelTest {
 
     private val repository = MockedSessionRepository()
-    private val viewModel by lazy { HistoryViewModel(ObserveSessionHistoryUseCase(repository)) }
+    private val viewModel by lazy {
+        HistoryViewModel(ObserveSessionHistoryUseCase(repository), DeleteSessionUseCase(repository))
+    }
 
     @Before
     fun setUp() {
@@ -60,9 +66,59 @@ class HistoryViewModelTest {
     }
 
     @Test
-    fun givenNoSessionSummaries_whenUiStateCollected_thenListIsEmpty() = runTest {
+    fun givenASwipedSession_whenTheUndoWindowIsStillOpen_thenItIsHiddenButNotYetDeleted() = runTest {
+        val sessionId = stopASession()
+        viewModel.uiState.test { awaitItem() }
+
+        viewModel.onSessionSwipedAway(sessionId)
+
+        assertEquals(HistoryUiState.Empty, viewModel.uiState.value)
+        // Still on disk: the row is hidden optimistically so Undo has something to bring back.
+        assertEquals(1, repository.observeSessionSummaries().first().size)
+    }
+
+    @Test
+    fun givenASwipedSession_whenTheUndoWindowElapses_thenItIsActuallyDeleted() = runTest {
+        val sessionId = stopASession()
+        viewModel.uiState.test { awaitItem() }
+
+        viewModel.onSessionSwipedAway(sessionId)
+        advanceTimeBy(6_000L)
+        runCurrent()
+
+        assertTrue(repository.observeSessionSummaries().first().isEmpty())
+    }
+
+    /** The whole point of Undo: nothing recorded may be lost by a swipe the user takes back. */
+    @Test
+    fun givenASwipedSession_whenUndoneBeforeTheWindowElapses_thenItComesBackAndSurvives() = runTest {
+        val sessionId = stopASession()
+        viewModel.uiState.test { awaitItem() }
+
+        viewModel.onSessionSwipedAway(sessionId)
+        viewModel.onUndoDelete(sessionId)
+        advanceTimeBy(6_000L)
+        runCurrent()
+
+        assertEquals(listOf(sessionId), viewModel.uiState.value.sessionsOrEmpty().map { it.id })
+        assertEquals(1, repository.observeSessionSummaries().first().size)
+    }
+
+    @Test
+    fun givenTwoSessions_whenOneIsSwipedAway_thenTheOtherStaysVisible() = runTest {
+        val kept = stopASession()
+        val swiped = stopASession()
+        viewModel.uiState.test { awaitItem() }
+
+        viewModel.onSessionSwipedAway(swiped)
+
+        assertEquals(listOf(kept), viewModel.uiState.value.sessionsOrEmpty().map { it.id })
+    }
+
+    @Test
+    fun givenNoSessionSummaries_whenUiStateCollected_thenTheStateIsEmptyRatherThanAnEmptyList() = runTest {
         viewModel.uiState.test {
-            assertEquals(emptyList<HistorySummaryUiModel>(), awaitItem())
+            assertEquals(HistoryUiState.Empty, awaitItem())
         }
     }
 
@@ -73,8 +129,8 @@ class HistoryViewModelTest {
         val thirdId = stopASession()
 
         viewModel.uiState.test {
-            val summaries = awaitItem()
-            assertEquals(listOf(firstId, secondId, thirdId), summaries.map { it.id })
+            val sessions = awaitItem().sessionsOrEmpty()
+            assertEquals(listOf(firstId, secondId, thirdId), sessions.map { it.id })
         }
     }
 
@@ -140,4 +196,7 @@ class HistoryViewModelTest {
 
         assertTrue(uiModel.routePoints.isEmpty())
     }
+
+    private fun HistoryUiState.sessionsOrEmpty(): List<HistorySummaryUiModel> =
+        (this as? HistoryUiState.Sessions)?.sessions.orEmpty()
 }
