@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -22,21 +23,19 @@ import androidx.compose.material3.FabPosition
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import kotlinx.coroutines.launch
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.remember
-import androidx.compose.material3.rememberSwipeToDismissBoxState
-import androidx.compose.material3.SwipeToDismissBoxValue
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,17 +44,27 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.khiemnph.simpletracking.R
+import kotlinx.coroutines.launch
+
+/** A rest day is drawn as a sliver rather than nothing, so the strip always reads as seven days. */
+private const val MINIMUM_BAR_FRACTION = 0.08f
+private const val SKELETON_ROW_COUNT = 3
 
 /** Stable handles for tests, so assertions do not depend on user-visible copy. */
 object HistoryTestTags {
     const val LIST = "history_list"
     const val EMPTY = "history_empty"
     const val RECORD_BUTTON = "history_record_button"
+    const val DIVIDER = "history_divider"
+    const val SKELETON = "history_skeleton"
+    const val WEEK_SUMMARY = "history_week_summary"
+
+    fun groupHeaderFor(label: String) = "history_group_$label"
 
     fun rowFor(sessionId: String) = "history_row_$sessionId"
-    const val DIVIDER = "history_divider"
 }
 
 /**
@@ -119,10 +128,13 @@ fun HistoryScreen(
         when (state) {
             // Nothing is drawn while the database answers. Showing the empty state here would tell
             // a returning user they have no runs, a moment before their runs appear.
-            HistoryUiState.Loading -> Unit
+            // A skeleton rather than nothing: the list has a known shape, so showing it settles
+            // the layout instead of letting rows appear against a blank screen.
+            HistoryUiState.Loading -> LoadingSkeleton(Modifier.padding(contentPadding))
             HistoryUiState.Empty -> EmptyHistory(Modifier.padding(contentPadding))
             is HistoryUiState.Sessions -> SessionList(
-                sessions = state.sessions,
+                week = state.week,
+                groups = state.groups,
                 contentPadding = contentPadding,
                 onSwipedAway = { sessionId ->
                     onSessionSwipedAway(sessionId)
@@ -142,7 +154,8 @@ fun HistoryScreen(
 
 @Composable
 private fun SessionList(
-    sessions: List<HistorySummaryUiModel>,
+    week: WeekSummaryUiModel,
+    groups: List<SessionGroupUiModel>,
     contentPadding: PaddingValues,
     onSwipedAway: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -153,18 +166,142 @@ private fun SessionList(
             .testTag(HistoryTestTags.LIST),
         contentPadding = contentPadding,
     ) {
-        itemsIndexed(sessions, key = { _, session -> session.id }) { index, session ->
-            SwipeToDeleteRow(session = session, onSwipedAway = { onSwipedAway(session.id) })
-            // No rule after the last row: it would fence off the empty space below rather than
-            // separate two things, which is what a divider is for.
-            if (index < sessions.lastIndex) {
-                HorizontalDivider(
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .testTag(HistoryTestTags.DIVIDER),
-                    thickness = dimensionResource(R.dimen.divider_thickness),
-                    color = MaterialTheme.colorScheme.outlineVariant,
+        item(key = "week") { WeekSummary(week) }
+
+        groups.forEach { group ->
+            item(key = "header-" + group.label) { GroupHeader(group.label) }
+
+            itemsIndexed(group.sessions, key = { _, session -> session.id }) { index, session ->
+                SwipeToDeleteRow(session = session, onSwipedAway = { onSwipedAway(session.id) })
+                // No rule after a group's last row: the next heading already separates them, and a
+                // rule there would fence off empty space rather than divide two rows.
+                if (index < group.sessions.lastIndex) {
+                    HorizontalDivider(
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .testTag(HistoryTestTags.DIVIDER),
+                        thickness = dimensionResource(R.dimen.divider_thickness),
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GroupHeader(label: String, modifier: Modifier = Modifier) {
+    Text(
+        text = label,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier
+            .padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 4.dp)
+            .testTag(HistoryTestTags.groupHeaderFor(label)),
+    )
+}
+
+/** The week at a glance: three totals over a seven-day bar strip, today rightmost. */
+@Composable
+private fun WeekSummary(week: WeekSummaryUiModel, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .testTag(HistoryTestTags.WEEK_SUMMARY),
+    ) {
+        Text(
+            text = stringResource(R.string.history_week_heading),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(6.dp))
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(
+                text = week.distanceLabel,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(Modifier.width(12.dp))
+            Text(
+                text = week.runCountLabel + stringResource(R.string.history_item_stats_separator) + week.durationLabel,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 2.dp),
+            )
+        }
+        Spacer(Modifier.height(10.dp))
+        WeekStrip(week.dailyDistanceFractions)
+    }
+}
+
+@Composable
+private fun WeekStrip(fractions: List<Float>, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(28.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.Bottom,
+    ) {
+        fractions.forEach { fraction ->
+            Box(
+                Modifier
+                    .weight(1f)
+                    .fillMaxHeight(fraction.coerceAtLeast(MINIMUM_BAR_FRACTION))
+                    .clip(MaterialTheme.shapes.extraSmall)
+                    .background(
+                        // A rest day still gets a visible trace, so the strip reads as seven days
+                        // rather than as however many days happened to have a run.
+                        if (fraction > 0f) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.surfaceContainerHighest
+                        },
+                    ),
+            )
+        }
+    }
+}
+
+@Composable
+private fun LoadingSkeleton(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .testTag(HistoryTestTags.SKELETON),
+    ) {
+        repeat(SKELETON_ROW_COUNT) {
+            Row(
+                Modifier.padding(horizontal = 16.dp, vertical = 18.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    Modifier
+                        .size(56.dp)
+                        .clip(MaterialTheme.shapes.small)
+                        .background(MaterialTheme.colorScheme.surfaceContainerHigh),
                 )
+                Spacer(Modifier.width(14.dp))
+                Column {
+                    Box(
+                        Modifier
+                            .width(120.dp)
+                            .height(20.dp)
+                            .clip(MaterialTheme.shapes.extraSmall)
+                            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Box(
+                        Modifier
+                            .width(180.dp)
+                            .height(14.dp)
+                            .clip(MaterialTheme.shapes.extraSmall)
+                            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                    )
+                }
             }
         }
     }

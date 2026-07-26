@@ -14,6 +14,7 @@
          deliberately "Runs" rather than "History": it names the content rather than the container.
          Becomes "Hoạt động" when Vietnamese strings land. -->
     <string name="history_title">Runs</string>
+    <string name="history_week_heading">Last 7 days</string>
     <string name="history_empty_title">No runs yet</string>
     <string name="history_empty_body">Tap Record to start tracking. Your route will show up here.</string>
     <string name="history_delete">Delete</string>

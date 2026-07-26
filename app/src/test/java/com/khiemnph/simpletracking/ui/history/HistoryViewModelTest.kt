@@ -197,6 +197,7 @@ class HistoryViewModelTest {
         assertTrue(uiModel.routePoints.isEmpty())
     }
 
+    /** Flattens the day groups, so assertions about which runs are visible stay readable. */
     private fun HistoryUiState.sessionsOrEmpty(): List<HistorySummaryUiModel> =
-        (this as? HistoryUiState.Sessions)?.sessions.orEmpty()
+        (this as? HistoryUiState.Sessions)?.groups?.flatMap { it.sessions }.orEmpty()
 }
