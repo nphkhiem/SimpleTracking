@@ -4,6 +4,14 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
+// Room exports the schema of every version to JSON here, and those files are committed. They are
+// the baseline each future Migration is written and tested against; a schema that was never
+// exported cannot be reconstructed after the fact, so this has to be in place BEFORE the first
+// version bump rather than when one is finally needed.
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 android {
     namespace = 'com.khiemnph.data'
     compileSdk = libs.versions.compileSdk.get().toInteger()
@@ -26,6 +34,11 @@ android {
             minifyEnabled = false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+    }
+
+    sourceSets {
+        // MigrationTestHelper reads the exported schemas from the unit-test assets.
+        test.assets.srcDirs += files("$projectDir/schemas")
     }
 
     testOptions {
@@ -55,6 +68,7 @@ dependencies {
     testImplementation libs.turbine
     testImplementation libs.kotlinx.coroutines.test
     testImplementation libs.robolectric
+    testImplementation libs.androidx.room.testing
     testImplementation libs.androidx.test.ext.junit
     testImplementation testFixtures(project(":domain"))
 
