@@ -15,11 +15,15 @@ interface SessionRepository {
 
     suspend fun resumeSession(sessionId: String)
 
+    /**
+     * Average speed is deliberately not a parameter: it is derived here from [finalDistanceMeters]
+     * and the session's own moving time, so the three numbers shown together on a history row can
+     * never contradict each other.
+     */
     suspend fun stopSession(
         sessionId: String,
         thumbnailPath: String?,
         finalDistanceMeters: Double,
-        finalAverageSpeedMps: Float,
     ): SessionSummary
 
     suspend fun getActiveSessionId(): String?

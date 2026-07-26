@@ -110,12 +110,13 @@ class SessionRepositoryImpl @Inject constructor(
         sessionId: String,
         thumbnailPath: String?,
         finalDistanceMeters: Double,
-        finalAverageSpeedMps: Float,
     ): SessionSummary = sessionWriteMutex.withLock {
         val current = requireNotNull(sessionDao.getById(sessionId)) { "Unknown session: $sessionId" }
         if (current.status == SessionStatus.STOPPED.name) return@withLock current.toSummary()
 
         val stoppedTimestamp = clock.nowMillis()
+        val durationMillis = elapsedMillis(current, stoppedTimestamp)
+        val finalAverageSpeedMps = averageSpeedMps(finalDistanceMeters, durationMillis)
         sessionDao.writeFinalStats(
             sessionId = sessionId,
             status = SessionStatus.STOPPED.name,
@@ -128,7 +129,7 @@ class SessionRepositoryImpl @Inject constructor(
         SessionSummary(
             id = sessionId,
             distanceMeters = finalDistanceMeters,
-            durationMillis = elapsedMillis(current, stoppedTimestamp),
+            durationMillis = durationMillis,
             averageSpeedMps = finalAverageSpeedMps,
             thumbnailPath = thumbnailPath,
             recordedAt = stoppedTimestamp,
@@ -155,17 +156,31 @@ class SessionRepositoryImpl @Inject constructor(
         points: List<LocationPointEntity>,
     ): ActiveSessionState {
         val route = points.map { LatLngPoint(it.latitude, it.longitude) }
+        // Drift-aware: every recorded point stays in `route` for the trace, but hops that are GPS
+        // wobble rather than movement must not inflate the distance readout.
+        val distanceMeters = DistanceCalculator.travelledDistanceMeters(points.map { it.toDomain() })
+        val elapsedDurationMillis = elapsedMillis(entity, clock.nowMillis())
         return ActiveSessionState(
             session = entity.toDomain(),
-            // Drift-aware: every recorded point stays in `route` for the trace, but hops that are
-            // GPS wobble rather than movement must not inflate the distance readout.
-            distanceMeters = DistanceCalculator.travelledDistanceMeters(points.map { it.toDomain() }),
-            elapsedDurationMillis = elapsedMillis(entity, clock.nowMillis()),
+            distanceMeters = distanceMeters,
+            elapsedDurationMillis = elapsedDurationMillis,
             currentSpeedMps = points.lastOrNull()?.speedMetersPerSec ?: 0f,
-            averageSpeedMps = if (points.isEmpty()) 0f else points.map { it.speedMetersPerSec }.average().toFloat(),
+            averageSpeedMps = averageSpeedMps(distanceMeters, elapsedDurationMillis),
             route = route,
         )
     }
+
+    /**
+     * Distance over moving time, which is what the distance and duration on screen actually imply.
+     * A mean of the provider's per-fix speed samples would be a different quantity: sampling-rate
+     * weighted, averaging in every stopped-at-a-light zero, and unreconcilable with the other two
+     * numbers on the same row.
+     *
+     * Guards a non-positive duration, which is reachable on a session stopped the same millisecond
+     * it started, and would otherwise yield infinity or NaN.
+     */
+    private fun averageSpeedMps(distanceMeters: Double, durationMillis: Long): Float =
+        if (durationMillis <= 0L) 0f else (distanceMeters / (durationMillis / 1_000.0)).toFloat()
 
     /**
      * Elapsed session duration as of [now]: wall-clock time since start, minus all completed

@@ -54,7 +54,6 @@ class HistoryViewModelTest {
             sessionId = sessionId,
             thumbnailPath = null,
             finalDistanceMeters = 1_000.0,
-            finalAverageSpeedMps = 1f,
         )
         return sessionId
     }

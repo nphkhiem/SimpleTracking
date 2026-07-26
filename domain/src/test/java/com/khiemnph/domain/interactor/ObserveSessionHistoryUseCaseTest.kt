@@ -25,7 +25,7 @@ class ObserveSessionHistoryUseCaseTest {
             assertTrue(awaitItem().isEmpty())
 
             val sessionId = repository.startSession()
-            repository.stopSession(sessionId, thumbnailPath = null, finalDistanceMeters = 100.0, finalAverageSpeedMps = 2f)
+            repository.stopSession(sessionId, thumbnailPath = null, finalDistanceMeters = 100.0)
 
             val summaries = awaitItem()
             assertEquals(1, summaries.size)
