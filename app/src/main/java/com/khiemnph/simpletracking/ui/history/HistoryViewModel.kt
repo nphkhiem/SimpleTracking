@@ -4,6 +4,8 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.khiemnph.domain.interactor.DeleteSessionUseCase
+import com.khiemnph.simpletracking.ui.format.formatDistanceKm
+import com.khiemnph.simpletracking.ui.format.formatDuration
 import com.khiemnph.domain.interactor.ObserveSessionHistoryUseCase
 import com.khiemnph.domain.model.SessionSummary
 import com.khiemnph.domain.util.RoutePolyline
@@ -22,12 +24,14 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-private const val METERS_PER_KILOMETER = 1_000.0
-private const val SECONDS_PER_MILLIS_DIVISOR = 1_000L
-private const val SECONDS_PER_MINUTE = 60L
-private const val SECONDS_PER_HOUR = 3_600L
 private const val MPS_TO_KMH_FACTOR = 3.6f
-private val RECORDED_AT_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("EEE, h:mm a", Locale.US)
+
+/**
+ * Resolved per call rather than held in a top-level `val`, so a device language change is picked
+ * up instead of being frozen at the moment the class first loaded.
+ */
+private fun recordedAtFormatter(): DateTimeFormatter =
+    DateTimeFormatter.ofPattern("EEE, h:mm a", Locale.getDefault())
 
 /**
  * Exposes [ObserveSessionHistoryUseCase]'s session summaries as pre-formatted
@@ -127,29 +131,15 @@ fun SessionSummary.toHistorySummaryUiModel(
 ): HistorySummaryUiModel = HistorySummaryUiModel(
     id = id,
     recordedAtLabel = formatRecordedAt(recordedAt, zoneId),
-    distanceLabel = formatDistanceKm(distanceMeters),
+    distanceLabel = "${formatDistanceKm(distanceMeters)} km",
     durationLabel = formatDuration(durationMillis),
     averageSpeedLabel = formatAverageSpeedKmh(averageSpeedMps),
     routePoints = routePolyline?.let(RoutePolyline::decode).orEmpty(),
 )
 
 private fun formatRecordedAt(recordedAtMillis: Long, zoneId: ZoneId): String =
-    Instant.ofEpochMilli(recordedAtMillis).atZone(zoneId).format(RECORDED_AT_FORMATTER)
+    Instant.ofEpochMilli(recordedAtMillis).atZone(zoneId).format(recordedAtFormatter())
 
-private fun formatDistanceKm(distanceMeters: Double): String =
-    String.format(Locale.US, "%.2f km", distanceMeters / METERS_PER_KILOMETER)
-
-private fun formatDuration(durationMillis: Long): String {
-    val totalSeconds = durationMillis / SECONDS_PER_MILLIS_DIVISOR
-    val hours = totalSeconds / SECONDS_PER_HOUR
-    val minutes = (totalSeconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE
-    val seconds = totalSeconds % SECONDS_PER_MINUTE
-    return if (hours > 0) {
-        String.format(Locale.US, "%d:%02d:%02d", hours, minutes, seconds)
-    } else {
-        String.format(Locale.US, "%d:%02d", minutes, seconds)
-    }
-}
 
 private fun formatAverageSpeedKmh(averageSpeedMps: Float): String =
-    String.format(Locale.US, "%.1f km/h avg", averageSpeedMps * MPS_TO_KMH_FACTOR)
+    String.format(Locale.getDefault(), "%.1f km/h avg", averageSpeedMps * MPS_TO_KMH_FACTOR)

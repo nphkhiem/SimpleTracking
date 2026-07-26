@@ -4,7 +4,10 @@ import android.app.Notification
 import android.app.NotificationManager
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import com.khiemnph.simpletracking.R
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -71,5 +74,31 @@ class TrackingNotificationFactoryTest {
         val manager = context.getSystemService(NotificationManager::class.java)
 
         assertTrue(manager.notificationChannels.isNotEmpty())
+    }
+
+    @Test
+    fun `small icon is a monochrome status bar glyph, not the launcher mipmap`() {
+        val notification = factory.buildNotification("session-1", isPaused = false)
+
+        // A full-colour launcher icon is drawn as a featureless white blob in the status bar,
+        // because the system masks the small icon to its alpha channel.
+        assertNotEquals(R.mipmap.ic_launcher, notification.smallIcon.resId)
+        assertEquals(R.drawable.ic_stat_tracking, notification.smallIcon.resId)
+    }
+
+    @Test
+    fun `tapping the notification opens the app instead of doing nothing`() {
+        val notification = factory.buildNotification("session-1", isPaused = false)
+
+        assertNotNull("a tracking notification with no contentIntent is a dead tap", notification.contentIntent)
+    }
+
+    @Test
+    fun `every action carries an icon for surfaces that render them`() {
+        val notification = factory.buildNotification("session-1", isPaused = false)
+
+        notification.actions.forEach { action ->
+            assertNotEquals("action '${action.title}' has no icon", 0, action.icon)
+        }
     }
 }

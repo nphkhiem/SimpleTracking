@@ -5,9 +5,14 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 import org.junit.Assert.assertEquals
+import com.khiemnph.simpletracking.testing.DefaultLocaleRule
+import org.junit.Rule
 import org.junit.Test
 
 class HistoryGroupingTest {
+
+    @get:Rule
+    val localeRule = DefaultLocaleRule()
 
     private val zone: ZoneId = ZoneId.of("Asia/Ho_Chi_Minh")
     private val today = LocalDate.of(2026, 7, 26)

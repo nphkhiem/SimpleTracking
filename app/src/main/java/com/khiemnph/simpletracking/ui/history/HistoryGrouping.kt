@@ -1,19 +1,22 @@
 package com.khiemnph.simpletracking.ui.history
 
 import com.khiemnph.domain.model.SessionSummary
+import com.khiemnph.simpletracking.ui.format.formatDistanceKm
+import com.khiemnph.simpletracking.ui.format.formatDuration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private const val METERS_PER_KILOMETER = 1_000.0
-private const val MILLIS_PER_SECOND = 1_000L
-private const val SECONDS_PER_MINUTE = 60L
-private const val SECONDS_PER_HOUR = 3_600L
 private const val DAYS_IN_WEEK = 7
 
-private val GROUP_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("EEE, d MMM", Locale.US)
+/**
+ * Resolved per call rather than held in a top-level `val`, so a device language change is picked
+ * up instead of being frozen at the moment the class first loaded.
+ */
+private fun groupDateFormatter(): DateTimeFormatter =
+    DateTimeFormatter.ofPattern("EEE, d MMM", Locale.getDefault())
 
 /**
  * Turns a flat, newest-first list of sessions into the day groups and week summary the list shows.
@@ -53,7 +56,7 @@ internal object HistoryGrouping {
         val best = perDayMeters.maxOrNull() ?: 0.0
 
         return WeekSummaryUiModel(
-            distanceLabel = String.format(Locale.US, "%.2f km", thisWeek.sumOf { it.distanceMeters } / METERS_PER_KILOMETER),
+            distanceLabel = "${formatDistanceKm(thisWeek.sumOf { it.distanceMeters })} km",
             runCountLabel = if (thisWeek.size == 1) "1 run" else "${thisWeek.size} runs",
             durationLabel = formatDuration(thisWeek.sumOf { it.durationMillis }),
             dailyDistanceFractions = perDayMeters.map { meters ->
@@ -65,21 +68,10 @@ internal object HistoryGrouping {
     private fun labelFor(date: LocalDate, today: LocalDate): String = when (date) {
         today -> "Today"
         today.minusDays(1) -> "Yesterday"
-        else -> GROUP_DATE_FORMATTER.format(date)
+        else -> groupDateFormatter().format(date)
     }
 
     private fun Long.toLocalDate(zone: ZoneId): LocalDate =
         Instant.ofEpochMilli(this).atZone(zone).toLocalDate()
 
-    private fun formatDuration(durationMillis: Long): String {
-        val totalSeconds = (durationMillis / MILLIS_PER_SECOND).coerceAtLeast(0L)
-        val hours = totalSeconds / SECONDS_PER_HOUR
-        val minutes = (totalSeconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE
-        val seconds = totalSeconds % SECONDS_PER_MINUTE
-        return if (hours > 0) {
-            String.format(Locale.US, "%d:%02d:%02d", hours, minutes, seconds)
-        } else {
-            String.format(Locale.US, "%d:%02d", minutes, seconds)
-        }
-    }
 }

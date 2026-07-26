@@ -29,7 +29,7 @@ internal fun formatPaceMinPerKm(speedMps: Float): String {
     // every pace by up to a second.
     val secondsPerKm = (METERS_PER_KILOMETER / speedMps).roundToInt()
     return String.format(
-        Locale.US,
+        Locale.getDefault(),
         "%d:%02d",
         secondsPerKm / SECONDS_PER_MINUTE,
         secondsPerKm % SECONDS_PER_MINUTE,

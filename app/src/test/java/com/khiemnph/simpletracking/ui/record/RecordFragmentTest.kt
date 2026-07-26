@@ -39,6 +39,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
+import com.khiemnph.simpletracking.testing.DefaultLocaleRule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -58,6 +59,9 @@ import org.robolectric.util.ReflectionHelpers
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class, sdk = [33])
 class RecordFragmentTest {
+
+    @get:Rule
+    val localeRule = DefaultLocaleRule()
 
     @get:Rule
     val hiltRule = HiltAndroidRule(this)

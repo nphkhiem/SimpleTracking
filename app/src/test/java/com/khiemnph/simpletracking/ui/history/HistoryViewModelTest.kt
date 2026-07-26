@@ -19,10 +19,15 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assert.assertNull
 import org.junit.Before
+import com.khiemnph.simpletracking.testing.DefaultLocaleRule
+import org.junit.Rule
 import org.junit.Test
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class HistoryViewModelTest {
+
+    @get:Rule
+    val localeRule = DefaultLocaleRule()
 
     private val repository = MockedSessionRepository()
     private val viewModel by lazy {
