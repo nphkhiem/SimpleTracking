@@ -9,9 +9,12 @@
     <string name="tracking_notification_action_resume">Resume</string>
     <string name="tracking_notification_action_stop">Stop</string>
 
-    <string name="history_title">History</string>
+    <!-- Both this screen's title and its nav-graph destination label, so the two agree.
+         Deliberately not the app name, which the launcher and task switcher already show, and
+         deliberately "Runs" rather than "History": it names the content rather than the container.
+         Becomes "Hoạt động" when Vietnamese strings land. -->
+    <string name="history_title">Runs</string>
     <string name="history_record_button_text">Record</string>
-    <string name="history_item_thumbnail_content_description">Session route thumbnail</string>
     <string name="history_item_stats_separator">" · "</string>
     <string name="record_title">Record</string>
     <string name="record_back_content_description">Back to History</string>

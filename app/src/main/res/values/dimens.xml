@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Corner radii, referenced by the shape appearances in themes.xml.
+  Corner radii referenced by the shape appearances in themes.xml, plus the row rule weight.
 
   The spacing scale these were generated alongside is deliberately not here yet: no layout consumes
   it until the screens are rebuilt, and shipping an unreferenced scale now would be dead resources.
@@ -12,4 +12,9 @@
     <dimen name="corner_md">16dp</dimen>
     <dimen name="corner_lg">24dp</dimen>
     <dimen name="corner_xl">28dp</dimen>
+
+    <!-- Heavier than Material's 1dp hairline. The Editorial direction separates rows with a rule
+         that reads as a deliberate mark rather than a rendering artefact, and at 420dpi a hairline
+         is barely over two pixels. -->
+    <dimen name="divider_thickness">2dp</dimen>
 </resources>

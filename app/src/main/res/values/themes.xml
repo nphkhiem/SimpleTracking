@@ -18,53 +18,53 @@
     <style name="Theme.ChayNgayDi" parent="Theme.Material3.DayNight.NoActionBar">
 
         <!-- ===== Primary ===== -->
-        <item name="colorPrimary">@color/ref_clay_40</item>
-        <item name="colorOnPrimary">@color/ref_clay_100</item>
-        <item name="colorPrimaryContainer">@color/ref_clay_90</item>
-        <item name="colorOnPrimaryContainer">@color/ref_clay_10</item>
-        <item name="colorPrimaryInverse">@color/ref_clay_80</item>
+        <item name="colorPrimary">@color/md_theme_primary</item>
+        <item name="colorOnPrimary">@color/md_theme_onPrimary</item>
+        <item name="colorPrimaryContainer">@color/md_theme_primaryContainer</item>
+        <item name="colorOnPrimaryContainer">@color/md_theme_onPrimaryContainer</item>
+        <item name="colorPrimaryInverse">@color/md_theme_primaryInverse</item>
 
         <!-- ===== Secondary ===== -->
-        <item name="colorSecondary">@color/ref_secondary_40</item>
-        <item name="colorOnSecondary">@color/ref_clay_100</item>
-        <item name="colorSecondaryContainer">@color/ref_secondary_90</item>
-        <item name="colorOnSecondaryContainer">@color/ref_secondary_10</item>
+        <item name="colorSecondary">@color/md_theme_secondary</item>
+        <item name="colorOnSecondary">@color/md_theme_onSecondary</item>
+        <item name="colorSecondaryContainer">@color/md_theme_secondaryContainer</item>
+        <item name="colorOnSecondaryContainer">@color/md_theme_onSecondaryContainer</item>
 
         <!-- ===== Tertiary · the PAUSED state ===== -->
-        <item name="colorTertiary">@color/ref_tertiary_40</item>
-        <item name="colorOnTertiary">@color/ref_clay_100</item>
-        <item name="colorTertiaryContainer">@color/ref_tertiary_90</item>
-        <item name="colorOnTertiaryContainer">@color/ref_tertiary_10</item>
+        <item name="colorTertiary">@color/md_theme_tertiary</item>
+        <item name="colorOnTertiary">@color/md_theme_onTertiary</item>
+        <item name="colorTertiaryContainer">@color/md_theme_tertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">@color/md_theme_onTertiaryContainer</item>
 
         <!-- ===== Error ===== -->
-        <item name="colorError">@color/ref_error_40</item>
-        <item name="colorOnError">@color/ref_clay_100</item>
-        <item name="colorErrorContainer">@color/ref_error_90</item>
-        <item name="colorOnErrorContainer">@color/ref_error_10</item>
+        <item name="colorError">@color/md_theme_error</item>
+        <item name="colorOnError">@color/md_theme_onError</item>
+        <item name="colorErrorContainer">@color/md_theme_errorContainer</item>
+        <item name="colorOnErrorContainer">@color/md_theme_onErrorContainer</item>
 
         <!-- ===== Surfaces ===== -->
-        <item name="android:colorBackground">@color/ref_neutral_98</item>
-        <item name="colorOnBackground">@color/ref_neutral_10</item>
-        <item name="colorSurface">@color/ref_neutral_98</item>
-        <item name="colorOnSurface">@color/ref_neutral_10</item>
-        <item name="colorSurfaceVariant">@color/ref_neutral_variant_90</item>
-        <item name="colorOnSurfaceVariant">@color/ref_neutral_variant_30</item>
-        <item name="colorSurfaceInverse">@color/ref_neutral_20</item>
-        <item name="colorOnSurfaceInverse">@color/ref_neutral_95</item>
+        <item name="android:colorBackground">@color/md_theme_background</item>
+        <item name="colorOnBackground">@color/md_theme_onBackground</item>
+        <item name="colorSurface">@color/md_theme_surface</item>
+        <item name="colorOnSurface">@color/md_theme_onSurface</item>
+        <item name="colorSurfaceVariant">@color/md_theme_surfaceVariant</item>
+        <item name="colorOnSurfaceVariant">@color/md_theme_onSurfaceVariant</item>
+        <item name="colorSurfaceInverse">@color/md_theme_surfaceInverse</item>
+        <item name="colorOnSurfaceInverse">@color/md_theme_onSurfaceInverse</item>
 
         <!-- Tonal container ladder. Replaces elevation-shadow stacking: surfaces are separated by
              tone and space, per the Editorial philosophy - no cards floating on grey. -->
-        <item name="colorSurfaceContainerLowest">@color/ref_neutral_100</item>
-        <item name="colorSurfaceContainerLow">@color/ref_neutral_96</item>
-        <item name="colorSurfaceContainer">@color/ref_neutral_94</item>
-        <item name="colorSurfaceContainerHigh">@color/ref_neutral_92</item>
-        <item name="colorSurfaceContainerHighest">@color/ref_neutral_90</item>
-        <item name="colorSurfaceDim">@color/ref_neutral_87</item>
-        <item name="colorSurfaceBright">@color/ref_neutral_98</item>
+        <item name="colorSurfaceContainerLowest">@color/md_theme_surfaceContainerLowest</item>
+        <item name="colorSurfaceContainerLow">@color/md_theme_surfaceContainerLow</item>
+        <item name="colorSurfaceContainer">@color/md_theme_surfaceContainer</item>
+        <item name="colorSurfaceContainerHigh">@color/md_theme_surfaceContainerHigh</item>
+        <item name="colorSurfaceContainerHighest">@color/md_theme_surfaceContainerHighest</item>
+        <item name="colorSurfaceDim">@color/md_theme_surfaceDim</item>
+        <item name="colorSurfaceBright">@color/md_theme_surfaceBright</item>
 
         <!-- ===== Outline ===== -->
-        <item name="colorOutline">@color/ref_neutral_variant_50</item>
-        <item name="colorOutlineVariant">@color/ref_neutral_variant_80</item>
+        <item name="colorOutline">@color/md_theme_outline</item>
+        <item name="colorOutlineVariant">@color/md_theme_outlineVariant</item>
         <item name="android:colorControlHighlight">#1F211C19</item>
 
         <!-- ===== System bars · edge-to-edge =====

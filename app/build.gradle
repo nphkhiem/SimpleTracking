@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.navigation.safeargs)
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
@@ -64,7 +65,16 @@ dependencies {
     implementation libs.androidx.navigation.ui.ktx
 
     // image loading
+    implementation platform(libs.androidx.compose.bom)
+    implementation libs.androidx.compose.material3
+    implementation libs.androidx.compose.ui
+    implementation libs.androidx.compose.ui.tooling.preview
+    debugImplementation libs.androidx.compose.ui.tooling
+    implementation libs.androidx.activity.compose
+    implementation libs.androidx.lifecycle.runtime.compose
+
     implementation libs.coil
+    implementation libs.coil.compose
 
     // google play services
     implementation libs.play.services.location
@@ -83,6 +93,9 @@ dependencies {
     testImplementation libs.junit
     testImplementation libs.mockk
     testImplementation libs.turbine
+    testImplementation platform(libs.androidx.compose.bom)
+    testImplementation libs.androidx.compose.ui.test.junit4
+    debugImplementation libs.androidx.compose.ui.test.manifest
     testImplementation libs.robolectric
     testImplementation libs.androidx.core.testing
     testImplementation libs.androidx.room.testing
