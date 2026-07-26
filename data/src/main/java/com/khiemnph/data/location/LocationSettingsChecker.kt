@@ -1,4 +1,4 @@
-package com.khiemnph.simpletracking.location
+package com.khiemnph.data.location
 
 /**
  * Checks whether the device's Location Service (the GPS toggle, separate from the app's own

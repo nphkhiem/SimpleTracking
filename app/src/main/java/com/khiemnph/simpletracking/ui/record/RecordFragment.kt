@@ -47,8 +47,8 @@ import com.khiemnph.domain.model.LatLngPoint
 import com.khiemnph.domain.model.SessionStatus
 import com.khiemnph.simpletracking.R
 import com.khiemnph.simpletracking.databinding.FragmentRecordBinding
-import com.khiemnph.simpletracking.location.LocationSettingsChecker
-import com.khiemnph.simpletracking.location.LocationSettingsResult
+import com.khiemnph.data.location.LocationSettingsChecker
+import com.khiemnph.data.location.LocationSettingsResult
 import com.khiemnph.simpletracking.permission.LocationPermissionAskTracker
 import com.khiemnph.simpletracking.permission.PermissionRationaleDialogFactory
 import com.khiemnph.simpletracking.ui.format.formatDistanceKm

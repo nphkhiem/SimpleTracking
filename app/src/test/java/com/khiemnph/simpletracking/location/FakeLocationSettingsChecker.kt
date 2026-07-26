@@ -1,5 +1,8 @@
 package com.khiemnph.simpletracking.location
 
+import com.khiemnph.data.location.LocationSettingsChecker
+import com.khiemnph.data.location.LocationSettingsResult
+
 /** Test-only [LocationSettingsChecker] whose [check] result a test configures directly, instead
  * of orchestrating real Play Services Task callbacks through [RecordFragmentTest][com.khiemnph.simpletracking.ui.record.RecordFragmentTest].
  * [checkCallCount] lets a test assert whether [check] ran at all - e.g. proving a guard skipped
