@@ -18,6 +18,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -103,6 +104,26 @@ class TrackingServiceTest {
         controller.create()
         controller.get().serviceScope = CoroutineScope(SupervisorJob() + dispatcher)
         return controller
+    }
+
+    @Test
+    fun givenLocationUpdatesFail_whenCollecting_thenNothingEscapesToTheServiceScope() = runTest {
+        // Revoking location permission mid-session makes requestLocationUpdates throw inside the
+        // callbackFlow. Uncaught on a SupervisorJob scope that reaches the thread's default
+        // handler, which is a process crash and, with START_REDELIVER_INTENT, a crash loop.
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val escaped = mutableListOf<Throwable>()
+        val controller = ServiceController.of(TrackingService(), TrackingService.startIntent(context, sessionId))
+        controller.create()
+        controller.get().serviceScope = CoroutineScope(
+            SupervisorJob() + dispatcher + CoroutineExceptionHandler { _, throwable -> escaped.add(throwable) },
+        )
+        fakeRepository.failWith = SecurityException("ACCESS_FINE_LOCATION revoked")
+
+        controller.get().onStartCommand(controller.intent, 0, 1)
+        runCurrent()
+
+        assertTrue("Location failures must not reach the service scope uncaught: $escaped", escaped.isEmpty())
     }
 
     @Test

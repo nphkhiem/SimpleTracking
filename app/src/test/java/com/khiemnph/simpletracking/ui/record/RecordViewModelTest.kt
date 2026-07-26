@@ -374,6 +374,25 @@ class RecordViewModelTest {
     }
 
     @Test
+    fun givenThumbnailSaveFails_whenStopClicked_thenStopIntentIsStillSent() = runTest {
+        // A full disk makes ThumbnailFileStore.save throw. Losing the thumbnail is acceptable;
+        // losing the Stop intent is not, because GPS collection would keep running afterwards.
+        val sessionId = repository.startSession()
+        val bitmap = mockk<Bitmap>()
+        coEvery { thumbnailFileStore.save(sessionId, bitmap) } throws java.io.IOException("No space left on device")
+        val viewModel = createViewModel()
+        viewModel.resolveSession(sessionId)
+        nextStartedServiceIntent()
+
+        viewModel.onStopClicked(bitmap)
+
+        assertSameIntent(
+            TrackingService.stopIntent(context, sessionId, thumbnailPath = null),
+            nextStartedServiceIntent(),
+        )
+    }
+
+    @Test
     fun givenStopClickedWithNullBitmap_whenInvoked_thenStopIntentSentWithoutPath() = runTest {
         val sessionId = repository.startSession()
         val viewModel = createViewModel()
