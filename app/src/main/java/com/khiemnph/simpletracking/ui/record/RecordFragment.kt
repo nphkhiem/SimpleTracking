@@ -51,17 +51,14 @@ import com.khiemnph.simpletracking.location.LocationSettingsChecker
 import com.khiemnph.simpletracking.location.LocationSettingsResult
 import com.khiemnph.simpletracking.permission.LocationPermissionAskTracker
 import com.khiemnph.simpletracking.permission.PermissionRationaleDialogFactory
+import com.khiemnph.simpletracking.ui.format.formatDistanceKm
+import com.khiemnph.simpletracking.ui.format.formatDuration
 import com.khiemnph.simpletracking.ui.route.OfflineRouteCanvas
 import com.khiemnph.simpletracking.ui.theme.ChayNgayDiTheme
 import dagger.hilt.android.AndroidEntryPoint
-import java.util.Locale
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 
-private const val METERS_PER_KILOMETER = 1_000.0
-private const val SECONDS_PER_MILLIS_DIVISOR = 1_000L
-private const val SECONDS_PER_MINUTE = 60L
-private const val SECONDS_PER_HOUR = 3_600L
 private const val MAP_INITIAL_ZOOM = 17f
 private const val ROUTE_POLYLINE_WIDTH_PX = 8f
 
@@ -472,18 +469,4 @@ class RecordFragment : Fragment() {
         }
     }
 
-    private fun formatDistanceKm(distanceMeters: Double): String =
-        String.format(Locale.US, "%.2f", distanceMeters / METERS_PER_KILOMETER)
-
-    private fun formatDuration(durationMillis: Long): String {
-        val totalSeconds = durationMillis / SECONDS_PER_MILLIS_DIVISOR
-        val hours = totalSeconds / SECONDS_PER_HOUR
-        val minutes = (totalSeconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE
-        val seconds = totalSeconds % SECONDS_PER_MINUTE
-        return if (hours > 0) {
-            String.format(Locale.US, "%d:%02d:%02d", hours, minutes, seconds)
-        } else {
-            String.format(Locale.US, "%d:%02d", minutes, seconds)
-        }
-    }
 }

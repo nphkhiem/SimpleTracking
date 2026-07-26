@@ -1,9 +1,14 @@
 package com.khiemnph.simpletracking.ui.record
 
 import org.junit.Assert.assertEquals
+import com.khiemnph.simpletracking.testing.DefaultLocaleRule
+import org.junit.Rule
 import org.junit.Test
 
 class PaceFormatTest {
+
+    @get:Rule
+    val localeRule = DefaultLocaleRule()
 
     @Test
     fun givenARunningSpeed_whenFormatted_thenItReadsAsMinutesPerKilometre() {

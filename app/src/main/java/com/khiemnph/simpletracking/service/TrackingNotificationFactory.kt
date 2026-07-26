@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import com.khiemnph.simpletracking.R
+import com.khiemnph.simpletracking.ui.MainActivity
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
@@ -25,18 +26,21 @@ class TrackingNotificationFactory @Inject constructor(@ApplicationContext privat
 
         val pauseResumeAction = if (isPaused) {
             action(
+                R.drawable.ic_play,
                 context.getString(R.string.tracking_notification_action_resume),
                 TrackingService.resumeIntent(context, sessionId),
                 REQUEST_CODE_PAUSE_RESUME,
             )
         } else {
             action(
+                R.drawable.ic_pause,
                 context.getString(R.string.tracking_notification_action_pause),
                 TrackingService.pauseIntent(context, sessionId),
                 REQUEST_CODE_PAUSE_RESUME,
             )
         }
         val stopAction = action(
+            R.drawable.ic_stop,
             context.getString(R.string.tracking_notification_action_stop),
             TrackingService.stopIntent(context, sessionId),
             REQUEST_CODE_STOP,
@@ -48,7 +52,8 @@ class TrackingNotificationFactory @Inject constructor(@ApplicationContext privat
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setContentTitle(context.getString(R.string.tracking_notification_title))
             .setContentText(contentText)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_stat_tracking)
+            .setContentIntent(openAppIntent())
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .addAction(pauseResumeAction)
@@ -75,14 +80,27 @@ class TrackingNotificationFactory @Inject constructor(@ApplicationContext privat
         channelCreated = true
     }
 
-    private fun action(title: String, intent: Intent, requestCode: Int): NotificationCompat.Action {
+    /**
+     * Reopens the app when the notification body is tapped. `FLAG_ACTIVITY_CLEAR_TOP` reuses the
+     * existing task rather than stacking a second MainActivity on top of the running session.
+     */
+    private fun openAppIntent(): PendingIntent = PendingIntent.getActivity(
+        context,
+        REQUEST_CODE_OPEN_APP,
+        Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        },
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+    )
+
+    private fun action(icon: Int, title: String, intent: Intent, requestCode: Int): NotificationCompat.Action {
         val pendingIntent = PendingIntent.getService(
             context,
             requestCode,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
-        return NotificationCompat.Action(0, title, pendingIntent)
+        return NotificationCompat.Action(icon, title, pendingIntent)
     }
 
     companion object {
@@ -90,5 +108,6 @@ class TrackingNotificationFactory @Inject constructor(@ApplicationContext privat
         private const val CHANNEL_ID = "tracking_channel"
         private const val REQUEST_CODE_PAUSE_RESUME = 100
         private const val REQUEST_CODE_STOP = 101
+        private const val REQUEST_CODE_OPEN_APP = 102
     }
 }
