@@ -78,3 +78,24 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
         db.execSQL("ALTER TABLE session ADD COLUMN pausedAtElapsedRealtimeMillis INTEGER")
     }
 }
+
+/**
+ * 3 to 4: the per-fix lookup gets an index that can actually serve it.
+ *
+ * `getMostRecentPoint` filters on `sessionId` and orders by `timestamp`, and runs on every accepted
+ * GPS fix. The old `sessionId`-only index served the filter but not the ordering, so SQLite
+ * materialised and sorted the whole session each time: on a two-hour ride that is roughly 3,600
+ * sorts growing to 3,600 rows each, on the Room executor, on battery, with the screen off.
+ *
+ * Room identifies indices by name, so the old one is dropped rather than left behind. Indices carry
+ * no data, so nothing here can lose any.
+ */
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("DROP INDEX IF EXISTS index_location_point_sessionId")
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS index_location_point_sessionId_timestamp " +
+                "ON location_point (sessionId, timestamp)",
+        )
+    }
+}

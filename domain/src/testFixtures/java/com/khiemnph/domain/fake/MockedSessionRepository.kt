@@ -94,6 +94,9 @@ class MockedSessionRepository : SessionRepository {
         return summary
     }
 
+    override suspend fun getSessionStatus(sessionId: String): SessionStatus? =
+        sessionsById[sessionId]?.status
+
     override suspend fun deleteSession(sessionId: String) {
         sessionsById.remove(sessionId)
         pointsBySessionId.remove(sessionId)

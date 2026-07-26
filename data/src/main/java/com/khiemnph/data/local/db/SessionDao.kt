@@ -82,6 +82,9 @@ interface SessionDao {
      * `onDelete = CASCADE` and Room enables `PRAGMA foreign_keys`, so SQLite removes them. Deleting
      * the row alone would leave thousands of orphaned GPS rows per session.
      */
+    @Query("SELECT status FROM session WHERE id = :sessionId")
+    suspend fun getStatusById(sessionId: String): String?
+
     @Query("DELETE FROM session WHERE id = :sessionId")
     suspend fun deleteById(sessionId: String)
 

@@ -140,6 +140,9 @@ class SessionRepositoryImpl @Inject constructor(
         )
     }
 
+    override suspend fun getSessionStatus(sessionId: String): SessionStatus? =
+        sessionDao.getStatusById(sessionId)?.let(SessionStatus::valueOf)
+
     override suspend fun deleteSession(sessionId: String) = sessionWriteMutex.withLock {
         sessionDao.deleteById(sessionId)
     }

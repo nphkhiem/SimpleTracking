@@ -3,6 +3,7 @@ package com.khiemnph.data.local.db
 import androidx.room.testing.MigrationTestHelper
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -121,5 +122,56 @@ class AppDatabaseMigrationTest {
             assertTrue(cursor.getColumnIndex("startElapsedRealtimeMillis") >= 0)
             assertTrue(cursor.getColumnIndex("pausedAtElapsedRealtimeMillis") >= 0)
         }
+    }
+
+    @Test
+    fun givenRecordedPointsAtVersion3_whenMigratedTo4_thenTheySurviveTheIndexChange() {
+        helper.createDatabase(TEST_DB, 3).use { db ->
+            db.execSQL(
+                """
+                INSERT INTO session
+                    (id, startTimestamp, startElapsedRealtimeMillis, pausedDurationMillis, status,
+                     pausedAtTimestamp, pausedAtElapsedRealtimeMillis, stoppedTimestamp,
+                     finalDistanceMeters, finalAverageSpeedMps, routePolyline)
+                VALUES ('s3', 1000, 500, 0, 'STOPPED', NULL, NULL, 61000, 100.0, 1.5, NULL)
+                """.trimIndent(),
+            )
+            db.execSQL(
+                """
+                INSERT INTO location_point
+                    (sessionId, latitude, longitude, timestamp, horizontalAccuracyMeters, speedMetersPerSec)
+                VALUES ('s3', 21.0285, 105.8542, 2000, 5.0, 2.0)
+                """.trimIndent(),
+            )
+        }
+
+        val migrated = helper.runMigrationsAndValidate(TEST_DB, 4, true, MIGRATION_3_4)
+
+        migrated.query("SELECT count(*) FROM location_point").use {
+            assertTrue(it.moveToFirst())
+            assertEquals(1, it.getInt(0))
+        }
+    }
+
+    /**
+     * The index existing is not the point; SQLite choosing it is. A `USE TEMP B-TREE FOR ORDER BY`
+     * here means the per-fix lookup is sorting the whole session again, which is the regression
+     * this migration exists to prevent.
+     */
+    @Test
+    fun givenTheMigratedSchema_whenPlanningThePerFixLookup_thenTheIndexServesTheOrderingToo() {
+        helper.createDatabase(TEST_DB, 3).close()
+        val migrated = helper.runMigrationsAndValidate(TEST_DB, 4, true, MIGRATION_3_4)
+
+        val plan = StringBuilder()
+        migrated.query(
+            "EXPLAIN QUERY PLAN SELECT * FROM location_point WHERE sessionId = 's3' " +
+                "ORDER BY timestamp DESC LIMIT 1",
+        ).use { cursor ->
+            while (cursor.moveToNext()) plan.append(cursor.getString(cursor.columnCount - 1)).append(' ')
+        }
+
+        assertTrue("Query plan was: $plan", plan.contains("index_location_point_sessionId_timestamp"))
+        assertFalse("Query plan still sorts: $plan", plan.contains("TEMP B-TREE"))
     }
 }

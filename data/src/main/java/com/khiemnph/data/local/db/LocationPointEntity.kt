@@ -16,7 +16,10 @@ import androidx.room.PrimaryKey
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index("sessionId")],
+    // Composite, and in this order, because the hot query filters on sessionId and orders by
+    // timestamp. A sessionId-only index serves the filter but not the ordering, which leaves
+    // SQLite sorting every row of the session on every GPS fix.
+    indices = [Index(value = ["sessionId", "timestamp"])],
 )
 data class LocationPointEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
