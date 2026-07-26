@@ -637,7 +637,7 @@ class RecordFragmentTest {
     }
 
     @Test
-    fun givenDistanceAndSpeedRecorded_whenUiStateUpdates_thenBottomSheetTextViewsReflectFormattedValues() {
+    fun givenDistanceAndSpeedRecorded_whenUiStateUpdates_thenBottomSheetShowsDistanceAndPace() {
         seedActiveSession()
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
@@ -661,8 +661,9 @@ class RecordFragmentTest {
 
             scenario.onActivity { activity ->
                 val fragment = recordFragmentOf(activity)
-                val speedView = fragment.view?.findViewById<TextView>(R.id.record_current_speed_value)
-                assertEquals("18.0", speedView?.text.toString())
+                val paceView = fragment.view?.findViewById<TextView>(R.id.record_current_speed_value)
+                // 5 m/s is 18 km/h, which runners read as 3:20 per kilometre.
+                assertEquals("3:20", paceView?.text.toString())
             }
         }
     }

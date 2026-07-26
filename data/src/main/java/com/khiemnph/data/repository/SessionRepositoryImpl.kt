@@ -13,6 +13,7 @@ import com.khiemnph.domain.model.SessionStatus
 import com.khiemnph.domain.model.SessionSummary
 import com.khiemnph.domain.repository.SessionRepository
 import com.khiemnph.domain.util.DistanceCalculator
+import com.khiemnph.domain.util.GpsSignalEvaluator
 import java.util.UUID
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
@@ -162,8 +163,10 @@ class SessionRepositoryImpl @Inject constructor(
         val route = points.map { LatLngPoint(it.latitude, it.longitude) }
         // Drift-aware: every recorded point stays in `route` for the trace, but hops that are GPS
         // wobble rather than movement must not inflate the distance readout.
-        val distanceMeters = DistanceCalculator.travelledDistanceMeters(points.map { it.toDomain() })
-        val elapsedDurationMillis = elapsedMillis(entity, clock.nowMillis())
+        val domainPoints = points.map { it.toDomain() }
+        val distanceMeters = DistanceCalculator.travelledDistanceMeters(domainPoints)
+        val now = clock.nowMillis()
+        val elapsedDurationMillis = elapsedMillis(entity, now)
         return ActiveSessionState(
             session = entity.toDomain(),
             distanceMeters = distanceMeters,
@@ -171,6 +174,9 @@ class SessionRepositoryImpl @Inject constructor(
             currentSpeedMps = points.lastOrNull()?.speedMetersPerSec ?: 0f,
             averageSpeedMps = averageSpeedMps(distanceMeters, elapsedDurationMillis),
             route = route,
+            // Recomputed on every ticker emission, which is what makes a signal that has gone
+            // quiet visible: nothing new has to arrive for the state to change.
+            gpsSignal = GpsSignalEvaluator.evaluate(domainPoints.lastOrNull(), now),
         )
     }
 

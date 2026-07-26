@@ -26,7 +26,10 @@
     <string name="record_back_content_description">Back to History</string>
     <string name="record_paused_tag">Paused</string>
     <string name="record_distance_unit">km</string>
-    <string name="record_current_speed_unit">km/h</string>
+    <string name="record_current_speed_unit">/km</string>
+    <string name="record_signal_acquiring">Finding GPS…</string>
+    <string name="record_signal_weak">Weak GPS</string>
+    <string name="record_signal_lost">GPS signal lost</string>
     <string name="record_duration_unit">time</string>
     <string name="record_pause_content_description">Pause</string>
     <string name="record_resume_content_description">Resume</string>

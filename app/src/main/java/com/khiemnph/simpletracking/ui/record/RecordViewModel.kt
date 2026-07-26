@@ -128,16 +128,11 @@ class RecordViewModel @Inject constructor(
     }
 
     /**
-     * [bitmap] is a best-effort map snapshot the Fragment attempts before calling this - `null`
-     * when the map wasn't ready/available, which simply results in the Stop intent carrying no
-     * thumbnail path (a normal placeholder case in History, not an error).
-     *
-     * Launched on [applicationScope], not `viewModelScope`, deliberately: the Fragment fires the
-     * map snapshot asynchronously and never waits for it before popping the back stack, so this
-     * can be invoked after that pop has already destroyed the Fragment and cleared this ViewModel
-     * (cancelling `viewModelScope`). Using the process-lifetime [applicationScope] instead means
-     * the thumbnail save and the Stop intent still reliably complete even then - otherwise the
-     * Stop intent would silently never reach [TrackingService] and tracking would keep running.
+     * Launched on [applicationScope], not `viewModelScope`, deliberately: the Fragment pops the
+     * back stack as it stops, which destroys the Fragment and clears this ViewModel. On
+     * `viewModelScope` the coroutine would be cancelled mid-flight, the Stop intent would never
+     * reach [TrackingService], and tracking would keep running after the user believed they had
+     * stopped it.
      */
     fun onStopClicked() {
         val id = sessionId ?: return
@@ -160,6 +155,7 @@ class RecordViewModel @Inject constructor(
             currentSpeedMps = if (currentSpeedWindow.isEmpty()) 0f else currentSpeedWindow.average().toFloat(),
             averageSpeedMps = state.averageSpeedMps,
             route = state.route,
+            gpsSignal = state.gpsSignal,
         )
     }
 

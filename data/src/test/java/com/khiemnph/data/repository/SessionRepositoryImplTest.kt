@@ -6,6 +6,7 @@ import com.khiemnph.data.local.db.AppDatabase
 import com.khiemnph.data.local.db.LocationPointDao
 import com.khiemnph.data.local.db.SessionDao
 import com.khiemnph.data.util.Clock
+import com.khiemnph.domain.model.GpsSignal
 import com.khiemnph.domain.model.LocationPoint
 import com.khiemnph.domain.model.SessionStatus
 import kotlinx.coroutines.flow.first
@@ -266,6 +267,51 @@ class SessionRepositoryImplTest {
         repository.deleteSession("never-existed")
 
         assertEquals(1, repository.observeSessionSummaries().first().size)
+    }
+
+    @Test
+    fun givenNoFixesYet_whenObserveActiveSession_thenSignalIsAcquiring() = runTest {
+        clock.currentMillis = 0L
+        repository.startSession()
+
+        assertEquals(GpsSignal.ACQUIRING, repository.observeActiveSession().first()!!.gpsSignal)
+    }
+
+    @Test
+    fun givenARecentAccurateFix_whenObserveActiveSession_thenSignalIsGood() = runTest {
+        clock.currentMillis = 0L
+        val sessionId = repository.startSession()
+        repository.recordLocationPoint(LocationPoint(sessionId, 10.7626, 106.6602, 1_000L, 5f, 2f))
+        clock.currentMillis = 2_000L
+
+        assertEquals(GpsSignal.GOOD, repository.observeActiveSession().first()!!.gpsSignal)
+    }
+
+    /**
+     * The BUG-17 case: fixes stop, but the ticker keeps emitting, so the state must change without
+     * anything new arriving. This is why the signal is derived at read time rather than on insert.
+     */
+    @Test
+    fun givenFixesStopArriving_whenTimePasses_thenSignalBecomesLostWithoutAnyNewFix() = runTest {
+        clock.currentMillis = 0L
+        val sessionId = repository.startSession()
+        repository.recordLocationPoint(LocationPoint(sessionId, 10.7626, 106.6602, 1_000L, 5f, 2f))
+
+        clock.currentMillis = 2_000L
+        assertEquals(GpsSignal.GOOD, repository.observeActiveSession().first()!!.gpsSignal)
+
+        clock.currentMillis = 60_000L
+        assertEquals(GpsSignal.LOST, repository.observeActiveSession().first()!!.gpsSignal)
+    }
+
+    @Test
+    fun givenAnImpreciseFix_whenObserveActiveSession_thenSignalIsWeak() = runTest {
+        clock.currentMillis = 0L
+        val sessionId = repository.startSession()
+        repository.recordLocationPoint(LocationPoint(sessionId, 10.7626, 106.6602, 1_000L, 18f, 2f))
+        clock.currentMillis = 2_000L
+
+        assertEquals(GpsSignal.WEAK, repository.observeActiveSession().first()!!.gpsSignal)
     }
 
     @Test
