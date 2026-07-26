@@ -1,14 +1,106 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#6200EE</color>
-    <color name="colorPrimaryDark">#3700B3</color>
-    <color name="colorAccent">#03DAC5</color>
+    <!--
+      Material 3 reference tones. Only the tones the themes actually map are kept: the full ramps
+      they were generated from live in the design tokens, so a later phase adds back the specific
+      tone it needs rather than carrying two thirds of an unused palette.
+    -->
+    <!-- ============================================================
+         PRIMARY · "Clay" - the brand ramp, seeded from #E2432E
+         ============================================================ -->
+    <color name="ref_clay_10">#FF410100</color>
+    <color name="ref_clay_20">#FF690300</color>
+    <color name="ref_clay_30">#FF931400</color>
+    <!-- Light-theme primary. White label on this = 5.29:1 (WCAG AA body ✓). -->
+    <color name="ref_clay_40">#FFC6371F</color>
+    <!-- The signature colour: route polylines, the record dot. Large graphics only. -->
+    <!-- Dark-theme primary. On ref_neutral_6 (#191110) = 10.9:1 ✓. -->
+    <color name="ref_clay_80">#FFFFB4A4</color>
+    <color name="ref_clay_90">#FFFFDAD2</color>
+    <color name="ref_clay_100">#FFFFFFFF</color>
+
+    <!-- ============================================================
+         NEUTRAL · warm, seeded from the existing ink #211C19.
+         This warmth is the app's fingerprint - do not cool it toward
+         blue-grey, which is where every competitor already sits.
+         ============================================================ -->
+    <color name="ref_neutral_4">#FF0F0B0A</color>
+    <color name="ref_neutral_6">#FF191110</color>
+    <color name="ref_neutral_10">#FF211C19</color>
+    <color name="ref_neutral_12">#FF251E1C</color>
+    <color name="ref_neutral_17">#FF302826</color>
+    <color name="ref_neutral_20">#FF372F2C</color>
+    <color name="ref_neutral_22">#FF3B3331</color>
+    <color name="ref_neutral_24">#FF403734</color>
+    <color name="ref_neutral_87">#FFE9D7D2</color>
+    <color name="ref_neutral_90">#FFF0DEDA</color>
+    <color name="ref_neutral_92">#FFF6E4DF</color>
+    <color name="ref_neutral_94">#FFFCEAE5</color>
+    <color name="ref_neutral_95">#FFFFEDE8</color>
+    <color name="ref_neutral_96">#FFFFF0EC</color>
+    <color name="ref_neutral_98">#FFFFF8F6</color>
+    <color name="ref_neutral_100">#FFFFFFFF</color>
+
+    <!-- ============================================================
+         NEUTRAL VARIANT · outlines and secondary text
+         ============================================================ -->
+    <!-- Light-theme onSurfaceVariant. On surface #FFF8F6 = 8.93:1 ✓
+         (replaces today's #8B7F77, which measures only 3.89:1 and fails AA). -->
+    <color name="ref_neutral_variant_30">#FF53433E</color>
+    <color name="ref_neutral_variant_50">#FF85736E</color>
+    <color name="ref_neutral_variant_60">#FFA08C87</color>
+    <!-- Dark-theme onSurfaceVariant. On #191110 = 10.9:1 ✓ -->
+    <color name="ref_neutral_variant_80">#FFD8C2BC</color>
+    <color name="ref_neutral_variant_90">#FFF5DED8</color>
+
+    <!-- ============================================================
+         SECONDARY · desaturated clay, for quiet supporting surfaces
+         ============================================================ -->
+    <color name="ref_secondary_10">#FF2C1512</color>
+    <color name="ref_secondary_20">#FF442A26</color>
+    <color name="ref_secondary_30">#FF5D3F3B</color>
+    <color name="ref_secondary_40">#FF775651</color>
+    <color name="ref_secondary_80">#FFE7BDB6</color>
+    <color name="ref_secondary_90">#FFFFDAD2</color>
+
+    <!-- ============================================================
+         TERTIARY · warm ochre. Reserved for the PAUSED state, which
+         must read as "held", never as "wrong". Carries forward the
+         intent of today's record_paused_ink (#B9822A / #E3A349).
+         ============================================================ -->
+    <color name="ref_tertiary_10">#FF241A00</color>
+    <color name="ref_tertiary_20">#FF3E2E00</color>
+    <color name="ref_tertiary_30">#FF5A4400</color>
+    <!-- Light tertiary. On surface #FFF8F6 = 5.37:1 ✓ -->
+    <color name="ref_tertiary_40">#FF8A5F14</color>
+    <!-- Dark tertiary. On #191110 = 11.1:1 ✓ -->
+    <color name="ref_tertiary_80">#FFEDC26E</color>
+    <color name="ref_tertiary_90">#FFFFDEA6</color>
+
+    <!-- ============================================================
+         ERROR · deliberately cooler and darker than the clay ramp so
+         a genuine error never reads as "brand red". Error states must
+         additionally always carry an icon and explicit text - colour
+         alone cannot be the signal when the brand is also red.
+         ============================================================ -->
+    <color name="ref_error_10">#FF410002</color>
+    <color name="ref_error_20">#FF690005</color>
+    <color name="ref_error_30">#FF93000A</color>
+    <color name="ref_error_40">#FFBA1A1A</color>
+    <color name="ref_error_80">#FFFFB4AB</color>
+    <color name="ref_error_90">#FFFFDAD6</color>
+
+    <!-- ============================================================
+         FIXED · identical in both themes by design.
+         These float over the Google Map, whose colours vary
+         independently of the app theme.
+         ============================================================ -->
 
     <!--
       History screen tokens (light), taken from the reviewed UI mockup's Variant A design system
       (https://claude.ai/code/artifact/0fdcd862-be87-4a06-b3d0-548142852ca1?screen=history&hv=a).
-      Kept separate from the legacy colorPrimary/colorAccent above, which style the action bar and
-      are unrelated to this design.
+      Consumed directly by the current layouts. New work should use the semantic roles in
+      themes.xml (?attr/colorOnSurface and friends); these disappear when the screens are rebuilt.
     -->
     <color name="history_surface">#FFFFFF</color>
     <color name="history_ink">#211C19</color>

@@ -1,11 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!--
-      Dark-theme overrides for the History screen tokens defined in values/colors.xml, taken from
-      the same reviewed UI mockup's dark-mode design tokens. The app's current theme
-      (Theme.AppCompat.Light.DarkActionBar) always resolves to "notnight", so these aren't reachable
-      yet, but are defined now so the History screen picks them up automatically once a future
-      phase adopts a DayNight theme, without any further changes here.
+      Dark-theme overrides for the screen tokens defined in values/colors.xml.
+
+      These were always reachable: resource qualifiers resolve from Configuration.uiMode, not from
+      the theme. Under the previous Theme.AppCompat.Light theme that was the bug, not a safeguard -
+      the text colours below flipped while the theme's window background stayed light, leaving
+      near-white on near-white at about 1.1:1. Now that the theme is Material 3 DayNight, the
+      background flips with them.
+
+      These names are legacy and are consumed directly by the current layouts. New work should use
+      the semantic roles in themes.xml (?attr/colorOnSurface and friends) instead; these disappear
+      when the screens are rebuilt.
     -->
     <color name="history_surface">#221C18</color>
     <color name="history_ink">#F4ECE6</color>

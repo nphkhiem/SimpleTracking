@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+  THIS FILE IS THE FIX. It is the single place light/dark is resolved.
+
+  Because Theme.ChayNgayDi's parent is Theme.Material3.DayNight.*, this override actually resolves
+  at night - which the current Theme.AppCompat.Light.DarkActionBar never could. Every surface and
+  every on-surface pair flips together, so the half-switched state that currently renders the
+  History list at ~1.1:1 contrast is structurally impossible.
+
+  Verified contrast (WCAG 2.1, AA needs 4.5:1 body / 3:1 large):
+    colorOnSurface        #F0DEDA on #191110 = 14.3:1 ✓
+    colorOnSurfaceVariant #D8C2BC on #191110 = 10.9:1 ✓
+    colorPrimary          #FFB4A4 on #191110 = 10.9:1 ✓
+    colorTertiary         #EDC26E on #191110 = 11.1:1 ✓
+-->
+<resources>
+
+    <style name="Theme.ChayNgayDi" parent="Theme.Material3.DayNight.NoActionBar">
+
+        <!-- ===== Primary ===== -->
+        <item name="colorPrimary">@color/ref_clay_80</item>
+        <item name="colorOnPrimary">@color/ref_clay_20</item>
+        <item name="colorPrimaryContainer">@color/ref_clay_30</item>
+        <item name="colorOnPrimaryContainer">@color/ref_clay_90</item>
+        <item name="colorPrimaryInverse">@color/ref_clay_40</item>
+
+        <!-- ===== Secondary ===== -->
+        <item name="colorSecondary">@color/ref_secondary_80</item>
+        <item name="colorOnSecondary">@color/ref_secondary_20</item>
+        <item name="colorSecondaryContainer">@color/ref_secondary_30</item>
+        <item name="colorOnSecondaryContainer">@color/ref_secondary_90</item>
+
+        <!-- ===== Tertiary · the PAUSED state ===== -->
+        <item name="colorTertiary">@color/ref_tertiary_80</item>
+        <item name="colorOnTertiary">@color/ref_tertiary_20</item>
+        <item name="colorTertiaryContainer">@color/ref_tertiary_30</item>
+        <item name="colorOnTertiaryContainer">@color/ref_tertiary_90</item>
+
+        <!-- ===== Error ===== -->
+        <item name="colorError">@color/ref_error_80</item>
+        <item name="colorOnError">@color/ref_error_20</item>
+        <item name="colorErrorContainer">@color/ref_error_30</item>
+        <item name="colorOnErrorContainer">@color/ref_error_90</item>
+
+        <!-- ===== Surfaces ===== -->
+        <item name="android:colorBackground">@color/ref_neutral_6</item>
+        <item name="colorOnBackground">@color/ref_neutral_90</item>
+        <item name="colorSurface">@color/ref_neutral_6</item>
+        <item name="colorOnSurface">@color/ref_neutral_90</item>
+        <item name="colorSurfaceVariant">@color/ref_neutral_variant_30</item>
+        <item name="colorOnSurfaceVariant">@color/ref_neutral_variant_80</item>
+        <item name="colorSurfaceInverse">@color/ref_neutral_90</item>
+        <item name="colorOnSurfaceInverse">@color/ref_neutral_20</item>
+
+        <item name="colorSurfaceContainerLowest">@color/ref_neutral_4</item>
+        <item name="colorSurfaceContainerLow">@color/ref_neutral_10</item>
+        <item name="colorSurfaceContainer">@color/ref_neutral_12</item>
+        <item name="colorSurfaceContainerHigh">@color/ref_neutral_17</item>
+        <item name="colorSurfaceContainerHighest">@color/ref_neutral_22</item>
+        <item name="colorSurfaceDim">@color/ref_neutral_6</item>
+        <item name="colorSurfaceBright">@color/ref_neutral_24</item>
+
+        <!-- ===== Outline ===== -->
+        <item name="colorOutline">@color/ref_neutral_variant_60</item>
+        <item name="colorOutlineVariant">@color/ref_neutral_variant_30</item>
+        <item name="android:colorControlHighlight">#1FF0DEDA</item>
+
+        <!-- ===== System bars · edge-to-edge ===== -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="android:enforceStatusBarContrast">false</item>
+
+        <!-- ===== Shape (identical to light) ===== -->
+        <item name="shapeAppearanceCornerExtraSmall">@style/Shape.ChayNgayDi.ExtraSmall</item>
+        <item name="shapeAppearanceCornerSmall">@style/Shape.ChayNgayDi.Small</item>
+        <item name="shapeAppearanceCornerMedium">@style/Shape.ChayNgayDi.Medium</item>
+        <item name="shapeAppearanceCornerLarge">@style/Shape.ChayNgayDi.Large</item>
+        <item name="shapeAppearanceCornerExtraLarge">@style/Shape.ChayNgayDi.ExtraLarge</item>
+
+        <!-- ===== Typography (identical to light) ===== -->
+        <item name="textAppearanceDisplayLarge">@style/TextAppearance.ChayNgayDi.DisplayLarge</item>
+        <item name="textAppearanceDisplayMedium">@style/TextAppearance.ChayNgayDi.DisplayMedium</item>
+        <item name="textAppearanceDisplaySmall">@style/TextAppearance.ChayNgayDi.DisplaySmall</item>
+        <item name="textAppearanceHeadlineLarge">@style/TextAppearance.ChayNgayDi.HeadlineLarge</item>
+        <item name="textAppearanceHeadlineMedium">@style/TextAppearance.ChayNgayDi.HeadlineMedium</item>
+        <item name="textAppearanceHeadlineSmall">@style/TextAppearance.ChayNgayDi.HeadlineSmall</item>
+        <item name="textAppearanceTitleLarge">@style/TextAppearance.ChayNgayDi.TitleLarge</item>
+        <item name="textAppearanceTitleMedium">@style/TextAppearance.ChayNgayDi.TitleMedium</item>
+        <item name="textAppearanceBodyLarge">@style/TextAppearance.ChayNgayDi.BodyLarge</item>
+        <item name="textAppearanceBodyMedium">@style/TextAppearance.ChayNgayDi.BodyMedium</item>
+        <item name="textAppearanceLabelLarge">@style/TextAppearance.ChayNgayDi.LabelLarge</item>
+        <item name="textAppearanceLabelMedium">@style/TextAppearance.ChayNgayDi.LabelMedium</item>
+        <item name="textAppearanceLabelSmall">@style/TextAppearance.ChayNgayDi.LabelSmall</item>
+
+    </style>
+
+</resources>

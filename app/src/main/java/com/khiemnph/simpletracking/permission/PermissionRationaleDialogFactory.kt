@@ -2,6 +2,7 @@ package com.khiemnph.simpletracking.permission
 
 import android.content.Context
 import androidx.appcompat.app.AlertDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.khiemnph.simpletracking.R
 import javax.inject.Inject
 
@@ -13,14 +14,16 @@ import javax.inject.Inject
  * - [locationPermanentlyDeniedDialog] once the permission is permanently denied and the system
  *   would otherwise silently re-deny a repeat request without even showing a dialog.
  *
- * Plain [AlertDialog.Builder] rather than Material's `MaterialAlertDialogBuilder` - this app's
- * theme ([R.style.AppTheme]) descends from `Theme.AppCompat`, not `Theme.MaterialComponents`,
- * and the latter throws if the theme doesn't supply its color attributes.
+ * Uses [MaterialAlertDialogBuilder] so these dialogs pick up the app's Material 3 colour roles,
+ * shape and typography. That was previously not possible: the old theme descended from
+ * `Theme.AppCompat`, and this builder throws when the theme does not supply Material's colour
+ * attributes. `Theme.ChayNgayDi` does, so the dialogs no longer look like leftovers from a
+ * different design system.
  */
 class PermissionRationaleDialogFactory @Inject constructor() {
 
     fun locationRationaleDialog(context: Context, onContinue: () -> Unit): AlertDialog =
-        AlertDialog.Builder(context)
+        MaterialAlertDialogBuilder(context)
             .setTitle(R.string.permission_location_rationale_title)
             .setMessage(R.string.permission_location_rationale_message)
             .setCancelable(false)
@@ -29,7 +32,7 @@ class PermissionRationaleDialogFactory @Inject constructor() {
             .create()
 
     fun locationPermanentlyDeniedDialog(context: Context, onOpenSettings: () -> Unit): AlertDialog =
-        AlertDialog.Builder(context)
+        MaterialAlertDialogBuilder(context)
             .setTitle(R.string.permission_location_permanently_denied_title)
             .setMessage(R.string.permission_location_permanently_denied_message)
             .setCancelable(false)
