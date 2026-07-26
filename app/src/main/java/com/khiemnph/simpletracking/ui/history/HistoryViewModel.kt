@@ -1,5 +1,6 @@
 package com.khiemnph.simpletracking.ui.history
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.khiemnph.domain.interactor.ObserveSessionHistoryUseCase
@@ -13,6 +14,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
 private const val METERS_PER_KILOMETER = 1_000.0
@@ -36,6 +38,8 @@ private val RECORDED_AT_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPatte
  * `recordedAt` (epoch millis) is formatted as `"EEE, h:mm a"` (e.g. `"Tue, 7:12 AM"`), matching
  * the reviewed mockup's per-row date/time label, resolved against the device's default time zone.
  */
+private const val TAG = "HistoryViewModel"
+
 @HiltViewModel
 class HistoryViewModel @Inject constructor(
     observeSessionHistoryUseCase: ObserveSessionHistoryUseCase,
@@ -46,9 +50,14 @@ class HistoryViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            observeSessionHistoryUseCase().collect { summaries ->
-                _uiState.value = summaries.map { it.toHistorySummaryUiModel() }
-            }
+            observeSessionHistoryUseCase()
+                // Without this the collector dies on the first throwable and the list silently
+                // stops updating for the rest of the process, with nothing shown to the user. A
+                // malformed row is the realistic trigger, via toSummary()'s requireNotNull checks.
+                .catch { throwable -> Log.e(TAG, "Session history stopped updating", throwable) }
+                .collect { summaries ->
+                    _uiState.value = summaries.map { it.toHistorySummaryUiModel() }
+                }
         }
     }
 }

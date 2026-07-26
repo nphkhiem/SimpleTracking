@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.IBinder
+import android.util.Log
 import androidx.annotation.VisibleForTesting
 import androidx.core.app.ServiceCompat
 import com.khiemnph.domain.interactor.PauseSessionUseCase
@@ -16,14 +17,27 @@ import dagger.hilt.android.AndroidEntryPoint
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+
+private const val TAG = "TrackingService"
+
+/**
+ * Last line of defence for work launched on the service scope. A [SupervisorJob] stops one failing
+ * child cancelling its siblings, but it does not swallow the failure: without a handler it reaches
+ * the thread's default uncaught handler and kills the process.
+ */
+private fun serviceExceptionHandler() = CoroutineExceptionHandler { _, throwable ->
+    Log.e(TAG, "Unhandled failure on the tracking service scope", throwable)
+}
 
 /**
  * Thin foreground GPS collector: holds zero business logic of its own. It only starts/stops GPS
@@ -46,7 +60,8 @@ class TrackingService : Service() {
      * so use-case dispatch can be verified deterministically instead of racing a real background
      * dispatcher. Production always uses the default value.
      */
-    internal var serviceScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    internal var serviceScope: CoroutineScope =
+        CoroutineScope(SupervisorJob() + Dispatchers.Default + serviceExceptionHandler())
 
     private var locationCollectionJob: Job? = null
     private var currentSessionId: String? = null
@@ -135,6 +150,12 @@ class TrackingService : Service() {
         currentSessionId = sessionId
         locationCollectionJob = locationTrackingRepository.locationUpdates(sessionId)
             .onEach { fix -> recordLocationFixUseCase(fix) }
+            // The provider can fail at any time - a revoked location permission throws
+            // SecurityException from inside the callbackFlow, and persisting a fix can fail on a
+            // full disk. Uncaught, either reaches the thread's default handler and kills the
+            // process; START_REDELIVER_INTENT then replays the intent into a fresh instance that
+            // fails the same way, which is a crash loop. Collection stops, the session does not.
+            .catch { throwable -> Log.e(TAG, "Location collection failed for session $sessionId", throwable) }
             .launchIn(serviceScope)
     }
 

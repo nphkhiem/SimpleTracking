@@ -145,7 +145,10 @@ class RecordViewModel @Inject constructor(
     fun onStopClicked(bitmap: Bitmap?) {
         val id = sessionId ?: return
         applicationScope.launch {
-            val thumbnailPath = bitmap?.let { thumbnailFileStore.save(id, it) }
+            // The thumbnail is decoration; the Stop intent is the whole point. A failing save (a
+            // full disk being the realistic one) must not take the intent down with it, or GPS
+            // collection keeps running after the user believes they stopped.
+            val thumbnailPath = bitmap?.let { runCatching { thumbnailFileStore.save(id, it) }.getOrNull() }
             ContextCompat.startForegroundService(context, TrackingService.stopIntent(context, id, thumbnailPath))
         }
     }

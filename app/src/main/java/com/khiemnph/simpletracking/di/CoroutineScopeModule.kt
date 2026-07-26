@@ -1,10 +1,12 @@
 package com.khiemnph.simpletracking.di
 
+import android.util.Log
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -17,7 +19,9 @@ import kotlinx.coroutines.SupervisorJob
  * navigation has already popped the Fragment and cleared its `viewModelScope`, so launching on
  * this scope instead keeps the thumbnail save and the Stop intent from being silently dropped.
  * A [SupervisorJob] means one failing action never cancels this scope or any other action already
- * running on it.
+ * running on it, but it does not swallow the failure: without a [CoroutineExceptionHandler] an
+ * uncaught throwable reaches the thread's default handler and kills the process. Since the whole
+ * point of this scope is work that must survive its caller, it must also survive its own failures.
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -26,5 +30,9 @@ object CoroutineScopeModule {
     @Provides
     @Singleton
     @ApplicationScope
-    fun provideApplicationScope(): CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    fun provideApplicationScope(): CoroutineScope = CoroutineScope(
+        SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, throwable ->
+            Log.e("ApplicationScope", "Unhandled failure on the application scope", throwable)
+        },
+    )
 }
