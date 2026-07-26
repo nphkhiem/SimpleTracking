@@ -99,15 +99,15 @@
     <!--
       History screen tokens (light), taken from the reviewed UI mockup's Variant A design system
       (https://claude.ai/code/artifact/0fdcd862-be87-4a06-b3d0-548142852ca1?screen=history&hv=a).
-      Consumed directly by the current layouts. New work should use the semantic roles in
-      themes.xml (?attr/colorOnSurface and friends); these disappear when the screens are rebuilt.
+      Consumed by the Record screen's layout and drawables, which are still View-based. The
+      History screen no longer uses them: it is Compose and reads the semantic roles in
+      md_theme.xml. These disappear entirely when Record is rebuilt.
     -->
     <color name="history_surface">#FFFFFF</color>
     <color name="history_ink">#211C19</color>
     <color name="history_ink_soft">#8B7F77</color>
     <color name="history_border">#14211C19</color>
     <color name="history_accent">#E2432E</color>
-    <color name="history_neutral_chip">#EFE6E0</color>
 
     <!--
       Record screen tokens (light), same reviewed mockup's design system, Record/Variant C

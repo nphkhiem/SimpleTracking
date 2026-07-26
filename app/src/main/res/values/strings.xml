@@ -11,7 +11,6 @@
 
     <string name="history_title">History</string>
     <string name="history_record_button_text">Record</string>
-    <string name="history_item_thumbnail_content_description">Session route thumbnail</string>
     <string name="history_item_stats_separator">" · "</string>
     <string name="record_title">Record</string>
     <string name="record_back_content_description">Back to History</string>

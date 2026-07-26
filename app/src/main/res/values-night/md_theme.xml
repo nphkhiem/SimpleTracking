@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Semantic Material 3 roles, mapped onto the reference tones in colors.xml.
+
+  This is the ONE place a role is defined for dark mode. themes.xml points its colorX attributes here,
+  and the Compose theme reads the same names through colorResource, so the View layer and the
+  Compose layer cannot drift apart while both exist. Change a role here and both follow.
+-->
+<resources>
+    <color name="md_theme_primary">@color/ref_clay_80</color>
+    <color name="md_theme_onPrimary">@color/ref_clay_20</color>
+    <color name="md_theme_primaryContainer">@color/ref_clay_30</color>
+    <color name="md_theme_onPrimaryContainer">@color/ref_clay_90</color>
+    <color name="md_theme_primaryInverse">@color/ref_clay_40</color>
+    <color name="md_theme_secondary">@color/ref_secondary_80</color>
+    <color name="md_theme_onSecondary">@color/ref_secondary_20</color>
+    <color name="md_theme_secondaryContainer">@color/ref_secondary_30</color>
+    <color name="md_theme_onSecondaryContainer">@color/ref_secondary_90</color>
+    <color name="md_theme_tertiary">@color/ref_tertiary_80</color>
+    <color name="md_theme_onTertiary">@color/ref_tertiary_20</color>
+    <color name="md_theme_tertiaryContainer">@color/ref_tertiary_30</color>
+    <color name="md_theme_onTertiaryContainer">@color/ref_tertiary_90</color>
+    <color name="md_theme_error">@color/ref_error_80</color>
+    <color name="md_theme_onError">@color/ref_error_20</color>
+    <color name="md_theme_errorContainer">@color/ref_error_30</color>
+    <color name="md_theme_onErrorContainer">@color/ref_error_90</color>
+    <color name="md_theme_background">@color/ref_neutral_6</color>
+    <color name="md_theme_onBackground">@color/ref_neutral_90</color>
+    <color name="md_theme_surface">@color/ref_neutral_6</color>
+    <color name="md_theme_onSurface">@color/ref_neutral_90</color>
+    <color name="md_theme_surfaceVariant">@color/ref_neutral_variant_30</color>
+    <color name="md_theme_onSurfaceVariant">@color/ref_neutral_variant_80</color>
+    <color name="md_theme_surfaceInverse">@color/ref_neutral_90</color>
+    <color name="md_theme_onSurfaceInverse">@color/ref_neutral_20</color>
+    <color name="md_theme_surfaceContainerLowest">@color/ref_neutral_4</color>
+    <color name="md_theme_surfaceContainerLow">@color/ref_neutral_10</color>
+    <color name="md_theme_surfaceContainer">@color/ref_neutral_12</color>
+    <color name="md_theme_surfaceContainerHigh">@color/ref_neutral_17</color>
+    <color name="md_theme_surfaceContainerHighest">@color/ref_neutral_22</color>
+    <color name="md_theme_surfaceDim">@color/ref_neutral_6</color>
+    <color name="md_theme_surfaceBright">@color/ref_neutral_24</color>
+    <color name="md_theme_outline">@color/ref_neutral_variant_60</color>
+    <color name="md_theme_outlineVariant">@color/ref_neutral_variant_30</color>
+</resources>
