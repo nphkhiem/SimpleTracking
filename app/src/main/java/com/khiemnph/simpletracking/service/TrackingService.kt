@@ -74,15 +74,27 @@ class TrackingService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val sessionId = intent?.getStringExtra(EXTRA_SESSION_ID)
-        if (sessionId != null) {
-            promoteToForeground(sessionId)
-            when (intent.action) {
-                ACTION_START -> handleStart(sessionId)
-                ACTION_PAUSE -> handlePause(sessionId)
-                ACTION_RESUME -> handleResume(sessionId)
-                ACTION_STOP -> handleStop(sessionId)
-            }
+        // Validated before anything acts on it. The action is checked *before* promoting to the
+        // foreground: an intent carrying a valid id but an unrecognised action used to promote
+        // this Service and then fall through the `when` doing nothing, leaving a foreground
+        // service running with no session behind it. A blank id would reach the domain use cases
+        // unchecked. Neither is reachable today, since the Service is not exported and every
+        // intent is explicit, but this is exactly the boundary that breaks silently the moment a
+        // deep link or an exported entry point is added.
+        val sessionId = intent?.getStringExtra(EXTRA_SESSION_ID)?.takeIf { it.isNotBlank() }
+        val action = intent?.action
+        if (sessionId == null || action !in HANDLED_ACTIONS) {
+            Log.w(TAG, "Ignoring unusable command: action=$action, hasSessionId=${sessionId != null}")
+            return START_REDELIVER_INTENT
+        }
+
+        if (!promoteToForeground(sessionId)) return START_REDELIVER_INTENT
+
+        when (action) {
+            ACTION_START -> handleStart(sessionId)
+            ACTION_PAUSE -> handlePause(sessionId)
+            ACTION_RESUME -> handleResume(sessionId)
+            ACTION_STOP -> handleStop(sessionId)
         }
         return START_REDELIVER_INTENT
     }
@@ -104,14 +116,26 @@ class TrackingService : Service() {
      * call repeatedly per Android docs; handlePause/handleResume refine the notification's
      * paused/running content afterward.
      */
-    private fun promoteToForeground(sessionId: String) {
+    private fun promoteToForeground(sessionId: String): Boolean {
         val notification = notificationFactory.buildNotification(sessionId, isPaused = false)
-        ServiceCompat.startForeground(
-            this,
-            TrackingNotificationFactory.NOTIFICATION_ID,
-            notification,
-            ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION,
-        )
+        return try {
+            ServiceCompat.startForeground(
+                this,
+                TrackingNotificationFactory.NOTIFICATION_ID,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION,
+            )
+            true
+        } catch (error: Exception) {
+            // Throwing here kills the process. The platform refuses this call in cases the app
+            // does not fully control: a start attempted from the background on API 31+
+            // (ForegroundServiceStartNotAllowedException), or location permission revoked while
+            // the session ran (SecurityException). Stop cleanly instead of crashing, since a
+            // Service that cannot be in the foreground cannot track anything either.
+            Log.e(TAG, "Could not promote to the foreground; stopping", error)
+            stopSelf()
+            false
+        }
     }
 
     private fun handleStart(sessionId: String) {
@@ -169,6 +193,7 @@ class TrackingService : Service() {
         private const val ACTION_PAUSE = "com.khiemnph.simpletracking.action.PAUSE"
         private const val ACTION_RESUME = "com.khiemnph.simpletracking.action.RESUME"
         private const val ACTION_STOP = "com.khiemnph.simpletracking.action.STOP"
+        private val HANDLED_ACTIONS = setOf(ACTION_START, ACTION_PAUSE, ACTION_RESUME, ACTION_STOP)
         private const val EXTRA_SESSION_ID = "com.khiemnph.simpletracking.extra.SESSION_ID"
 
         /**

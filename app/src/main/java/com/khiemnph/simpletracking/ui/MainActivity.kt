@@ -39,6 +39,17 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
     }
 
+    /**
+     * Recovery runs inside `repeatOnLifecycle(STARTED)` rather than as a bare `onStart` launch.
+     *
+     * Two defects came from the bare launch. The coroutine outlived `onStop`, so a user who
+     * backgrounded the app while the session lookup was still in flight got a `navigate()` call
+     * after `onSaveInstanceState` and an `IllegalStateException`. And every `onStart` added
+     * another coroutine, so returning from Recents repeatedly left several in flight racing to
+     * navigate. `repeatOnLifecycle` cancels at `onStop` and runs one block at a time, which fixes
+     * both, and the `isStateSaved` check below covers the remaining window where the state is
+     * saved but this block has not yet been cancelled.
+     */
     override fun onStart() {
         super.onStart()
         EspressoIdlingResource.increment()
@@ -56,6 +67,9 @@ class MainActivity : AppCompatActivity() {
                     Log.e(TAG, "Failed to check for an active session on startup", error)
                     return@launch
                 }
+                // Navigating once the state is saved throws; skipping is correct, because the
+                // next onStart re-runs this check anyway.
+                if (supportFragmentManager.isStateSaved) return@launch
                 val navController = navController()
                 if (activeSession != null && navController.currentDestination?.id != R.id.recordFragment) {
                     navController.navigate(
