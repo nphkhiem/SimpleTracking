@@ -72,11 +72,50 @@ class SessionDaoTest {
     fun givenUpdateStatus_whenGetById_thenReflectsNewStatusAndPausedFields() = runTest {
         dao.upsert(sessionEntity(id = "s1", status = "RUNNING"))
 
-        dao.updateStatus(sessionId = "s1", status = "PAUSED", pausedDurationMillis = 0L, pausedAtTimestamp = 1_000L)
+        dao.updateStatusIfCurrent(
+            sessionId = "s1",
+            expectedCurrentStatus = "RUNNING",
+            status = "PAUSED",
+            pausedDurationMillis = 0L,
+            pausedAtTimestamp = 1_000L,
+        )
 
         val updated = dao.getById("s1")
         assertEquals("PAUSED", updated?.status)
         assertEquals(1_000L, updated?.pausedAtTimestamp)
+    }
+
+    @Test
+    fun givenStatusNoLongerMatchesExpected_whenUpdateStatusIfCurrent_thenNoRowsChanged() = runTest {
+        dao.upsert(sessionEntity(id = "s1", status = "STOPPED"))
+
+        val updated = dao.updateStatusIfCurrent(
+            sessionId = "s1",
+            expectedCurrentStatus = "RUNNING",
+            status = "PAUSED",
+            pausedDurationMillis = 0L,
+            pausedAtTimestamp = 1_000L,
+        )
+
+        assertEquals(0, updated)
+        assertEquals("STOPPED", dao.getById("s1")?.status)
+    }
+
+    @Test
+    fun givenSessionAlreadyStopped_whenWriteFinalStats_thenNoRowsChanged() = runTest {
+        dao.upsert(sessionEntity(id = "s1", status = "STOPPED"))
+
+        val updated = dao.writeFinalStats(
+            sessionId = "s1",
+            status = "STOPPED",
+            stoppedTimestamp = 9_000L,
+            pausedDurationMillis = 0L,
+            finalDistanceMeters = 1.0,
+            finalAverageSpeedMps = 1f,
+            thumbnailPath = null,
+        )
+
+        assertEquals(0, updated)
     }
 
     @Test
