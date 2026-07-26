@@ -74,8 +74,9 @@ private const val SNAPSHOT_TIMEOUT_MILLIS = 2_000L
  * [requestNotificationPermissionThenStartSession]). Once location permission is granted, the
  * device's Location Service (the GPS toggle) is checked once via [locationSettingsChecker] right
  * before starting; while a session is `RUNNING`, [locationServiceStateReceiver] re-runs that same
- * check on every [LocationManager.PROVIDERS_CHANGED_ACTION] broadcast and auto-pauses if it stops
- * being satisfied - resuming afterwards stays a manual user action.
+ * check on every [LocationManager.PROVIDERS_CHANGED_ACTION] broadcast and auto-pauses if the
+ * Location Service is confirmed off - resuming afterwards stays a manual user action. A check that
+ * cannot complete is never treated as confirmation: see [LocationSettingsResult.Unresolvable].
  */
 @AndroidEntryPoint
 class RecordFragment : Fragment() {
@@ -101,6 +102,7 @@ class RecordFragment : Fragment() {
     private var mapFragment: SupportMapFragment? = null
 
     private var stopDispatched = false
+    private var isMapLoaded = false
     private var hasCenteredCameraOnce = false
 
     /**
@@ -199,6 +201,7 @@ class RecordFragment : Fragment() {
         super.onDestroyView()
         googleMap = null
         mapFragment = null
+        isMapLoaded = false
         _binding = null
     }
 
@@ -240,6 +243,9 @@ class RecordFragment : Fragment() {
         mapFragment = fragment
         fragment.getMapAsync { map ->
             googleMap = map
+            // Fires only once tiles have actually rendered. Offline with nothing cached it never
+            // fires, which is exactly the case a snapshot must not be requested in.
+            map.setOnMapLoadedCallback { isMapLoaded = true }
             renderRoute(viewModel.uiState.value.route)
         }
     }
@@ -300,13 +306,18 @@ class RecordFragment : Fragment() {
                 is LocationSettingsResult.ResolutionRequired -> newSessionLocationSettingsLauncher.launch(
                     IntentSenderRequest.Builder(result.intentSender).build(),
                 )
-                LocationSettingsResult.Unresolvable -> showLocationServiceUnresolvableMessage()
+                // Unknown, not negative: start anyway and say so. Refusing here is what made the
+                // app unusable offline, and GPS needs no network.
+                LocationSettingsResult.Unresolvable -> {
+                    showLocationSettingsUnknownMessage()
+                    requestNotificationPermissionThenStartSession()
+                }
             }
         }
     }
 
-    private fun showLocationServiceUnresolvableMessage() {
-        view?.let { Snackbar.make(it, R.string.record_location_service_unresolvable_message, Snackbar.LENGTH_LONG).show() }
+    private fun showLocationSettingsUnknownMessage() {
+        view?.let { Snackbar.make(it, R.string.record_location_settings_unknown_message, Snackbar.LENGTH_LONG).show() }
     }
 
     /** `POST_NOTIFICATIONS` is optional: this fires the request (API 33+ only, and only if not
@@ -333,7 +344,9 @@ class RecordFragment : Fragment() {
                     viewModel.onPauseOrResumeClicked()
                     midSessionLocationSettingsLauncher.launch(IntentSenderRequest.Builder(result.intentSender).build())
                 }
-                LocationSettingsResult.Unresolvable -> viewModel.onPauseOrResumeClicked()
+                // Deliberately nothing: a check that could not complete is not evidence the
+                // Location Service went off, and pausing a healthy run on that basis loses data.
+                LocationSettingsResult.Unresolvable -> Unit
             }
         }
     }
@@ -356,7 +369,12 @@ class RecordFragment : Fragment() {
         if (stopDispatched) return
 
         val map = googleMap
-        if (map == null) {
+        if (map == null || !isMapLoaded) {
+            // Asking an unrendered map for a snapshot is what crashed the app offline: the request
+            // stays queued inside the Maps SDK, the timeout below navigates away, and the SDK then
+            // throws "Can't take a snapshot while executing in the background" from its own
+            // handler, after this screen is gone. Not requesting one is the only reliable guard,
+            // because a request already in flight cannot be cancelled.
             dispatchStop(null)
             return
         }

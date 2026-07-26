@@ -24,7 +24,7 @@
     <string name="record_stop_content_description">Stop</string>
     <string name="record_start_marker_title">Start</string>
     <string name="record_current_marker_title">Current position</string>
-    <string name="record_location_service_unresolvable_message">Turn on your device\'s Location Service to record a session.</string>
+    <string name="record_location_settings_unknown_message">Couldn\'t check your location settings. Recording anyway \u2014 if no route appears, check that Location is on.</string>
 
     <string name="permission_location_rationale_title">Location access needed</string>
     <string name="permission_location_rationale_message">Chạy Ngay Đi needs location access to record your route while you track a session.</string>
