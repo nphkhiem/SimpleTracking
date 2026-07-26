@@ -11,6 +11,12 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <!-- Sits above the map and hides itself once the map reports it has finished loading. -->
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/record_route_fallback"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
     <ImageButton
         android:id="@+id/record_back_button"
         android:layout_width="36dp"

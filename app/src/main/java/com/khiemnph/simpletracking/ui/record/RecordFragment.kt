@@ -17,10 +17,19 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.core.view.doOnLayout
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
@@ -42,6 +51,8 @@ import com.khiemnph.simpletracking.location.LocationSettingsChecker
 import com.khiemnph.simpletracking.location.LocationSettingsResult
 import com.khiemnph.simpletracking.permission.LocationPermissionAskTracker
 import com.khiemnph.simpletracking.permission.PermissionRationaleDialogFactory
+import com.khiemnph.simpletracking.ui.route.OfflineRouteCanvas
+import com.khiemnph.simpletracking.ui.theme.ChayNgayDiTheme
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.Locale
 import javax.inject.Inject
@@ -99,6 +110,13 @@ class RecordFragment : Fragment() {
 
     private var stopDispatched = false
     private var hasCenteredCameraOnce = false
+
+    /**
+     * How much of the fallback is hidden behind the pinned bottom sheet, so the route is fitted to
+     * the part of the screen the user can actually see. Measured rather than assumed: the sheet's
+     * height depends on font scale and on the metrics it is showing.
+     */
+    private val bottomSheetHeightDp = mutableStateOf(0.dp)
 
     /**
      * Must be registered unconditionally at construction time - before `onCreate`/`onAttach`
@@ -162,6 +180,7 @@ class RecordFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         setUpMap()
+        setUpRouteFallback()
         setUpBottomSheet()
 
         binding.recordBackButton.setOnClickListener { findNavController().popBackStack() }
@@ -203,6 +222,9 @@ class RecordFragment : Fragment() {
     internal fun bottomSheetBehavior(): BottomSheetBehavior<View> = BottomSheetBehavior.from(binding.recordBottomSheet)
 
     private fun setUpBottomSheet() {
+        binding.recordBottomSheet.doOnLayout { sheet ->
+            bottomSheetHeightDp.value = (sheet.height / resources.displayMetrics.density).dp
+        }
         bottomSheetBehavior().apply {
             // Pinned/non-dismissable: the sheet must never be swipeable away from the screen.
             isHideable = false
@@ -237,7 +259,36 @@ class RecordFragment : Fragment() {
         mapFragment = fragment
         fragment.getMapAsync { map ->
             googleMap = map
+            // Only a map that has actually finished loading may replace the fallback. Binding a
+            // GoogleMap is not evidence it can draw: offline it can be handed over and still never
+            // render a tile.
+            map.setOnMapLoadedCallback { _binding?.recordRouteFallback?.isVisible = false }
             renderRoute(viewModel.uiState.value.route)
+        }
+    }
+
+    /**
+     * Draws the route with no map under it, shown until [setUpMap]'s map reports itself loaded.
+     *
+     * This is the offline state, and it is not a rare one. The Maps renderer is a Play Services
+     * dynamic module fetched at runtime, so on a device that has never cached it and has no
+     * connection the map never initialises at all, and it does not recover when the network returns
+     * within the same instance. Starting visible rather than being swapped in on failure means
+     * there is no moment where the screen shows nothing.
+     */
+    private fun setUpRouteFallback() {
+        binding.recordRouteFallback.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                ChayNgayDiTheme {
+                    val state by viewModel.uiState.collectAsStateWithLifecycle()
+                    OfflineRouteCanvas(
+                        points = state.route,
+                        modifier = Modifier.fillMaxSize(),
+                        bottomInset = bottomSheetHeightDp.value,
+                    )
+                }
+            }
         }
     }
 
