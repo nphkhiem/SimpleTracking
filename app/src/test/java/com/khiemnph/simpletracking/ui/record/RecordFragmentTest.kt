@@ -468,6 +468,55 @@ class RecordFragmentTest {
         return generateSequence { shadowOf(appContext).nextStartedService }.filter { it.action == expectedAction }.toList()
     }
 
+    /**
+     * Offline, Play Services' own settings check fails, which surfaces as [LocationSettingsResult.Unresolvable].
+     * That says the check could not complete, not that location is unavailable, so it must not
+     * block recording: GPS is device hardware and works with no network at all.
+     */
+    @Test
+    fun givenLocationSettingsCheckCannotComplete_whenStartingNewSession_thenSessionStillStarts() {
+        setLocationPermissionGranted(true)
+        fakeLocationSettingsChecker.result = LocationSettingsResult.Unresolvable
+        val appContext = ApplicationProvider.getApplicationContext<Application>()
+
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            idleMainLooper()
+
+            scenario.onActivity { activity -> navigateToNewRecordSession(activity) }
+            idleMainLooper()
+        }
+
+        assertNotNull(
+            "A failed settings check must not stop a session from starting",
+            generateSequence { shadowOf(appContext).nextStartedService }
+                .firstOrNull { it.action == TrackingService.startIntent(appContext, sessionId).action },
+        )
+    }
+
+    /**
+     * The same distinction mid-session, where getting it wrong is worse: a network blip that makes
+     * the check fail would otherwise silently pause a run that is recording perfectly well.
+     */
+    @Test
+    fun givenLocationSettingsCheckCannotComplete_whenProvidersChangedBroadcastReceived_thenSessionIsNotPaused() {
+        seedActiveSession()
+        fakeLocationSettingsChecker.result = LocationSettingsResult.Unresolvable
+        val appContext = ApplicationProvider.getApplicationContext<Application>()
+
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            idleMainLooper()
+
+            scenario.onActivity { appContext.sendBroadcast(Intent(LocationManager.PROVIDERS_CHANGED_ACTION)) }
+            idleMainLooper()
+        }
+
+        assertEquals(
+            "A settings check that could not complete must not pause a running session",
+            0,
+            pauseIntentsSentToTrackingService(appContext).size,
+        )
+    }
+
     @Test
     fun givenLocationServiceBecomesUnsatisfiedWhileSessionRunning_whenProvidersChangedBroadcastReceived_thenPauseIntentSentToTrackingService() {
         seedActiveSession()
