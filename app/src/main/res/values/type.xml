@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+  The M3 type scale, wired into the theme's textAppearance* attributes. The layouts still set
+  inline sp literals; they stop doing that as each screen is rebuilt, and from then on a layout
+  should set android:textAppearance="?attr/textAppearanceX" rather than android:textSize.
+
+  The oversized Metric.* styles for the Record readout and the large numerals are not here yet:
+  nothing references them until those screens are rebuilt, so they land with them.
+
+  ── TYPEFACE ─────────────────────────────────────────────────────────────────────────────────────
+  Every style below declares the family, currently the platform sans-serif (Roboto), which is the
+  zero-cost option and ships today.
+
+  To adopt Inter (the brief's recommendation), drop Inter into res/font/ and change the fontFamily
+  items below. Nothing else changes.
+
+  Hard constraint for any candidate typeface: FULL VIETNAMESE COVERAGE. The app is named
+  "Chạy Ngay Đi" and its copy is Vietnamese, so the family must render ạ ẹ ị ọ ụ ỵ đ ơ ư ề ế ộ ậ
+  correctly - stacked diacritics, not just Latin Extended-A. Inter and Roboto both do. Many
+  fashionable display faces do not; verify before committing.
+
+  ── TABULAR FIGURES ──────────────────────────────────────────────────────────────────────────────
+  Every live or comparative number uses fontFeatureSettings="tnum". Without it, proportional digits
+  make the running timer visibly jitter as digits change width, and metric columns fail to align.
+  This is the single highest-value typographic detail in a tracking app.
+-->
+<resources>
+
+    <!-- ============================================================
+         DISPLAY · editorial hero type. Negative tracking is what makes
+         large type read as designed rather than merely big.
+         ============================================================ -->
+    <style name="TextAppearance.ChayNgayDi.DisplayLarge" parent="TextAppearance.Material3.DisplayLarge">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:textSize">57sp</item>
+        <item name="lineHeight">64sp</item>
+        <item name="android:letterSpacing">-0.025</item>
+    </style>
+
+    <style name="TextAppearance.ChayNgayDi.DisplayMedium" parent="TextAppearance.Material3.DisplayMedium">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:textSize">45sp</item>
+        <item name="lineHeight">52sp</item>
+        <item name="android:letterSpacing">-0.02</item>
+    </style>
+
+    <style name="TextAppearance.ChayNgayDi.DisplaySmall" parent="TextAppearance.Material3.DisplaySmall">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:textSize">36sp</item>
+        <item name="lineHeight">44sp</item>
+        <item name="android:letterSpacing">-0.015</item>
+    </style>
+
+    <!-- ============================================================
+         HEADLINE
+         ============================================================ -->
+    <style name="TextAppearance.ChayNgayDi.HeadlineLarge" parent="TextAppearance.Material3.HeadlineLarge">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:textSize">32sp</item>
+        <item name="lineHeight">40sp</item>
+        <item name="android:letterSpacing">-0.015</item>
+    </style>
+
+    <style name="TextAppearance.ChayNgayDi.HeadlineMedium" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:textSize">28sp</item>
+        <item name="lineHeight">36sp</item>
+        <item name="android:letterSpacing">-0.01</item>
+    </style>
+
+    <style name="TextAppearance.ChayNgayDi.HeadlineSmall" parent="TextAppearance.Material3.HeadlineSmall">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:textSize">24sp</item>
+        <item name="lineHeight">32sp</item>
+        <item name="android:letterSpacing">-0.005</item>
+    </style>
+
+    <!-- ============================================================
+         TITLE
+         ============================================================ -->
+    <style name="TextAppearance.ChayNgayDi.TitleLarge" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">22sp</item>
+        <item name="lineHeight">28sp</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <style name="TextAppearance.ChayNgayDi.TitleMedium" parent="TextAppearance.Material3.TitleMedium">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">16sp</item>
+        <item name="lineHeight">24sp</item>
+        <item name="android:letterSpacing">0.009</item>
+    </style>
+
+    <!-- ============================================================
+         BODY · 16sp minimum for primary reading text
+         ============================================================ -->
+    <style name="TextAppearance.ChayNgayDi.BodyLarge" parent="TextAppearance.Material3.BodyLarge">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:textSize">16sp</item>
+        <item name="lineHeight">24sp</item>
+        <item name="android:letterSpacing">0.009</item>
+    </style>
+
+    <style name="TextAppearance.ChayNgayDi.BodyMedium" parent="TextAppearance.Material3.BodyMedium">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="fontFamily">sans-serif</item>
+        <item name="android:textSize">14sp</item>
+        <item name="lineHeight">20sp</item>
+        <item name="android:letterSpacing">0.017</item>
+    </style>
+
+    <!-- ============================================================
+         LABEL
+         ============================================================ -->
+    <style name="TextAppearance.ChayNgayDi.LabelLarge" parent="TextAppearance.Material3.LabelLarge">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">14sp</item>
+        <item name="lineHeight">20sp</item>
+        <item name="android:letterSpacing">0.007</item>
+    </style>
+
+    <style name="TextAppearance.ChayNgayDi.LabelMedium" parent="TextAppearance.Material3.LabelMedium">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">12sp</item>
+        <item name="lineHeight">16sp</item>
+        <item name="android:letterSpacing">0.04</item>
+    </style>
+
+    <style name="TextAppearance.ChayNgayDi.LabelSmall" parent="TextAppearance.Material3.LabelSmall">
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">11sp</item>
+        <item name="lineHeight">16sp</item>
+        <item name="android:letterSpacing">0.04</item>
+    </style>
+
+    <!-- ============================================================
+         METRIC · the app's signature type. Tabular figures, tight
+         tracking, used for every number the user actually reads.
+         These are the "Instrument" half of Editorial Instrument.
+         ============================================================ -->
+
+</resources>

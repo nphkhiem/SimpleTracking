@@ -21,7 +21,7 @@ import org.robolectric.annotation.Config
 @Config(sdk = [33])
 class PermissionRationaleDialogFactoryTest {
 
-    private val context = ContextThemeWrapper(ApplicationProvider.getApplicationContext<Context>(), R.style.AppTheme)
+    private val context = ContextThemeWrapper(ApplicationProvider.getApplicationContext<Context>(), R.style.Theme_ChayNgayDi)
     private val factory = PermissionRationaleDialogFactory()
 
     private fun idleMainLooper() = shadowOf(Looper.getMainLooper()).idle()

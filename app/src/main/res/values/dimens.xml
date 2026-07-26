@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Corner radii, referenced by the shape appearances in themes.xml.
+
+  The spacing scale these were generated alongside is deliberately not here yet: no layout consumes
+  it until the screens are rebuilt, and shipping an unreferenced scale now would be dead resources.
+  It lands with the screens that use it.
+-->
+<resources>
+    <dimen name="corner_xs">8dp</dimen>
+    <dimen name="corner_sm">12dp</dimen>
+    <dimen name="corner_md">16dp</dimen>
+    <dimen name="corner_lg">24dp</dimen>
+    <dimen name="corner_xl">28dp</dimen>
+</resources>

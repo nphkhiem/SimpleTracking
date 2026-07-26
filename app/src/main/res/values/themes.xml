@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+  Replaces Theme.AppCompat.Light.DarkActionBar with Material 3 DayNight + NoActionBar. Three things
+  change at once, and all three are required:
+
+    1. Material3  - unlocks the M3 component set already on the classpath (material 1.14.0) and the
+                    full set of semantic colour roles.
+    2. DayNight   - makes values-night/themes.xml actually resolve. This is what today's theme is
+                    missing and why dark mode is broken rather than merely absent.
+    3. NoActionBar - removes the #6200EE purple bar that is currently the most prominent element on
+                    every screen. Each destination owns its own top app bar (or none, on Record).
+
+  AndroidManifest.xml must change android:theme="@style/AppTheme" -> "@style/Theme.ChayNgayDi".
+-->
+<resources>
+
+    <style name="Theme.ChayNgayDi" parent="Theme.Material3.DayNight.NoActionBar">
+
+        <!-- ===== Primary ===== -->
+        <item name="colorPrimary">@color/ref_clay_40</item>
+        <item name="colorOnPrimary">@color/ref_clay_100</item>
+        <item name="colorPrimaryContainer">@color/ref_clay_90</item>
+        <item name="colorOnPrimaryContainer">@color/ref_clay_10</item>
+        <item name="colorPrimaryInverse">@color/ref_clay_80</item>
+
+        <!-- ===== Secondary ===== -->
+        <item name="colorSecondary">@color/ref_secondary_40</item>
+        <item name="colorOnSecondary">@color/ref_clay_100</item>
+        <item name="colorSecondaryContainer">@color/ref_secondary_90</item>
+        <item name="colorOnSecondaryContainer">@color/ref_secondary_10</item>
+
+        <!-- ===== Tertiary · the PAUSED state ===== -->
+        <item name="colorTertiary">@color/ref_tertiary_40</item>
+        <item name="colorOnTertiary">@color/ref_clay_100</item>
+        <item name="colorTertiaryContainer">@color/ref_tertiary_90</item>
+        <item name="colorOnTertiaryContainer">@color/ref_tertiary_10</item>
+
+        <!-- ===== Error ===== -->
+        <item name="colorError">@color/ref_error_40</item>
+        <item name="colorOnError">@color/ref_clay_100</item>
+        <item name="colorErrorContainer">@color/ref_error_90</item>
+        <item name="colorOnErrorContainer">@color/ref_error_10</item>
+
+        <!-- ===== Surfaces ===== -->
+        <item name="android:colorBackground">@color/ref_neutral_98</item>
+        <item name="colorOnBackground">@color/ref_neutral_10</item>
+        <item name="colorSurface">@color/ref_neutral_98</item>
+        <item name="colorOnSurface">@color/ref_neutral_10</item>
+        <item name="colorSurfaceVariant">@color/ref_neutral_variant_90</item>
+        <item name="colorOnSurfaceVariant">@color/ref_neutral_variant_30</item>
+        <item name="colorSurfaceInverse">@color/ref_neutral_20</item>
+        <item name="colorOnSurfaceInverse">@color/ref_neutral_95</item>
+
+        <!-- Tonal container ladder. Replaces elevation-shadow stacking: surfaces are separated by
+             tone and space, per the Editorial philosophy - no cards floating on grey. -->
+        <item name="colorSurfaceContainerLowest">@color/ref_neutral_100</item>
+        <item name="colorSurfaceContainerLow">@color/ref_neutral_96</item>
+        <item name="colorSurfaceContainer">@color/ref_neutral_94</item>
+        <item name="colorSurfaceContainerHigh">@color/ref_neutral_92</item>
+        <item name="colorSurfaceContainerHighest">@color/ref_neutral_90</item>
+        <item name="colorSurfaceDim">@color/ref_neutral_87</item>
+        <item name="colorSurfaceBright">@color/ref_neutral_98</item>
+
+        <!-- ===== Outline ===== -->
+        <item name="colorOutline">@color/ref_neutral_variant_50</item>
+        <item name="colorOutlineVariant">@color/ref_neutral_variant_80</item>
+        <item name="android:colorControlHighlight">#1F211C19</item>
+
+        <!-- ===== System bars · edge-to-edge =====
+             The app draws behind both bars and consumes insets per-screen. Record in particular is
+             a full-bleed map and must not be cropped by chrome, which is exactly what the current
+             action bar does to it. -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="android:enforceStatusBarContrast">false</item>
+
+        <!-- ===== Shape ===== -->
+        <item name="shapeAppearanceCornerExtraSmall">@style/Shape.ChayNgayDi.ExtraSmall</item>
+        <item name="shapeAppearanceCornerSmall">@style/Shape.ChayNgayDi.Small</item>
+        <item name="shapeAppearanceCornerMedium">@style/Shape.ChayNgayDi.Medium</item>
+        <item name="shapeAppearanceCornerLarge">@style/Shape.ChayNgayDi.Large</item>
+        <item name="shapeAppearanceCornerExtraLarge">@style/Shape.ChayNgayDi.ExtraLarge</item>
+
+        <!-- ===== Typography ===== -->
+        <item name="textAppearanceDisplayLarge">@style/TextAppearance.ChayNgayDi.DisplayLarge</item>
+        <item name="textAppearanceDisplayMedium">@style/TextAppearance.ChayNgayDi.DisplayMedium</item>
+        <item name="textAppearanceDisplaySmall">@style/TextAppearance.ChayNgayDi.DisplaySmall</item>
+        <item name="textAppearanceHeadlineLarge">@style/TextAppearance.ChayNgayDi.HeadlineLarge</item>
+        <item name="textAppearanceHeadlineMedium">@style/TextAppearance.ChayNgayDi.HeadlineMedium</item>
+        <item name="textAppearanceHeadlineSmall">@style/TextAppearance.ChayNgayDi.HeadlineSmall</item>
+        <item name="textAppearanceTitleLarge">@style/TextAppearance.ChayNgayDi.TitleLarge</item>
+        <item name="textAppearanceTitleMedium">@style/TextAppearance.ChayNgayDi.TitleMedium</item>
+        <item name="textAppearanceBodyLarge">@style/TextAppearance.ChayNgayDi.BodyLarge</item>
+        <item name="textAppearanceBodyMedium">@style/TextAppearance.ChayNgayDi.BodyMedium</item>
+        <item name="textAppearanceLabelLarge">@style/TextAppearance.ChayNgayDi.LabelLarge</item>
+        <item name="textAppearanceLabelMedium">@style/TextAppearance.ChayNgayDi.LabelMedium</item>
+        <item name="textAppearanceLabelSmall">@style/TextAppearance.ChayNgayDi.LabelSmall</item>
+
+    </style>
+
+    <!-- ===== Shape appearances =====
+         Softer than M3 defaults at the large end. The 28dp sheet corner and the fully-rounded FAB
+         are what carry the "warm, not clinical" feel at a glance. -->
+    <style name="Shape.ChayNgayDi.ExtraSmall" parent="ShapeAppearance.Material3.Corner.ExtraSmall">
+        <item name="cornerSize">@dimen/corner_xs</item>
+    </style>
+    <style name="Shape.ChayNgayDi.Small" parent="ShapeAppearance.Material3.Corner.Small">
+        <item name="cornerSize">@dimen/corner_sm</item>
+    </style>
+    <style name="Shape.ChayNgayDi.Medium" parent="ShapeAppearance.Material3.Corner.Medium">
+        <item name="cornerSize">@dimen/corner_md</item>
+    </style>
+    <style name="Shape.ChayNgayDi.Large" parent="ShapeAppearance.Material3.Corner.Large">
+        <item name="cornerSize">@dimen/corner_lg</item>
+    </style>
+    <style name="Shape.ChayNgayDi.ExtraLarge" parent="ShapeAppearance.Material3.Corner.ExtraLarge">
+        <item name="cornerSize">@dimen/corner_xl</item>
+    </style>
+
+</resources>
