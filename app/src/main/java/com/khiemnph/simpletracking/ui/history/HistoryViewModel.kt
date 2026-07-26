@@ -9,6 +9,7 @@ import com.khiemnph.domain.model.SessionSummary
 import com.khiemnph.domain.util.RoutePolyline
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -65,7 +66,7 @@ class HistoryViewModel @Inject constructor(
     private val pendingDeletions = MutableStateFlow<Set<String>>(emptySet())
     private val deletionJobs = mutableMapOf<String, Job>()
 
-    private var latestSummaries: List<HistorySummaryUiModel> = emptyList()
+    private var latestSummaries: List<SessionSummary> = emptyList()
 
     /**
      * Swipe hides the row and starts the clock. If the ViewModel is cleared before it elapses the
@@ -94,7 +95,16 @@ class HistoryViewModel @Inject constructor(
 
     private fun publish() {
         val visible = latestSummaries.filterNot { it.id in pendingDeletions.value }
-        _uiState.value = if (visible.isEmpty()) HistoryUiState.Empty else HistoryUiState.Sessions(visible)
+        _uiState.value = if (visible.isEmpty()) {
+            HistoryUiState.Empty
+        } else {
+            val zone = ZoneId.systemDefault()
+            val today = LocalDate.now(zone)
+            HistoryUiState.Sessions(
+                week = HistoryGrouping.weekFor(visible, today, zone),
+                groups = HistoryGrouping.groupsFor(visible, today, zone),
+            )
+        }
     }
 
     init {
@@ -105,7 +115,7 @@ class HistoryViewModel @Inject constructor(
                 // malformed row is the realistic trigger, via toSummary()'s requireNotNull checks.
                 .catch { throwable -> Log.e(TAG, "Session history stopped updating", throwable) }
                 .collect { summaries ->
-                    latestSummaries = summaries.map { it.toHistorySummaryUiModel() }
+                    latestSummaries = summaries
                     publish()
                 }
         }

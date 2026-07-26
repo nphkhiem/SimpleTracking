@@ -39,12 +39,23 @@ class HistoryScreenTest {
         routePoints = emptyList(),
     )
 
+    private val week = WeekSummaryUiModel(
+        distanceLabel = "12.50 km",
+        runCountLabel = "3 runs",
+        durationLabel = "1:12:00",
+        dailyDistanceFractions = listOf(0f, 0.4f, 0f, 1f, 0f, 0.6f, 0.2f),
+    )
+
     private fun setScreen(
         sessions: List<HistorySummaryUiModel>,
         onRecordClick: () -> Unit = {},
         onSessionSwipedAway: (String) -> Unit = {},
     ) = setState(
-        state = if (sessions.isEmpty()) HistoryUiState.Empty else HistoryUiState.Sessions(sessions),
+        state = if (sessions.isEmpty()) {
+            HistoryUiState.Empty
+        } else {
+            HistoryUiState.Sessions(week, listOf(SessionGroupUiModel("Today", sessions)))
+        },
         onRecordClick = onRecordClick,
         onSessionSwipedAway = onSessionSwipedAway,
     )
@@ -91,6 +102,53 @@ class HistoryScreenTest {
     }
 
     @Test
+    fun givenSessions_whenScreenRendered_thenTheWeekSummaryIsShownAboveThem() {
+        setScreen(listOf(session("a", "5.23 km")))
+
+        composeRule.onNodeWithTag(HistoryTestTags.WEEK_SUMMARY).assertIsDisplayed()
+        composeRule.onNodeWithText("12.50 km").assertIsDisplayed()
+    }
+
+    @Test
+    fun givenSessionsAcrossTwoDays_whenScreenRendered_thenEachDayHasItsOwnHeading() {
+        setState(
+            HistoryUiState.Sessions(
+                week = week,
+                groups = listOf(
+                    SessionGroupUiModel("Today", listOf(session("a", "5.23 km"))),
+                    SessionGroupUiModel("Yesterday", listOf(session("b", "3.56 km"))),
+                ),
+            ),
+        )
+
+        composeRule.onNodeWithTag(HistoryTestTags.groupHeaderFor("Today")).assertIsDisplayed()
+        composeRule.onNodeWithTag(HistoryTestTags.groupHeaderFor("Yesterday")).assertIsDisplayed()
+    }
+
+    /** A heading already separates two days, so a rule under a group's last row would be noise. */
+    @Test
+    fun givenTwoGroupsOfOne_whenScreenRendered_thenThereAreNoDividersAtAll() {
+        setState(
+            HistoryUiState.Sessions(
+                week = week,
+                groups = listOf(
+                    SessionGroupUiModel("Today", listOf(session("a", "5.23 km"))),
+                    SessionGroupUiModel("Yesterday", listOf(session("b", "3.56 km"))),
+                ),
+            ),
+        )
+
+        composeRule.onAllNodesWithTag(HistoryTestTags.DIVIDER).assertCountEquals(0)
+    }
+
+    @Test
+    fun givenTheDatabaseHasNotAnsweredYet_whenScreenRendered_thenASkeletonHoldsTheLayout() {
+        setState(HistoryUiState.Loading)
+
+        composeRule.onNodeWithTag(HistoryTestTags.SKELETON).assertIsDisplayed()
+    }
+
+    @Test
     fun givenNoSessions_whenScreenRendered_thenTheEmptyStateExplainsWhatToDo() {
         setScreen(emptyList())
 
@@ -101,6 +159,7 @@ class HistoryScreenTest {
      * Loading must not render the empty state. Otherwise a returning user is told they have no runs
      * for the moment it takes the database to answer, which is the bug this state exists to avoid.
      */
+    /** Loading must never show the empty state: a returning user would be told they have no runs. */
     @Test
     fun givenTheDatabaseHasNotAnsweredYet_whenScreenRendered_thenNoEmptyStateIsShown() {
         setState(HistoryUiState.Loading)
