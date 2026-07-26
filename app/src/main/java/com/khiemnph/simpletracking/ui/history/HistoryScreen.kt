@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
@@ -42,6 +43,7 @@ import com.khiemnph.simpletracking.R
 object HistoryTestTags {
     const val LIST = "history_list"
     const val RECORD_BUTTON = "history_record_button"
+    const val DIVIDER = "history_divider"
 }
 
 /**
@@ -61,7 +63,7 @@ fun HistoryScreen(
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.app_name)) },
+                title = { Text(stringResource(R.string.history_title)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
@@ -99,12 +101,19 @@ fun HistoryScreen(
                 bottom = insets.calculateBottomPadding() + 88.dp,
             ),
         ) {
-            items(sessions, key = { it.id }) { session ->
+            itemsIndexed(sessions, key = { _, session -> session.id }) { index, session ->
                 SessionRow(session)
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                )
+                // No rule after the last row: it would fence off the empty space below rather than
+                // separate two things, which is what a divider is for.
+                if (index < sessions.lastIndex) {
+                    HorizontalDivider(
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .testTag(HistoryTestTags.DIVIDER),
+                        thickness = dimensionResource(R.dimen.divider_thickness),
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                    )
+                }
             }
         }
     }

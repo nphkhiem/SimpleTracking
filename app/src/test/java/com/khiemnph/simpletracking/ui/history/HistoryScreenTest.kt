@@ -2,6 +2,8 @@ package com.khiemnph.simpletracking.ui.history
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -66,6 +68,22 @@ class HistoryScreenTest {
         setScreen(emptyList())
 
         composeRule.onNodeWithTag(HistoryTestTags.RECORD_BUTTON).assertIsDisplayed()
+    }
+
+    @Test
+    fun givenSessions_whenScreenRendered_thenDividersSeparateRowsWithNoneAfterTheLast() {
+        setScreen(listOf(session("a", "1.00 km"), session("b", "2.00 km"), session("c", "3.00 km")))
+
+        // Three rows have two gaps between them. A third divider would be fencing off empty space
+        // below the list rather than separating anything.
+        composeRule.onAllNodesWithTag(HistoryTestTags.DIVIDER).assertCountEquals(2)
+    }
+
+    @Test
+    fun givenASingleSession_whenScreenRendered_thenThereIsNoDividerAtAll() {
+        setScreen(listOf(session("only", "5.23 km")))
+
+        composeRule.onAllNodesWithTag(HistoryTestTags.DIVIDER).assertCountEquals(0)
     }
 
     /** The list must not stop at a screenful: a real history grows past what fits. */
