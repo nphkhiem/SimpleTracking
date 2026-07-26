@@ -102,6 +102,8 @@ dependencies {
     kspTest libs.hilt.compiler
     testImplementation testFixtures(project(":domain"))
 
+    androidTestImplementation platform(libs.androidx.compose.bom)
+    androidTestImplementation libs.androidx.compose.ui.test.junit4
     androidTestImplementation libs.androidx.test.ext.junit
     androidTestImplementation libs.androidx.test.rules
     androidTestImplementation libs.androidx.espresso.core
@@ -109,3 +111,8 @@ dependencies {
     androidTestImplementation testFixtures(project(":domain"))
     kspAndroidTest libs.hilt.compiler
 }
+
+// `check` compiles unit tests but not androidTest, which is how the instrumented suite silently
+// stopped compiling during the Compose migration and stayed broken without anything going red.
+// Compiling it here turns that back into a build failure.
+tasks.named('check') { dependsOn 'assembleDebugAndroidTest' }

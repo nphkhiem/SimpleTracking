@@ -10,7 +10,6 @@ import com.khiemnph.domain.interactor.ObserveActiveSessionUseCase
 import com.khiemnph.simpletracking.R
 import com.khiemnph.simpletracking.databinding.ActivityMainBinding
 import com.khiemnph.simpletracking.ui.history.HistoryFragmentDirections
-import com.khiemnph.simpletracking.util.EspressoIdlingResource
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -52,9 +51,8 @@ class MainActivity : AppCompatActivity() {
      */
     override fun onStart() {
         super.onStart()
-        EspressoIdlingResource.increment()
         lifecycleScope.launch {
-            try {
+            run {
                 // Only the use-case fetch is guarded - a navigation-guard regression must still
                 // crash loudly in tests/debug builds rather than being silently absorbed here.
                 val activeSession = try {
@@ -76,11 +74,6 @@ class MainActivity : AppCompatActivity() {
                         HistoryFragmentDirections.actionHistoryFragmentToRecordFragment(activeSession.session.id),
                     )
                 }
-            } finally {
-                // Lets androidTest's IdlingRegistry wait for this one-shot recovery check to fully
-                // resolve - the suspend fetch above genuinely crosses a background dispatcher on a
-                // real device (Room's query executor), unlike under Robolectric's idleMainLooper().
-                EspressoIdlingResource.decrement()
             }
         }
     }

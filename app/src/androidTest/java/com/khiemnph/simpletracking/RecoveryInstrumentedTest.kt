@@ -8,7 +8,9 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onIdle
 import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.IdlingRegistry
+import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
@@ -25,7 +27,7 @@ import com.khiemnph.domain.repository.SessionRepository
 import com.khiemnph.simpletracking.service.TrackingService
 import com.khiemnph.simpletracking.ui.MainActivity
 import com.khiemnph.simpletracking.ui.record.RecordFragment
-import com.khiemnph.simpletracking.util.EspressoIdlingResource
+import com.khiemnph.simpletracking.ui.history.HistoryTestTags
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -108,6 +110,9 @@ class RecoveryInstrumentedTest {
     val permissionRule: GrantPermissionRule =
         GrantPermissionRule.grant(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.POST_NOTIFICATIONS)
 
+    @get:Rule(order = 2)
+    val composeRule = createEmptyComposeRule()
+
     @Inject
     lateinit var sessionRepository: SessionRepository
 
@@ -119,7 +124,6 @@ class RecoveryInstrumentedTest {
         // no-ORDER-BY query in SessionDao.observeActiveSession/getActiveSessionId.
         ApplicationProvider.getApplicationContext<Context>().deleteDatabase(DATABASE_FILE_NAME)
         hiltRule.inject()
-        IdlingRegistry.getInstance().register(EspressoIdlingResource.countingIdlingResource)
     }
 
     @After
@@ -133,49 +137,46 @@ class RecoveryInstrumentedTest {
         ApplicationProvider.getApplicationContext<Context>()
             .stopService(Intent(ApplicationProvider.getApplicationContext(), TrackingService::class.java))
         assertTrue("Expected TrackingService.onDestroy() to finish before teardown returns", TrackingService.awaitDestroyed())
-        IdlingRegistry.getInstance().unregister(EspressoIdlingResource.countingIdlingResource)
     }
 
     @Test
     fun givenAppProcessKilledWhileSessionRunning_whenRelaunched_thenNavigatesStraightToRecordFragmentWithCorrectRunningState() {
         val sessionId = ActivityScenario.launch(MainActivity::class.java).use {
-            onView(withId(R.id.history_record_button)).perform(click())
-            onView(withId(R.id.record_paused_tag)).check(matches(not(isDisplayed())))
+            composeRule.onNodeWithTag(HistoryTestTags.RECORD_BUTTON).performClick()
+            awaitView(R.id.record_paused_tag, not(isDisplayed()))
 
-            runBlocking { requireNotNull(sessionRepository.getActiveSessionId()) }
+            awaitNotNull("the started session to be persisted") {
+                runBlocking { sessionRepository.getActiveSessionId() }
+            }
         }
         // ActivityScenario.close() (implicit via the `use` above) tears the Activity all the way
         // down - nothing from the closed scenario is reused below, only the real Room row it
         // persisted, exactly mirroring what a relaunch after a real process kill would read.
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            // ActivityScenario.onActivity {} is a raw runOnMainSync callback, not an Espresso
-            // ViewInteraction - it never consults IdlingRegistry, so it can run before MainActivity's
-            // onStart recovery coroutine (correctly instrumented via EspressoIdlingResource) has
-            // finished. Espresso.onIdle() runs the exact same IdlingRegistry synchronization
-            // ViewInteraction.perform()/check() use internally, but without matching any view, so
-            // it can't race the outgoing/incoming Activity windows during this relaunch the way an
-            // onView(withId(...)) check briefly could (confirmed empirically: that approach hit an
-            // AmbiguousViewMatcherException from a transient second nav_host_fragment window during
-            // the Activity transition). This guarantees the recovery coroutine has fully resolved
-            // before the onActivity assertion below ever runs.
-            onIdle()
-            scenario.onActivity { activity ->
-                val navHostFragment =
-                    activity.supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-                assertEquals(
-                    "Expected cold-start recovery to route straight to RecordFragment",
-                    R.id.recordFragment,
-                    navHostFragment.navController.currentDestination?.id,
-                )
-                val recordFragment = navHostFragment.childFragmentManager.primaryNavigationFragment as RecordFragment
-                assertEquals(
-                    "Expected the recovered session id to match the one persisted before relaunch",
-                    sessionId,
-                    recordFragment.args.sessionId,
-                )
+            // The recovery coroutine resolves asynchronously, so this is retried rather than run
+            // once: onActivity {} is a raw runOnMainSync callback that would otherwise happily
+            // observe the pre-recovery destination. Retrying a state read, rather than matching a
+            // view, also avoids the AmbiguousViewMatcherException a view match used to hit while
+            // the outgoing and incoming Activity windows briefly overlapped during the relaunch.
+            val recovered = awaitNotNull("cold-start recovery to route to RecordFragment") {
+                var fragment: RecordFragment? = null
+                scenario.onActivity { activity ->
+                    val navHost =
+                        activity.supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+                    if (navHost.navController.currentDestination?.id == R.id.recordFragment) {
+                        fragment = navHost.childFragmentManager.primaryNavigationFragment as? RecordFragment
+                    }
+                }
+                fragment
             }
-            onView(withId(R.id.record_paused_tag)).check(matches(not(isDisplayed())))
+
+            assertEquals(
+                "Expected the recovered session id to match the one persisted before relaunch",
+                sessionId,
+                recovered.args.sessionId,
+            )
+            awaitView(R.id.record_paused_tag, not(isDisplayed()))
         }
     }
 

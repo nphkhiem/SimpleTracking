@@ -11,7 +11,6 @@ import com.khiemnph.domain.model.ActiveSessionState
 import com.khiemnph.domain.model.SessionStatus
 import com.khiemnph.simpletracking.di.ApplicationScope
 import com.khiemnph.simpletracking.service.TrackingService
-import com.khiemnph.simpletracking.util.EspressoIdlingResource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -77,64 +76,29 @@ class RecordViewModel @Inject constructor(
      */
     fun resolveSession(existingSessionId: String?) {
         if (sessionId != null) return
-        EspressoIdlingResource.increment()
         viewModelScope.launch {
-            // reachedFirstEmission tracks whether collect's own per-emission finally below has
-            // taken over balancing this method's increment. If startSessionUseCase() or
-            // startForegroundService throws before collect ever runs - or the coroutine is
-            // cancelled while still suspended waiting for that first emission - this outer finally
-            // is the only thing left to balance it, or the increment would leak forever.
-            var reachedFirstEmission = false
-            try {
-                val id = existingSessionId ?: startSessionUseCase()
-                sessionId = id
-                ContextCompat.startForegroundService(context, TrackingService.startIntent(context, id))
-                observeActiveSessionUseCase().collect { state ->
-                    reachedFirstEmission = true
-                    try {
-                        if (state != null) updateUiState(state)
-                    } finally {
-                        // Balances this call's own increment above, plus one increment per
-                        // subsequent state-changing action (onPauseOrResumeClicked, or a test
-                        // feeding a fix straight through the fake LocationTrackingRepository) -
-                        // every mutation this app makes to the active session's state ultimately
-                        // surfaces as exactly one emission here, which is what makes Espresso's
-                        // IdlingRegistry check reliably wait until this Flow-driven UI has
-                        // actually caught up, instead of racing the async hop off
-                        // TrackingService's background dispatcher.
-                        EspressoIdlingResource.decrement()
-                    }
-                }
-            } finally {
-                if (!reachedFirstEmission) EspressoIdlingResource.decrement()
+            val id = existingSessionId ?: startSessionUseCase()
+            sessionId = id
+            ContextCompat.startForegroundService(context, TrackingService.startIntent(context, id))
+            observeActiveSessionUseCase().collect { state ->
+                if (state != null) updateUiState(state)
             }
         }
     }
 
     fun onPauseOrResumeClicked() {
         val id = sessionId ?: return
-        EspressoIdlingResource.increment()
-        try {
-            val target = pauseResumeGate.onTapped(_uiState.value.status)
-            pauseResumeTapElapsedRealtime = SystemClock.elapsedRealtime()
-            // Reflect the tap immediately. The gate keeps this showing until the write lands, so
-            // the once-per-second ticker cannot flicker it back to the pre-tap status meanwhile.
-            _uiState.value = _uiState.value.copy(status = target)
-            val intent = if (target == SessionStatus.RUNNING) {
-                TrackingService.resumeIntent(context, id)
-            } else {
-                TrackingService.pauseIntent(context, id)
-            }
-            ContextCompat.startForegroundService(context, intent)
-        } catch (e: Exception) {
-            // Not a plain `finally`: on success this increment is balanced by the state emission
-            // TrackingService's async pause/resume handling eventually produces (see
-            // resolveSession's collect above), not by this function returning. Only compensate
-            // here when startForegroundService throws before ever reaching TrackingService, since
-            // then no such emission will ever arrive to balance it.
-            EspressoIdlingResource.decrement()
-            throw e
+        val target = pauseResumeGate.onTapped(_uiState.value.status)
+        pauseResumeTapElapsedRealtime = SystemClock.elapsedRealtime()
+        // Reflect the tap immediately. The gate keeps this showing until the write lands, so
+        // the once-per-second ticker cannot flicker it back to the pre-tap status meanwhile.
+        _uiState.value = _uiState.value.copy(status = target)
+        val intent = if (target == SessionStatus.RUNNING) {
+            TrackingService.resumeIntent(context, id)
+        } else {
+            TrackingService.pauseIntent(context, id)
         }
+        ContextCompat.startForegroundService(context, intent)
     }
 
     /**
