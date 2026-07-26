@@ -78,6 +78,7 @@ class SessionDaoTest {
             status = "PAUSED",
             pausedDurationMillis = 0L,
             pausedAtTimestamp = 1_000L,
+            pausedAtElapsedRealtimeMillis = null,
         )
 
         val updated = dao.getById("s1")
@@ -95,6 +96,7 @@ class SessionDaoTest {
             status = "PAUSED",
             pausedDurationMillis = 0L,
             pausedAtTimestamp = 1_000L,
+            pausedAtElapsedRealtimeMillis = null,
         )
 
         assertEquals(0, updated)

@@ -3,9 +3,11 @@ package com.khiemnph.data.local.db
 internal fun sessionEntity(
     id: String = "session-1",
     startTimestamp: Long = 0L,
+    startElapsedRealtimeMillis: Long? = null,
     pausedDurationMillis: Long = 0L,
     status: String = "RUNNING",
     pausedAtTimestamp: Long? = null,
+    pausedAtElapsedRealtimeMillis: Long? = null,
     stoppedTimestamp: Long? = null,
     finalDistanceMeters: Double? = null,
     finalAverageSpeedMps: Float? = null,
@@ -13,9 +15,11 @@ internal fun sessionEntity(
 ) = SessionEntity(
     id = id,
     startTimestamp = startTimestamp,
+    startElapsedRealtimeMillis = startElapsedRealtimeMillis,
     pausedDurationMillis = pausedDurationMillis,
     status = status,
     pausedAtTimestamp = pausedAtTimestamp,
+    pausedAtElapsedRealtimeMillis = pausedAtElapsedRealtimeMillis,
     stoppedTimestamp = stoppedTimestamp,
     finalDistanceMeters = finalDistanceMeters,
     finalAverageSpeedMps = finalAverageSpeedMps,
