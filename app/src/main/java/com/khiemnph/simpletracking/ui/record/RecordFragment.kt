@@ -33,6 +33,7 @@ import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.PolylineOptions
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.snackbar.Snackbar
+import com.khiemnph.domain.model.GpsSignal
 import com.khiemnph.domain.model.LatLngPoint
 import com.khiemnph.domain.model.SessionStatus
 import com.khiemnph.simpletracking.R
@@ -47,7 +48,6 @@ import javax.inject.Inject
 import kotlinx.coroutines.launch
 
 private const val METERS_PER_KILOMETER = 1_000.0
-private const val MPS_TO_KMH_FACTOR = 3.6f
 private const val SECONDS_PER_MILLIS_DIVISOR = 1_000L
 private const val SECONDS_PER_MINUTE = 60L
 private const val SECONDS_PER_HOUR = 3_600L
@@ -354,10 +354,11 @@ class RecordFragment : Fragment() {
         val isPaused = state.status == SessionStatus.PAUSED
 
         binding.recordDistanceValue.text = formatDistanceKm(state.distanceMeters)
-        binding.recordCurrentSpeedValue.text = formatSpeedKmh(state.currentSpeedMps)
+        binding.recordCurrentSpeedValue.text = formatPaceMinPerKm(state.currentSpeedMps)
         binding.recordDurationValue.text = formatDuration(state.elapsedDurationMillis)
 
         binding.recordPausedTag.visibility = if (isPaused) View.VISIBLE else View.GONE
+        renderGpsSignal(state.gpsSignal)
         binding.recordPauseResumeButton.setImageResource(if (isPaused) R.drawable.ic_play else R.drawable.ic_pause)
         binding.recordPauseResumeButton.contentDescription = getString(
             if (isPaused) R.string.record_resume_content_description else R.string.record_pause_content_description,
@@ -368,6 +369,34 @@ class RecordFragment : Fragment() {
 
     /** Clears and redraws Start/Current markers and the route polyline - simplest correct
      * approach for a route that only ever grows, at this app's scale of points per session. */
+    /**
+     * Says nothing when the signal is fine. The point of this line is the cases where the numbers
+     * above it cannot be trusted, and a permanent "GPS good" badge would train the user to stop
+     * reading it. Kept [View.INVISIBLE] rather than gone so the metrics never shift.
+     */
+    private fun renderGpsSignal(signal: GpsSignal) {
+        val message = when (signal) {
+            GpsSignal.ACQUIRING -> R.string.record_signal_acquiring
+            GpsSignal.WEAK -> R.string.record_signal_weak
+            GpsSignal.LOST -> R.string.record_signal_lost
+            GpsSignal.GOOD -> null
+        }
+        binding.recordSignalTag.apply {
+            if (message == null) {
+                visibility = View.INVISIBLE
+            } else {
+                setText(message)
+                setTextColor(
+                    ContextCompat.getColor(
+                        requireContext(),
+                        if (signal == GpsSignal.LOST) R.color.md_theme_error else R.color.record_paused_ink,
+                    ),
+                )
+                visibility = View.VISIBLE
+            }
+        }
+    }
+
     private fun renderRoute(route: List<LatLngPoint>) {
         val map = googleMap ?: return
         map.clear()
@@ -394,9 +423,6 @@ class RecordFragment : Fragment() {
 
     private fun formatDistanceKm(distanceMeters: Double): String =
         String.format(Locale.US, "%.2f", distanceMeters / METERS_PER_KILOMETER)
-
-    private fun formatSpeedKmh(speedMps: Float): String =
-        String.format(Locale.US, "%.1f", speedMps * MPS_TO_KMH_FACTOR)
 
     private fun formatDuration(durationMillis: Long): String {
         val totalSeconds = durationMillis / SECONDS_PER_MILLIS_DIVISOR

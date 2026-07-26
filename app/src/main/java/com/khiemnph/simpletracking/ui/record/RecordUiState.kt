@@ -1,5 +1,6 @@
 package com.khiemnph.simpletracking.ui.record
 
+import com.khiemnph.domain.model.GpsSignal
 import com.khiemnph.domain.model.LatLngPoint
 import com.khiemnph.domain.model.SessionStatus
 
@@ -15,4 +16,5 @@ data class RecordUiState(
     val currentSpeedMps: Float = 0f,
     val averageSpeedMps: Float = 0f,
     val route: List<LatLngPoint> = emptyList(),
+    val gpsSignal: GpsSignal = GpsSignal.ACQUIRING,
 )

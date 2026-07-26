@@ -53,6 +53,24 @@
             android:visibility="gone"
             tools:visibility="visible" />
 
+        <!--
+          Reserved space, never gone: the status line occupies a row whether or not it has anything
+          to say, so the metrics below never jump when the signal changes mid-run.
+        -->
+        <TextView
+            android:id="@+id/record_signal_tag"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="8dp"
+            android:letterSpacing="0.05"
+            android:textAllCaps="true"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:visibility="invisible"
+            tools:text="@string/record_signal_weak"
+            tools:visibility="visible" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

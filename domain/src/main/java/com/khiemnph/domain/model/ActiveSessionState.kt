@@ -7,4 +7,6 @@ data class ActiveSessionState(
     val currentSpeedMps: Float,
     val averageSpeedMps: Float,
     val route: List<LatLngPoint>,
+    /** How far the distance above can currently be trusted. */
+    val gpsSignal: GpsSignal = GpsSignal.ACQUIRING,
 )
