@@ -1,6 +1,7 @@
 package com.khiemnph.simpletracking.ui.record
 
 import android.content.Context
+import android.os.SystemClock
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -59,6 +60,10 @@ class RecordViewModel @Inject constructor(
     private val currentSpeedWindow = ArrayDeque<Float>(CURRENT_SPEED_WINDOW_SIZE)
     private var previousState: ActiveSessionState? = null
 
+    /** Holds the status the user asked for until the write confirming it comes back. */
+    private val pauseResumeGate = PauseResumeGate()
+    private var pauseResumeTapElapsedRealtime = 0L
+
     /**
      * Resolves which session this screen tracks, then starts (or re-affirms) Service collection
      * for it and begins observing its live state. Must only be called once the Fragment has
@@ -110,7 +115,12 @@ class RecordViewModel @Inject constructor(
         val id = sessionId ?: return
         EspressoIdlingResource.increment()
         try {
-            val intent = if (_uiState.value.status == SessionStatus.PAUSED) {
+            val target = pauseResumeGate.onTapped(_uiState.value.status)
+            pauseResumeTapElapsedRealtime = SystemClock.elapsedRealtime()
+            // Reflect the tap immediately. The gate keeps this showing until the write lands, so
+            // the once-per-second ticker cannot flicker it back to the pre-tap status meanwhile.
+            _uiState.value = _uiState.value.copy(status = target)
+            val intent = if (target == SessionStatus.RUNNING) {
                 TrackingService.resumeIntent(context, id)
             } else {
                 TrackingService.pauseIntent(context, id)
@@ -148,8 +158,10 @@ class RecordViewModel @Inject constructor(
         }
         previousState = state
 
+        pauseResumeGate.expireIfStale(SystemClock.elapsedRealtime() - pauseResumeTapElapsedRealtime)
+
         _uiState.value = RecordUiState(
-            status = state.session.status,
+            status = pauseResumeGate.displayStatus(state.session.status),
             distanceMeters = state.distanceMeters,
             elapsedDurationMillis = state.elapsedDurationMillis,
             currentSpeedMps = if (currentSpeedWindow.isEmpty()) 0f else currentSpeedWindow.average().toFloat(),

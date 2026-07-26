@@ -538,15 +538,17 @@ class RecordFragmentTest {
     }
 
     /**
-     * Two [LocationManager.PROVIDERS_CHANGED_ACTION] broadcasts in a row - before this Fragment's
-     * own `RUNNING`-only guard has a chance to see a real pause take effect (there is no live
-     * `TrackingService` consuming intents in this harness) - reproduce the exact race the auto-pause
-     * behaviour relies on [com.khiemnph.domain.interactor.PauseSessionUseCase]'s own idempotency
-     * (Phase 1) for, rather than a guard of its own: both broadcasts must be handled the same way,
-     * without error, each sending its own Pause intent.
+     * Two [LocationManager.PROVIDERS_CHANGED_ACTION] broadcasts in a row, with no live
+     * `TrackingService` in this harness to consume the first one's intent and flip the real status.
+     *
+     * This used to send two Pause intents and lean on [com.khiemnph.domain.interactor.PauseSessionUseCase]'s
+     * idempotency to absorb the second. [PauseResumeGate] now holds the requested status until the
+     * write lands, so the Fragment's own `RUNNING`-only guard sees the pending Pause and the second
+     * broadcast correctly sends nothing. Suppressing that redundant write is the point of the gate:
+     * it is the same duplicate-command mechanism behind the pause/stop race.
      */
     @Test
-    fun givenTwoProvidersChangedBroadcastsInARowWhileStillRunning_whenReceived_thenEachSendsAPauseIntentWithoutError() {
+    fun givenTwoProvidersChangedBroadcastsInARowWhileStillRunning_whenReceived_thenOnlyOnePauseIntentIsSent() {
         seedActiveSession()
         fakeLocationSettingsChecker.result = LocationSettingsResult.ResolutionRequired(fakeIntentSender())
         val appContext = ApplicationProvider.getApplicationContext<Application>()
@@ -560,7 +562,7 @@ class RecordFragmentTest {
             idleMainLooper()
         }
 
-        assertEquals(2, pauseIntentsSentToTrackingService(appContext).size)
+        assertEquals(1, pauseIntentsSentToTrackingService(appContext).size)
     }
 
     @Test

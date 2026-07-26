@@ -328,4 +328,45 @@ class TrackingServiceTest {
 
         assertNull(controller.get().onBind(null))
     }
+
+    @Test
+    fun givenUnrecognisedAction_whenOnStartCommandCalled_thenServiceIsNotPromotedToTheForeground() = runTest {
+        // A valid session id with an action this Service does not handle used to promote to the
+        // foreground and then fall through the dispatch, leaving a foreground service running with
+        // nothing behind it.
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val stray = Intent(context, TrackingService::class.java)
+            .setAction("com.khiemnph.simpletracking.action.NOT_A_REAL_ACTION")
+            .putExtra("com.khiemnph.simpletracking.extra.SESSION_ID", sessionId)
+        val controller = launchService(dispatcher, stray)
+        val service = controller.get()
+
+        service.onStartCommand(stray, 0, 1)
+
+        assertNull(shadowOf(service).lastForegroundNotification)
+    }
+
+    @Test
+    fun givenBlankSessionId_whenOnStartCommandCalled_thenCommandIsIgnored() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val blank = TrackingService.startIntent(context, "   ")
+        val controller = launchService(dispatcher, blank)
+        val service = controller.get()
+
+        service.onStartCommand(blank, 0, 1)
+
+        assertNull("a blank id must never reach the domain use cases", shadowOf(service).lastForegroundNotification)
+    }
+
+    @Test
+    fun givenNullIntent_whenOnStartCommandCalled_thenCommandIsIgnoredWithoutCrashing() = runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        val controller = launchService(dispatcher, TrackingService.startIntent(context, sessionId))
+        val service = controller.get()
+
+        val result = service.onStartCommand(null, 0, 1)
+
+        assertEquals(Service.START_REDELIVER_INTENT, result)
+        assertNull(shadowOf(service).lastForegroundNotification)
+    }
 }
