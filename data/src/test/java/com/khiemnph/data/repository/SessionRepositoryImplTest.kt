@@ -29,8 +29,38 @@ import org.robolectric.annotation.Config
  * background threads against `runTest`'s virtual clock. */
 private val immediateExecutor = Executor { it.run() }
 
-private class FakeClock(var currentMillis: Long = 0L) : Clock {
-    override fun nowMillis(): Long = currentMillis
+/**
+ * Two clocks that normally move together, and can be made to disagree the way real ones do.
+ *
+ * Setting [currentMillis] means ordinary time passing, so both advance. The named methods are the
+ * interesting cases: a clock correction moves the wall clock alone, and a reboot resets the
+ * monotonic clock alone.
+ */
+private class FakeClock(startMillis: Long = 0L) : Clock {
+
+    private var wall = startMillis
+    private var monotonic = startMillis
+
+    var currentMillis: Long
+        get() = wall
+        set(value) {
+            monotonic += value - wall
+            wall = value
+        }
+
+    /** An NTP correction or a user editing the date: the wall clock moves, real time does not. */
+    fun jumpWallClockBy(millis: Long) {
+        wall += millis
+    }
+
+    /** `elapsedRealtime` is measured from boot, so a reboot restarts it while the date carries on. */
+    fun reboot() {
+        monotonic = 0L
+    }
+
+    override fun nowMillis(): Long = wall
+
+    override fun elapsedRealtimeMillis(): Long = monotonic
 }
 
 @RunWith(RobolectricTestRunner::class)
@@ -314,6 +344,73 @@ class SessionRepositoryImplTest {
         assertEquals(GpsSignal.WEAK, repository.observeActiveSession().first()!!.gpsSignal)
     }
 
+    /**
+     * The BUG-10 case. An NTP correction or a user editing the date moves the wall clock backwards
+     * mid-session; the monotonic clock does not, so the timer must not follow it.
+     */
+    @Test
+    fun givenTheWallClockJumpsBackwards_whenDurationComputed_thenTheTimerFollowsTheMonotonicClock() = runTest {
+        clock.currentMillis = 100_000L
+        val sessionId = repository.startSession()
+
+        clock.currentMillis = 130_000L // 30 s of real time
+        clock.jumpWallClockBy(-3_600_000L) // and then the date is corrected back an hour
+
+        assertEquals(30_000L, repository.observeActiveSession().first()!!.elapsedDurationMillis)
+        assertEquals(sessionId, repository.getActiveSessionId())
+    }
+
+    @Test
+    fun givenTheWallClockJumpsForwards_whenDurationComputed_thenTheTimerDoesNotJumpWithIt() = runTest {
+        clock.currentMillis = 0L
+        repository.startSession()
+
+        clock.currentMillis = 10_000L // 10 s of real time
+        clock.jumpWallClockBy(3_600_000L) // and then the date jumps forward an hour
+
+        assertEquals(10_000L, repository.observeActiveSession().first()!!.elapsedDurationMillis)
+    }
+
+    @Test
+    fun givenAPauseSpanningAClockChange_whenResumed_thenOnlyTheRealPausedTimeIsDeducted() = runTest {
+        clock.currentMillis = 0L
+        val sessionId = repository.startSession()
+
+        clock.currentMillis = 10_000L
+        repository.pauseSession(sessionId)
+
+        clock.currentMillis = 15_000L // five real seconds of pause
+        clock.jumpWallClockBy(3_600_000L) // during which the date leaps an hour
+        repository.resumeSession(sessionId)
+
+        clock.currentMillis = clock.currentMillis + 5_000L // five more real seconds of running
+        // 20 s of real time, minus the 5 s actually spent paused.
+        assertEquals(15_000L, repository.observeActiveSession().first()!!.elapsedDurationMillis)
+    }
+
+    /** A reboot resets elapsedRealtime, so the monotonic reading is no longer comparable. */
+    @Test
+    fun givenARebootMidSession_whenDurationComputed_thenItFallsBackToWallClockRatherThanGoingNegative() = runTest {
+        clock.currentMillis = 1_000_000L
+        repository.startSession()
+
+        clock.reboot()
+        clock.jumpWallClockBy(60_000L) // the date kept running across the reboot
+
+        assertEquals(60_000L, repository.observeActiveSession().first()!!.elapsedDurationMillis)
+    }
+
+    @Test
+    fun givenAnyClockDisagreement_whenDurationComputed_thenItIsNeverNegative() = runTest {
+        clock.currentMillis = 1_000_000L
+        repository.startSession()
+
+        clock.reboot()
+        clock.jumpWallClockBy(-1_000_000L)
+
+        assertTrue(repository.observeActiveSession().first()!!.elapsedDurationMillis >= 0L)
+    }
+
     @Test
     fun givenStationaryJitterPoints_whenObserveActiveSession_thenDistanceExcludesDrift() = runTest {
         clock.currentMillis = 0L
@@ -402,6 +499,7 @@ class SessionRepositoryImplTest {
             status = SessionStatus.PAUSED.name,
             pausedDurationMillis = 0L,
             pausedAtTimestamp = 1_000L,
+            pausedAtElapsedRealtimeMillis = null,
         )
         clock.currentMillis = 5_000L
         val newer = repository.startSession()

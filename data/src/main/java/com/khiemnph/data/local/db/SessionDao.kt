@@ -27,7 +27,9 @@ interface SessionDao {
     @Query(
         """
         UPDATE session
-        SET status = :status, pausedDurationMillis = :pausedDurationMillis, pausedAtTimestamp = :pausedAtTimestamp
+        SET status = :status, pausedDurationMillis = :pausedDurationMillis,
+            pausedAtTimestamp = :pausedAtTimestamp,
+            pausedAtElapsedRealtimeMillis = :pausedAtElapsedRealtimeMillis
         WHERE id = :sessionId AND status = :expectedCurrentStatus
         """,
     )
@@ -37,6 +39,7 @@ interface SessionDao {
         status: String,
         pausedDurationMillis: Long,
         pausedAtTimestamp: Long?,
+        pausedAtElapsedRealtimeMillis: Long?,
     ): Int
 
     /**
@@ -49,7 +52,8 @@ interface SessionDao {
         """
         UPDATE session
         SET status = :status, stoppedTimestamp = :stoppedTimestamp, pausedDurationMillis = :pausedDurationMillis,
-            pausedAtTimestamp = NULL, finalDistanceMeters = :finalDistanceMeters,
+            pausedAtTimestamp = NULL, pausedAtElapsedRealtimeMillis = NULL,
+            finalDistanceMeters = :finalDistanceMeters,
             finalAverageSpeedMps = :finalAverageSpeedMps, routePolyline = :routePolyline
         WHERE id = :sessionId AND status != 'STOPPED'
         """,

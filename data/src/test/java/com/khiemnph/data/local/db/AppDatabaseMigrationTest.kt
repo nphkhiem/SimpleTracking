@@ -81,4 +81,45 @@ class AppDatabaseMigrationTest {
             assertTrue(cursor.getColumnIndex("routePolyline") >= 0)
         }
     }
+
+    @Test
+    fun givenASessionRecordedAtVersion2_whenMigratedTo3_thenItSurvivesWithNoMonotonicTiming() {
+        helper.createDatabase(TEST_DB, 2).use { db ->
+            db.execSQL(
+                """
+                INSERT INTO session
+                    (id, startTimestamp, pausedDurationMillis, status, pausedAtTimestamp,
+                     stoppedTimestamp, finalDistanceMeters, finalAverageSpeedMps, routePolyline)
+                VALUES ('s2', 1000, 0, 'STOPPED', NULL, 61000, 4321.0, 3.5, '2103850,10585420')
+                """.trimIndent(),
+            )
+        }
+
+        val migrated = helper.runMigrationsAndValidate(TEST_DB, 3, true, MIGRATION_2_3)
+
+        migrated.query(
+            "SELECT finalDistanceMeters, routePolyline, startElapsedRealtimeMillis FROM session",
+        ).use {
+            assertTrue("The recorded session was lost by the migration", it.moveToFirst())
+            assertEquals(4321.0, it.getDouble(0), 0.0001)
+            assertEquals("2103850,10585420", it.getString(1))
+            // elapsedRealtime is measured from boot, so there is no value that could be invented
+            // for a session recorded before the column existed. It keeps wall-clock timing.
+            assertTrue(it.isNull(2))
+        }
+    }
+
+    @Test
+    fun givenAVersion1Database_whenMigratedAllTheWayTo3_thenBothMigrationsApplyInOrder() {
+        helper.createDatabase(TEST_DB, 1).close()
+
+        val migrated = helper.runMigrationsAndValidate(TEST_DB, 3, true, MIGRATION_1_2, MIGRATION_2_3)
+
+        migrated.query("SELECT * FROM session LIMIT 0").use { cursor ->
+            assertEquals(-1, cursor.getColumnIndex("thumbnailPath"))
+            assertTrue(cursor.getColumnIndex("routePolyline") >= 0)
+            assertTrue(cursor.getColumnIndex("startElapsedRealtimeMillis") >= 0)
+            assertTrue(cursor.getColumnIndex("pausedAtElapsedRealtimeMillis") >= 0)
+        }
+    }
 }

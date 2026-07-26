@@ -25,9 +25,17 @@ import androidx.room.PrimaryKey
 data class SessionEntity(
     @PrimaryKey val id: String,
     val startTimestamp: Long,
+    /**
+     * Monotonic counterpart of [startTimestamp], for measuring duration rather than recording when.
+     * Null for sessions recorded before this existed, and meaningless after a reboot, so readers
+     * must fall back to [startTimestamp] when it is absent or incoherent.
+     */
+    val startElapsedRealtimeMillis: Long?,
     val pausedDurationMillis: Long,
     val status: String,
     val pausedAtTimestamp: Long?,
+    /** Monotonic counterpart of [pausedAtTimestamp], on the same terms. */
+    val pausedAtElapsedRealtimeMillis: Long?,
     val stoppedTimestamp: Long?,
     val finalDistanceMeters: Double?,
     val finalAverageSpeedMps: Float?,

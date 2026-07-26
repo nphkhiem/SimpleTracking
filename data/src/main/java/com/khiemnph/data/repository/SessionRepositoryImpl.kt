@@ -65,9 +65,11 @@ class SessionRepositoryImpl @Inject constructor(
             SessionEntity(
                 id = id,
                 startTimestamp = clock.nowMillis(),
+                startElapsedRealtimeMillis = clock.elapsedRealtimeMillis(),
                 pausedDurationMillis = 0L,
                 status = SessionStatus.RUNNING.name,
                 pausedAtTimestamp = null,
+                pausedAtElapsedRealtimeMillis = null,
                 stoppedTimestamp = null,
                 finalDistanceMeters = null,
                 finalAverageSpeedMps = null,
@@ -85,20 +87,21 @@ class SessionRepositoryImpl @Inject constructor(
             status = SessionStatus.PAUSED.name,
             pausedDurationMillis = current.pausedDurationMillis,
             pausedAtTimestamp = clock.nowMillis(),
+            pausedAtElapsedRealtimeMillis = clock.elapsedRealtimeMillis(),
         )
         Unit
     }
 
     override suspend fun resumeSession(sessionId: String) = sessionWriteMutex.withLock {
         val current = sessionDao.getById(sessionId) ?: return@withLock
-        val pausedAt = current.pausedAtTimestamp
-        val additionalPausedMillis = if (pausedAt != null) clock.nowMillis() - pausedAt else 0L
+        val additionalPausedMillis = pausedIntervalMillis(current, clock.nowMillis(), clock.elapsedRealtimeMillis())
         sessionDao.updateStatusIfCurrent(
             sessionId = sessionId,
             expectedCurrentStatus = SessionStatus.PAUSED.name,
             status = SessionStatus.RUNNING.name,
             pausedDurationMillis = current.pausedDurationMillis + additionalPausedMillis,
             pausedAtTimestamp = null,
+            pausedAtElapsedRealtimeMillis = null,
         )
         Unit
     }
@@ -193,14 +196,48 @@ class SessionRepositoryImpl @Inject constructor(
         if (durationMillis <= 0L) 0f else (distanceMeters / (durationMillis / 1_000.0)).toFloat()
 
     /**
+     * How long an interval has really lasted, preferring the clock that cannot jump.
+     *
+     * [monotonicStart] is used when it is present and coherent. It is absent for sessions recorded
+     * before the monotonic columns existed, and it is incoherent after a reboot, because
+     * `elapsedRealtime` restarts from zero and so reads as earlier than a start captured before the
+     * reboot. In both cases wall-clock time is the only measurement available and is used instead.
+     *
+     * The result is floored at zero either way. A backwards clock change would otherwise produce a
+     * negative duration, which the timer used to render as text like `-0:-15`.
+     */
+    private fun intervalMillis(
+        wallStart: Long,
+        wallNow: Long,
+        monotonicStart: Long?,
+        monotonicNow: Long,
+    ): Long {
+        val monotonic = monotonicStart?.takeIf { monotonicNow >= it }?.let { monotonicNow - it }
+        return (monotonic ?: (wallNow - wallStart)).coerceAtLeast(0L)
+    }
+
+    /** The in-progress paused interval, or zero when the session is not paused. */
+    private fun pausedIntervalMillis(entity: SessionEntity, wallNow: Long, monotonicNow: Long): Long {
+        val pausedAt = entity.pausedAtTimestamp ?: return 0L
+        return intervalMillis(pausedAt, wallNow, entity.pausedAtElapsedRealtimeMillis, monotonicNow)
+    }
+
+    /**
      * Elapsed session duration as of [now]: wall-clock time since start, minus all completed
      * paused intervals ([SessionEntity.pausedDurationMillis]), minus the in-progress paused
      * interval if the session is currently [SessionStatus.PAUSED] (from [SessionEntity.pausedAtTimestamp]
      * up to [now]). Without this last term, a session sitting paused would keep accruing elapsed
      * time as if it were still running.
      */
-    private fun elapsedMillis(entity: SessionEntity, now: Long): Long =
-        now - entity.startTimestamp - finalPausedDurationMillis(entity, now)
+    private fun elapsedMillis(entity: SessionEntity, now: Long): Long {
+        val sinceStart = intervalMillis(
+            wallStart = entity.startTimestamp,
+            wallNow = now,
+            monotonicStart = entity.startElapsedRealtimeMillis,
+            monotonicNow = clock.elapsedRealtimeMillis(),
+        )
+        return (sinceStart - finalPausedDurationMillis(entity, now)).coerceAtLeast(0L)
+    }
 
     /**
      * Total paused time across the whole session as of [now]: all completed paused intervals
@@ -210,8 +247,8 @@ class SessionRepositoryImpl @Inject constructor(
      * stopped row (e.g. via `toSummary()`) doesn't need its own paused-state branch.
      */
     private fun finalPausedDurationMillis(entity: SessionEntity, now: Long): Long {
-        val ongoingPauseMillis = if (entity.status == SessionStatus.PAUSED.name && entity.pausedAtTimestamp != null) {
-            now - entity.pausedAtTimestamp
+        val ongoingPauseMillis = if (entity.status == SessionStatus.PAUSED.name) {
+            pausedIntervalMillis(entity, now, clock.elapsedRealtimeMillis())
         } else {
             0L
         }

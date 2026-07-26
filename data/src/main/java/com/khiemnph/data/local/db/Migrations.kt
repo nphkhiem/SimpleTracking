@@ -57,3 +57,24 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
         db.execSQL("ALTER TABLE session_new RENAME TO session")
     }
 }
+
+/**
+ * 2 to 3: the session clock becomes monotonic.
+ *
+ * Durations were derived entirely from `System.currentTimeMillis`, which is the wrong clock for
+ * measuring elapsed time: it moves when an NTP correction lands or a user edits the date, and it
+ * can move backwards, which rendered the running timer as text like `-0:-15`. Two nullable
+ * `elapsedRealtime` columns are added so a session can be timed with a clock that only moves
+ * forward.
+ *
+ * Both are nullable and left null here rather than backfilled. `elapsedRealtime` is measured from
+ * boot, so there is no value that could be invented for a session recorded before this column
+ * existed. Those sessions keep using wall-clock timing, which is exactly what they were recorded
+ * with, and new sessions get the monotonic treatment.
+ */
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE session ADD COLUMN startElapsedRealtimeMillis INTEGER")
+        db.execSQL("ALTER TABLE session ADD COLUMN pausedAtElapsedRealtimeMillis INTEGER")
+    }
+}
