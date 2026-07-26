@@ -1,9 +1,8 @@
-package com.khiemnph.simpletracking.location
+package com.khiemnph.data.location
 
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.location.SettingsClient
-import com.khiemnph.data.location.buildTrackingLocationRequest
 import java.util.concurrent.Executor
 import javax.inject.Inject
 import kotlin.coroutines.resume

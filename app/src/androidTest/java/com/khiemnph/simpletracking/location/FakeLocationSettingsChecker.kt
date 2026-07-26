@@ -1,5 +1,8 @@
 package com.khiemnph.simpletracking.location
 
+import com.khiemnph.data.location.LocationSettingsChecker
+import com.khiemnph.data.location.LocationSettingsResult
+
 /**
  * Test-only [LocationSettingsChecker] whose [check] result a test configures directly, instead of
  * orchestrating real Play Services Task callbacks through a real device's Location Service state.

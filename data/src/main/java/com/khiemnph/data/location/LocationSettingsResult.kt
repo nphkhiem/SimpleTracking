@@ -1,4 +1,4 @@
-package com.khiemnph.simpletracking.location
+package com.khiemnph.data.location
 
 import android.content.IntentSender
 

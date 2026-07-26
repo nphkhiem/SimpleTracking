@@ -50,7 +50,7 @@ private const val LOCATION_UPDATE_INTERVAL_MILLIS = 2_000L
  * check reflects what will actually be requested, rather than an independently-maintained
  * approximation of it.
  */
-fun buildTrackingLocationRequest(): LocationRequest = LocationRequest.Builder(LOCATION_UPDATE_INTERVAL_MILLIS)
+internal fun buildTrackingLocationRequest(): LocationRequest = LocationRequest.Builder(LOCATION_UPDATE_INTERVAL_MILLIS)
     .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
     .build()
 

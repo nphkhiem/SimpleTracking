@@ -51,7 +51,10 @@ android {
 }
 
 dependencies {
-    api project(":data")
+    // implementation, not api: nothing consumes :app, and api let :app lean on :data
+    // and :domain transitively instead of declaring what it actually uses.
+    implementation project(":domain")
+    implementation project(":data")
     implementation libs.androidx.core.ktx
     implementation libs.kotlinx.coroutines.android
 
