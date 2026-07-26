@@ -3,6 +3,7 @@ package com.khiemnph.simpletracking.ui.history
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.khiemnph.domain.interactor.DeleteSessionUseCase
 import com.khiemnph.domain.interactor.ObserveSessionHistoryUseCase
 import com.khiemnph.domain.model.SessionSummary
 import com.khiemnph.domain.util.RoutePolyline
@@ -16,6 +17,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private const val METERS_PER_KILOMETER = 1_000.0
@@ -41,13 +44,58 @@ private val RECORDED_AT_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPatte
  */
 private const val TAG = "HistoryViewModel"
 
+/** Long enough to read the snackbar and reach for Undo, short enough not to feel unfinished. */
+private const val UNDO_WINDOW_MILLIS = 5_000L
+
 @HiltViewModel
 class HistoryViewModel @Inject constructor(
     observeSessionHistoryUseCase: ObserveSessionHistoryUseCase,
+    private val deleteSessionUseCase: DeleteSessionUseCase,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<List<HistorySummaryUiModel>>(emptyList())
-    val uiState: StateFlow<List<HistorySummaryUiModel>> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow<HistoryUiState>(HistoryUiState.Loading)
+    val uiState: StateFlow<HistoryUiState> = _uiState.asStateFlow()
+
+    /**
+     * Sessions the user has swiped away but whose deletion has not been committed yet, so Undo can
+     * still take it back. Held here rather than deleting immediately and re-inserting on undo: a
+     * session's GPS points cannot be recreated once they are gone, so the safe direction is to
+     * hide first and delete last.
+     */
+    private val pendingDeletions = MutableStateFlow<Set<String>>(emptySet())
+    private val deletionJobs = mutableMapOf<String, Job>()
+
+    private var latestSummaries: List<HistorySummaryUiModel> = emptyList()
+
+    /**
+     * Swipe hides the row and starts the clock. If the ViewModel is cleared before it elapses the
+     * delete simply never happens and the session reappears, which is the right way for this to
+     * fail: nothing recorded is lost by a navigation.
+     */
+    fun onSessionSwipedAway(sessionId: String) {
+        pendingDeletions.value += sessionId
+        publish()
+        deletionJobs[sessionId]?.cancel()
+        deletionJobs[sessionId] = viewModelScope.launch {
+            delay(UNDO_WINDOW_MILLIS)
+            runCatching { deleteSessionUseCase(sessionId) }
+                .onFailure { Log.e(TAG, "Could not delete session $sessionId", it) }
+            pendingDeletions.value -= sessionId
+            deletionJobs.remove(sessionId)
+            publish()
+        }
+    }
+
+    fun onUndoDelete(sessionId: String) {
+        deletionJobs.remove(sessionId)?.cancel()
+        pendingDeletions.value -= sessionId
+        publish()
+    }
+
+    private fun publish() {
+        val visible = latestSummaries.filterNot { it.id in pendingDeletions.value }
+        _uiState.value = if (visible.isEmpty()) HistoryUiState.Empty else HistoryUiState.Sessions(visible)
+    }
 
     init {
         viewModelScope.launch {
@@ -57,7 +105,8 @@ class HistoryViewModel @Inject constructor(
                 // malformed row is the realistic trigger, via toSummary()'s requireNotNull checks.
                 .catch { throwable -> Log.e(TAG, "Session history stopped updating", throwable) }
                 .collect { summaries ->
-                    _uiState.value = summaries.map { it.toHistorySummaryUiModel() }
+                    latestSummaries = summaries.map { it.toHistorySummaryUiModel() }
+                    publish()
                 }
         }
     }

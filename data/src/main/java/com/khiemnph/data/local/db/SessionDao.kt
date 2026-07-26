@@ -73,6 +73,14 @@ interface SessionDao {
     @Query("SELECT * FROM session WHERE status = 'STOPPED' ORDER BY stoppedTimestamp DESC")
     fun observeSummaries(): Flow<List<SessionEntity>>
 
+    /**
+     * The session's recorded points go with it: `location_point` declares
+     * `onDelete = CASCADE` and Room enables `PRAGMA foreign_keys`, so SQLite removes them. Deleting
+     * the row alone would leave thousands of orphaned GPS rows per session.
+     */
+    @Query("DELETE FROM session WHERE id = :sessionId")
+    suspend fun deleteById(sessionId: String)
+
     @Query("SELECT id FROM session WHERE status != 'STOPPED' ORDER BY startTimestamp DESC LIMIT 1")
     suspend fun getActiveSessionId(): String?
 }

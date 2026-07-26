@@ -1,5 +1,6 @@
 package com.khiemnph.simpletracking.di
 
+import com.khiemnph.domain.interactor.DeleteSessionUseCase
 import com.khiemnph.domain.interactor.ObserveActiveSessionUseCase
 import com.khiemnph.domain.interactor.ObserveSessionHistoryUseCase
 import com.khiemnph.domain.interactor.PauseSessionUseCase
@@ -38,6 +39,12 @@ import javax.inject.Singleton
 @Module
 @TestInstallIn(components = [SingletonComponent::class], replaces = [UseCaseModule::class])
 object TestUseCaseModule {
+
+    /** Real, not a mock: the History tests assert that a deleted session actually leaves the list. */
+    @Provides
+    @Singleton
+    fun provideDeleteSessionUseCase(sessionRepository: SessionRepository): DeleteSessionUseCase =
+        DeleteSessionUseCase(sessionRepository)
 
     @Provides
     @Singleton

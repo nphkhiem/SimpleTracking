@@ -209,6 +209,66 @@ class SessionRepositoryImplTest {
     }
 
     @Test
+    fun givenAStoppedSession_whenDeleted_thenItLeavesTheHistory() = runTest {
+        clock.currentMillis = 0L
+        val sessionId = repository.startSession()
+        clock.currentMillis = 10_000L
+        repository.stopSession(sessionId, finalDistanceMeters = 500.0, routePolyline = null)
+
+        repository.deleteSession(sessionId)
+
+        assertTrue(repository.observeSessionSummaries().first().isEmpty())
+    }
+
+    /**
+     * The whole point of deleting a junk session is reclaiming what it recorded. A session row that
+     * goes while thousands of its GPS rows stay would leave the database growing forever.
+     */
+    @Test
+    fun givenASessionWithRecordedPoints_whenDeleted_thenItsPointsGoWithIt() = runTest {
+        val sessionId = repository.startSession()
+        repeat(5) { index ->
+            repository.recordLocationPoint(
+                LocationPoint(sessionId, 10.7626 + index * 0.001, 106.6602, 1_000L + index, 5f, 2f),
+            )
+        }
+        clock.currentMillis = 10_000L
+        repository.stopSession(sessionId, finalDistanceMeters = 500.0, routePolyline = null)
+
+        repository.deleteSession(sessionId)
+
+        assertTrue(locationPointDao.getPointsForSession(sessionId).isEmpty())
+    }
+
+    @Test
+    fun givenTwoSessions_whenOneIsDeleted_thenTheOtherIsUntouched() = runTest {
+        clock.currentMillis = 0L
+        val kept = repository.startSession()
+        clock.currentMillis = 5_000L
+        repository.stopSession(kept, finalDistanceMeters = 100.0, routePolyline = null)
+        clock.currentMillis = 6_000L
+        val removed = repository.startSession()
+        clock.currentMillis = 9_000L
+        repository.stopSession(removed, finalDistanceMeters = 200.0, routePolyline = null)
+
+        repository.deleteSession(removed)
+
+        assertEquals(listOf(kept), repository.observeSessionSummaries().first().map { it.id })
+    }
+
+    @Test
+    fun givenAnUnknownSessionId_whenDeleted_thenNothingHappensAndNothingThrows() = runTest {
+        clock.currentMillis = 0L
+        val sessionId = repository.startSession()
+        clock.currentMillis = 5_000L
+        repository.stopSession(sessionId, finalDistanceMeters = 100.0, routePolyline = null)
+
+        repository.deleteSession("never-existed")
+
+        assertEquals(1, repository.observeSessionSummaries().first().size)
+    }
+
+    @Test
     fun givenStationaryJitterPoints_whenObserveActiveSession_thenDistanceExcludesDrift() = runTest {
         clock.currentMillis = 0L
         val sessionId = repository.startSession()
