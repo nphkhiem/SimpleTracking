@@ -5,6 +5,6 @@ data class SessionSummary(
     val distanceMeters: Double,
     val durationMillis: Long,
     val averageSpeedMps: Float,
-    val thumbnailPath: String?,
+    val routePolyline: String?,
     val recordedAt: Long,
 )

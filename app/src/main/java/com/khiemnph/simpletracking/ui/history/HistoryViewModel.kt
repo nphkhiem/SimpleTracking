@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.khiemnph.domain.interactor.ObserveSessionHistoryUseCase
 import com.khiemnph.domain.model.SessionSummary
+import com.khiemnph.domain.util.RoutePolyline
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
 import java.time.ZoneId
@@ -70,7 +71,7 @@ fun SessionSummary.toHistorySummaryUiModel(
     distanceLabel = formatDistanceKm(distanceMeters),
     durationLabel = formatDuration(durationMillis),
     averageSpeedLabel = formatAverageSpeedKmh(averageSpeedMps),
-    thumbnailPath = thumbnailPath,
+    routePoints = routePolyline?.let(RoutePolyline::decode).orEmpty(),
 )
 
 private fun formatRecordedAt(recordedAtMillis: Long, zoneId: ZoneId): String =

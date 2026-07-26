@@ -20,7 +20,7 @@ import androidx.room.RoomDatabase
  */
 @Database(
     entities = [SessionEntity::class, LocationPointEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {

@@ -34,7 +34,7 @@ class HistoryScreenTest {
         distanceLabel = distance,
         durationLabel = "28:14",
         averageSpeedLabel = "11.1 km/h avg",
-        thumbnailPath = null,
+        routePoints = emptyList(),
     )
 
     private fun setScreen(

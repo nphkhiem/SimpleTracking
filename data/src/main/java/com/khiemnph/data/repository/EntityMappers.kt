@@ -15,7 +15,7 @@ internal fun SessionEntity.toDomain(): Session = Session(
     stoppedTimestamp = stoppedTimestamp,
     finalDistanceMeters = finalDistanceMeters,
     finalAverageSpeedMps = finalAverageSpeedMps,
-    thumbnailPath = thumbnailPath,
+    routePolyline = routePolyline,
 )
 
 /** Only valid for entities with `status == STOPPED`, where the final-stat columns are populated. */
@@ -28,7 +28,7 @@ internal fun SessionEntity.toSummary(): SessionSummary {
         distanceMeters = distance,
         durationMillis = stopped - startTimestamp - pausedDurationMillis,
         averageSpeedMps = averageSpeed,
-        thumbnailPath = thumbnailPath,
+        routePolyline = routePolyline,
         recordedAt = stopped,
     )
 }

@@ -70,7 +70,7 @@ class SessionRepositoryImpl @Inject constructor(
                 stoppedTimestamp = null,
                 finalDistanceMeters = null,
                 finalAverageSpeedMps = null,
-                thumbnailPath = null,
+                routePolyline = null,
             ),
         )
         return id
@@ -108,8 +108,8 @@ class SessionRepositoryImpl @Inject constructor(
      */
     override suspend fun stopSession(
         sessionId: String,
-        thumbnailPath: String?,
         finalDistanceMeters: Double,
+        routePolyline: String?,
     ): SessionSummary = sessionWriteMutex.withLock {
         val current = requireNotNull(sessionDao.getById(sessionId)) { "Unknown session: $sessionId" }
         if (current.status == SessionStatus.STOPPED.name) return@withLock current.toSummary()
@@ -124,14 +124,14 @@ class SessionRepositoryImpl @Inject constructor(
             pausedDurationMillis = finalPausedDurationMillis(current, stoppedTimestamp),
             finalDistanceMeters = finalDistanceMeters,
             finalAverageSpeedMps = finalAverageSpeedMps,
-            thumbnailPath = thumbnailPath,
+            routePolyline = routePolyline,
         )
         SessionSummary(
             id = sessionId,
             distanceMeters = finalDistanceMeters,
             durationMillis = durationMillis,
             averageSpeedMps = finalAverageSpeedMps,
-            thumbnailPath = thumbnailPath,
+            routePolyline = routePolyline,
             recordedAt = stoppedTimestamp,
         )
     }

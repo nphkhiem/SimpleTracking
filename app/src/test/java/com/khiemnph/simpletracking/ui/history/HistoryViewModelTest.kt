@@ -12,6 +12,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
@@ -37,14 +38,14 @@ class HistoryViewModelTest {
         distanceMeters: Double = 1_000.0,
         durationMillis: Long = 60_000L,
         averageSpeedMps: Float = 1f,
-        thumbnailPath: String? = null,
+        routePolyline: String? = null,
         recordedAt: Long = 0L,
     ) = SessionSummary(
         id = id,
         distanceMeters = distanceMeters,
         durationMillis = durationMillis,
         averageSpeedMps = averageSpeedMps,
-        thumbnailPath = thumbnailPath,
+        routePolyline = routePolyline,
         recordedAt = recordedAt,
     )
 
@@ -52,7 +53,7 @@ class HistoryViewModelTest {
         val sessionId = repository.startSession()
         repository.stopSession(
             sessionId = sessionId,
-            thumbnailPath = null,
+            routePolyline = null,
             finalDistanceMeters = 1_000.0,
         )
         return sessionId
@@ -116,16 +117,27 @@ class HistoryViewModelTest {
     }
 
     @Test
-    fun givenNullThumbnailPath_whenMappedToUiModel_thenThumbnailPathRemainsNull() {
-        val uiModel = sessionSummary(thumbnailPath = null).toHistorySummaryUiModel()
+    fun givenNoRecordedRoute_whenMappedToUiModel_thenThereAreNoPointsToDraw() {
+        val uiModel = sessionSummary(routePolyline = null).toHistorySummaryUiModel()
 
-        assertNull(uiModel.thumbnailPath)
+        assertTrue(uiModel.routePoints.isEmpty())
     }
 
     @Test
-    fun givenNonNullThumbnailPath_whenMappedToUiModel_thenThumbnailPathIsPassedThroughUnchanged() {
-        val uiModel = sessionSummary(thumbnailPath = "/data/thumbnails/session-1.png").toHistorySummaryUiModel()
+    fun givenARecordedRoute_whenMappedToUiModel_thenItIsDecodedReadyForDrawing() {
+        // Decoding here rather than in the composable keeps the screen dumb: it draws points, it
+        // does not parse storage formats.
+        val uiModel = sessionSummary(routePolyline = "2103850,10585420;2103900,10585470")
+            .toHistorySummaryUiModel()
 
-        assertEquals("/data/thumbnails/session-1.png", uiModel.thumbnailPath)
+        assertEquals(2, uiModel.routePoints.size)
+        assertEquals(21.0385, uiModel.routePoints.first().latitude, 0.0001)
+    }
+
+    @Test
+    fun givenAnUnparseableRoute_whenMappedToUiModel_thenTheRowStillRendersWithNoRoute() {
+        val uiModel = sessionSummary(routePolyline = "corrupt").toHistorySummaryUiModel()
+
+        assertTrue(uiModel.routePoints.isEmpty())
     }
 }

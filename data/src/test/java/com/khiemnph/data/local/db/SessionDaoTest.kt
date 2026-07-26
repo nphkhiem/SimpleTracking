@@ -112,7 +112,7 @@ class SessionDaoTest {
             pausedDurationMillis = 0L,
             finalDistanceMeters = 1.0,
             finalAverageSpeedMps = 1f,
-            thumbnailPath = null,
+            routePolyline = null,
         )
 
         assertEquals(0, updated)
@@ -129,7 +129,7 @@ class SessionDaoTest {
             pausedDurationMillis = 1_500L,
             finalDistanceMeters = 123.4,
             finalAverageSpeedMps = 2.5f,
-            thumbnailPath = "/path/thumb.png",
+            routePolyline = "/path/thumb.png",
         )
 
         val summaries = dao.observeSummaries().first()
@@ -137,7 +137,7 @@ class SessionDaoTest {
         assertEquals("STOPPED", summaries.first().status)
         assertEquals(123.4, summaries.first().finalDistanceMeters)
         assertEquals(2.5f, summaries.first().finalAverageSpeedMps)
-        assertEquals("/path/thumb.png", summaries.first().thumbnailPath)
+        assertEquals("/path/thumb.png", summaries.first().routePolyline)
         assertEquals(1_500L, summaries.first().pausedDurationMillis)
     }
 
@@ -152,7 +152,7 @@ class SessionDaoTest {
             pausedDurationMillis = 2_000L,
             finalDistanceMeters = 0.0,
             finalAverageSpeedMps = 0f,
-            thumbnailPath = null,
+            routePolyline = null,
         )
 
         val updated = dao.getById("s1")

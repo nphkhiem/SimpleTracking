@@ -29,14 +29,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import com.khiemnph.simpletracking.R
 
 /** Stable handles for tests, so assertions do not depend on user-visible copy. */
@@ -129,16 +127,12 @@ private fun SessionRow(session: HistorySummaryUiModel, modifier: Modifier = Modi
         )
         Spacer(Modifier.height(6.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            AsyncImage(
-                model = session.thumbnailPath,
-                // The route is repeated verbatim by the labels beside it, so announcing it again
-                // would just make TalkBack read the row twice.
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
+            RouteThumbnail(
+                points = session.routePoints,
+                // The labels beside it already state distance, time and pace, so announcing the
+                // route as well would just make TalkBack read the row twice.
                 modifier = Modifier
                     .size(56.dp)
-                    .clip(MaterialTheme.shapes.small)
-                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                     .clearAndSetSemantics {},
             )
             Spacer(Modifier.width(14.dp))
