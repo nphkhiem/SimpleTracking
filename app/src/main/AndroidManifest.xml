@@ -9,9 +9,21 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!--
+      Backup is off deliberately. This app's entire dataset is the user's precise movement history:
+      every latitude, longitude, timestamp, accuracy and speed it has ever recorded, at 2-second
+      resolution. With backup enabled and no extraction rules, the default set includes
+      databases/simple_tracking.db, so that history leaves the device for Google Drive backup and
+      device-to-device transfer. Cloud backup is encrypted with the device screen-lock secret, so
+      this is not a trivially remote leak, but for this data class opting out is the correct
+      default. If backup is ever wanted as a feature, ship explicit dataExtractionRules that
+      exclude the database and make it an informed opt-in rather than a silent one.
+    -->
     <application
         android:name=".SimpleTrackingApp"
-        android:allowBackup="true"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:hardwareAccelerated="true"

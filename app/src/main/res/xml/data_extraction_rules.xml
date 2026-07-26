@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Excludes everything from both cloud backup and device-to-device transfer.
+
+  android:allowBackup="false" alone is not sufficient on Android 12 and higher: it is deprecated
+  there, and it does not govern device-to-device transfer at all. minSdk is 29, so both mechanisms
+  are needed - allowBackup for API 29-30, these rules for API 31+.
+
+  What is being excluded is the point: databases/simple_tracking.db is the user's complete movement
+  history at 2-second resolution, files/thumbnails/ renders their routes as images, and shared_prefs
+  holds the permission-ask state. None of it should leave the device implicitly.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="file" />
+        <exclude domain="external" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="file" />
+        <exclude domain="external" />
+    </device-transfer>
+</data-extraction-rules>
