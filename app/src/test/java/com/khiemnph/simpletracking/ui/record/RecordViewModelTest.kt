@@ -5,10 +5,8 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
-import android.graphics.Bitmap
 import androidx.lifecycle.ViewModelStore
 import androidx.test.core.app.ApplicationProvider
-import com.khiemnph.data.thumbnail.ThumbnailFileStore
 import com.khiemnph.domain.fake.MockedSessionRepository
 import com.khiemnph.domain.interactor.ObserveActiveSessionUseCase
 import com.khiemnph.domain.interactor.StartSessionUseCase
@@ -55,7 +53,6 @@ class RecordViewModelTest {
     private val repository = MockedSessionRepository()
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val startSessionUseCase = mockk<StartSessionUseCase>()
-    private val thumbnailFileStore = mockk<ThumbnailFileStore>()
 
     /**
      * A separate [CoroutineScope] instance from `viewModelScope`, deliberately not tied to
@@ -78,7 +75,6 @@ class RecordViewModelTest {
     private fun createViewModel() = RecordViewModel(
         startSessionUseCase = startSessionUseCase,
         observeActiveSessionUseCase = ObserveActiveSessionUseCase(repository),
-        thumbnailFileStore = thumbnailFileStore,
         context = context,
         applicationScope = applicationScope,
     )
@@ -320,7 +316,6 @@ class RecordViewModelTest {
         val viewModel = RecordViewModel(
             startSessionUseCase = startSessionUseCase,
             observeActiveSessionUseCase = ObserveActiveSessionUseCase(repository),
-            thumbnailFileStore = thumbnailFileStore,
             context = throwingContext,
             applicationScope = applicationScope,
         )
@@ -355,53 +350,14 @@ class RecordViewModelTest {
     }
 
     @Test
-    fun givenStopClickedWithBitmap_whenInvoked_thenThumbnailSavedThenStopIntentSentWithPath() = runTest {
-        val sessionId = repository.startSession()
-        val bitmap = mockk<Bitmap>()
-        val thumbnailPath = "/data/thumbnails/$sessionId.png"
-        coEvery { thumbnailFileStore.save(sessionId, bitmap) } returns thumbnailPath
-        val viewModel = createViewModel()
-        viewModel.resolveSession(sessionId)
-        nextStartedServiceIntent() // drain the start intent
-
-        viewModel.onStopClicked(bitmap)
-
-        coVerify(exactly = 1) { thumbnailFileStore.save(sessionId, bitmap) }
-        assertSameIntent(
-            TrackingService.stopIntent(context, sessionId, thumbnailPath = thumbnailPath),
-            nextStartedServiceIntent(),
-        )
-    }
-
-    @Test
-    fun givenThumbnailSaveFails_whenStopClicked_thenStopIntentIsStillSent() = runTest {
-        // A full disk makes ThumbnailFileStore.save throw. Losing the thumbnail is acceptable;
-        // losing the Stop intent is not, because GPS collection would keep running afterwards.
-        val sessionId = repository.startSession()
-        val bitmap = mockk<Bitmap>()
-        coEvery { thumbnailFileStore.save(sessionId, bitmap) } throws java.io.IOException("No space left on device")
-        val viewModel = createViewModel()
-        viewModel.resolveSession(sessionId)
-        nextStartedServiceIntent()
-
-        viewModel.onStopClicked(bitmap)
-
-        assertSameIntent(
-            TrackingService.stopIntent(context, sessionId, thumbnailPath = null),
-            nextStartedServiceIntent(),
-        )
-    }
-
-    @Test
-    fun givenStopClickedWithNullBitmap_whenInvoked_thenStopIntentSentWithoutPath() = runTest {
+    fun givenStopClicked_whenInvoked_thenStopIntentSentToTrackingService() = runTest {
         val sessionId = repository.startSession()
         val viewModel = createViewModel()
         viewModel.resolveSession(sessionId)
         nextStartedServiceIntent() // drain the start intent
 
-        viewModel.onStopClicked(null)
+        viewModel.onStopClicked()
 
-        coVerify(exactly = 0) { thumbnailFileStore.save(any(), any()) }
         assertSameIntent(TrackingService.stopIntent(context, sessionId), nextStartedServiceIntent())
     }
 
@@ -429,7 +385,7 @@ class RecordViewModelTest {
         viewModelStore.put("record", viewModel)
         viewModelStore.clear() // mirrors popBackStack() destroying the Fragment/ViewModel
 
-        viewModel.onStopClicked(null) // mirrors the snapshot callback firing after that teardown
+        viewModel.onStopClicked() // mirrors the snapshot callback firing after that teardown
 
         assertSameIntent(TrackingService.stopIntent(context, sessionId), nextStartedServiceIntent())
     }

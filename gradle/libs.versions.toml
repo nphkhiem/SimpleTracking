@@ -24,8 +24,6 @@ material = "1.14.0"
 # Coroutines
 coroutines = "1.11.0"
 
-# Image loading
-coil = "3.5.0"
 composeBom = "2026.06.00"
 activityCompose = "1.12.0"
 lifecycleCompose = "2.10.0"
@@ -66,9 +64,6 @@ androidx-navigation-ui-ktx = { group = "androidx.navigation", name = "navigation
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
-
-coil = { group = "io.coil-kt.coil3", name = "coil", version.ref = "coil" }
-coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
 
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }

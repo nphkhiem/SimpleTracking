@@ -10,6 +10,11 @@ import androidx.room.PrimaryKey
  * `TypeConverter` for a enum column — plain `String` keeps the raw DAO queries (`WHERE status !=
  * 'STOPPED'`) simple to read without extra converter registration.
  *
+ * [routePolyline] holds the finished route's shape (see
+ * [com.khiemnph.domain.util.RoutePolyline]) rather than a path to a rendered image. Storing the
+ * geometry means a thumbnail can be drawn deterministically, offline, at any size and in either
+ * theme, none of which a captured PNG of map tiles could do.
+ *
  * [pausedAtTimestamp] has no equivalent field on the domain `Session` model. It exists purely as
  * data-layer bookkeeping: [com.khiemnph.domain.repository.SessionRepository.pauseSession] and
  * `resumeSession` take only a `sessionId`, so this repository needs to remember *when* a pause
@@ -26,5 +31,5 @@ data class SessionEntity(
     val stoppedTimestamp: Long?,
     val finalDistanceMeters: Double?,
     val finalAverageSpeedMps: Float?,
-    val thumbnailPath: String?,
+    val routePolyline: String?,
 )

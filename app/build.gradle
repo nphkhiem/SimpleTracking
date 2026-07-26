@@ -73,9 +73,6 @@ dependencies {
     implementation libs.androidx.activity.compose
     implementation libs.androidx.lifecycle.runtime.compose
 
-    implementation libs.coil
-    implementation libs.coil.compose
-
     // google play services
     implementation libs.play.services.location
     implementation libs.play.services.maps

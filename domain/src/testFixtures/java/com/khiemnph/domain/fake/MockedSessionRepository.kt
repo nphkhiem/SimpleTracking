@@ -41,7 +41,7 @@ class MockedSessionRepository : SessionRepository {
             stoppedTimestamp = null,
             finalDistanceMeters = null,
             finalAverageSpeedMps = null,
-            thumbnailPath = null,
+            routePolyline = null,
         )
         sessionsById[id] = session
         pointsBySessionId[id] = mutableListOf()
@@ -63,8 +63,8 @@ class MockedSessionRepository : SessionRepository {
 
     override suspend fun stopSession(
         sessionId: String,
-        thumbnailPath: String?,
         finalDistanceMeters: Double,
+        routePolyline: String?,
     ): SessionSummary {
         val session = sessionsById[sessionId] ?: error("Unknown session: $sessionId")
         val stoppedTimestamp = System.currentTimeMillis()
@@ -77,7 +77,7 @@ class MockedSessionRepository : SessionRepository {
             stoppedTimestamp = stoppedTimestamp,
             finalDistanceMeters = finalDistanceMeters,
             finalAverageSpeedMps = finalAverageSpeedMps,
-            thumbnailPath = thumbnailPath,
+            routePolyline = routePolyline,
         )
         sessionsById[sessionId] = updated
         activeSessionStateFlow.value = null
@@ -87,7 +87,7 @@ class MockedSessionRepository : SessionRepository {
             distanceMeters = finalDistanceMeters,
             durationMillis = durationMillis,
             averageSpeedMps = finalAverageSpeedMps,
-            thumbnailPath = thumbnailPath,
+            routePolyline = routePolyline,
             recordedAt = stoppedTimestamp,
         )
         sessionSummariesFlow.value = sessionSummariesFlow.value + summary

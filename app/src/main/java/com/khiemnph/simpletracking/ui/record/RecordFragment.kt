@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.location.LocationManager
 import android.net.Uri
 import android.os.Build
@@ -55,9 +54,6 @@ private const val SECONDS_PER_HOUR = 3_600L
 private const val MAP_INITIAL_ZOOM = 17f
 private const val ROUTE_POLYLINE_WIDTH_PX = 8f
 
-/** Upper bound on waiting for the map snapshot before stopping without a thumbnail. */
-private const val SNAPSHOT_TIMEOUT_MILLIS = 2_000L
-
 /**
  * The live-tracking destination, reached either from
  * [com.khiemnph.simpletracking.ui.history.HistoryFragment]'s Record button (a brand-new session,
@@ -102,7 +98,6 @@ class RecordFragment : Fragment() {
     private var mapFragment: SupportMapFragment? = null
 
     private var stopDispatched = false
-    private var isMapLoaded = false
     private var hasCenteredCameraOnce = false
 
     /**
@@ -201,7 +196,6 @@ class RecordFragment : Fragment() {
         super.onDestroyView()
         googleMap = null
         mapFragment = null
-        isMapLoaded = false
         _binding = null
     }
 
@@ -243,9 +237,6 @@ class RecordFragment : Fragment() {
         mapFragment = fragment
         fragment.getMapAsync { map ->
             googleMap = map
-            // Fires only once tiles have actually rendered. Offline with nothing cached it never
-            // fires, which is exactly the case a snapshot must not be requested in.
-            map.setOnMapLoadedCallback { isMapLoaded = true }
             renderRoute(viewModel.uiState.value.route)
         }
     }
@@ -351,48 +342,11 @@ class RecordFragment : Fragment() {
         }
     }
 
-    /**
-     * Captures the route thumbnail, then stops the session and leaves.
-     *
-     * Navigation must wait for the snapshot rather than run alongside it. `popBackStack()` detaches
-     * this Fragment and backgrounds the map, and the Maps SDK's snapshot runnable — already queued
-     * on the main looper — then throws `IllegalStateException: Can't take a snapshot while
-     * executing in the background`, killing the process before [RecordViewModel.onStopClicked] ever
-     * runs. The session stays `RUNNING`, the foreground service and its notification survive, and
-     * the user lands on the launcher believing they stopped.
-     *
-     * [SNAPSHOT_TIMEOUT_MILLIS] bounds the wait: the Maps SDK gives no delivery guarantee, so a
-     * callback that never arrives must not strand the user on a screen whose Stop button appears
-     * dead. Losing the thumbnail is always preferable to losing the stop.
-     */
     private fun handleStopClicked() {
-        if (stopDispatched) return
-
-        val map = googleMap
-        if (map == null || !isMapLoaded) {
-            // Asking an unrendered map for a snapshot is what crashed the app offline: the request
-            // stays queued inside the Maps SDK, the timeout below navigates away, and the SDK then
-            // throws "Can't take a snapshot while executing in the background" from its own
-            // handler, after this screen is gone. Not requesting one is the only reliable guard,
-            // because a request already in flight cannot be cancelled.
-            dispatchStop(null)
-            return
-        }
-
-        val onSnapshotTimeout = Runnable { dispatchStop(null) }
-        view?.postDelayed(onSnapshotTimeout, SNAPSHOT_TIMEOUT_MILLIS)
-        map.snapshot { bitmap ->
-            view?.removeCallbacks(onSnapshotTimeout)
-            dispatchStop(bitmap)
-        }
-    }
-
-    /** Idempotent: whichever of the snapshot callback or its timeout arrives first wins. */
-    private fun dispatchStop(bitmap: Bitmap?) {
         if (stopDispatched) return
         stopDispatched = true
 
-        viewModel.onStopClicked(bitmap)
+        viewModel.onStopClicked()
         findNavController().popBackStack()
     }
 

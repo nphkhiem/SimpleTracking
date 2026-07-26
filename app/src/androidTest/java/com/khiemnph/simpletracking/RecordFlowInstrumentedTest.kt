@@ -187,7 +187,7 @@ class RecordFlowInstrumentedTest {
                 stoppedTimestamp = null,
                 finalDistanceMeters = null,
                 finalAverageSpeedMps = null,
-                thumbnailPath = null,
+                routePolyline = null,
             ),
         )
 

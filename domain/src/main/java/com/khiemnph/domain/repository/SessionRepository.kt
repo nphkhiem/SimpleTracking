@@ -22,8 +22,8 @@ interface SessionRepository {
      */
     suspend fun stopSession(
         sessionId: String,
-        thumbnailPath: String?,
         finalDistanceMeters: Double,
+        routePolyline: String?,
     ): SessionSummary
 
     suspend fun getActiveSessionId(): String?

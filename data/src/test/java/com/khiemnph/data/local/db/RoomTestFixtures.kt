@@ -9,7 +9,7 @@ internal fun sessionEntity(
     stoppedTimestamp: Long? = null,
     finalDistanceMeters: Double? = null,
     finalAverageSpeedMps: Float? = null,
-    thumbnailPath: String? = null,
+    routePolyline: String? = null,
 ) = SessionEntity(
     id = id,
     startTimestamp = startTimestamp,
@@ -19,7 +19,7 @@ internal fun sessionEntity(
     stoppedTimestamp = stoppedTimestamp,
     finalDistanceMeters = finalDistanceMeters,
     finalAverageSpeedMps = finalAverageSpeedMps,
-    thumbnailPath = thumbnailPath,
+    routePolyline = routePolyline,
 )
 
 internal fun locationPointEntity(

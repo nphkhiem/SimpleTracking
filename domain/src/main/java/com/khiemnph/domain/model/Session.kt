@@ -8,5 +8,5 @@ data class Session(
     val stoppedTimestamp: Long?,
     val finalDistanceMeters: Double?,
     val finalAverageSpeedMps: Float?,
-    val thumbnailPath: String?,
+    val routePolyline: String?,
 )

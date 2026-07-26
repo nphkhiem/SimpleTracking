@@ -50,7 +50,7 @@ interface SessionDao {
         UPDATE session
         SET status = :status, stoppedTimestamp = :stoppedTimestamp, pausedDurationMillis = :pausedDurationMillis,
             pausedAtTimestamp = NULL, finalDistanceMeters = :finalDistanceMeters,
-            finalAverageSpeedMps = :finalAverageSpeedMps, thumbnailPath = :thumbnailPath
+            finalAverageSpeedMps = :finalAverageSpeedMps, routePolyline = :routePolyline
         WHERE id = :sessionId AND status != 'STOPPED'
         """,
     )
@@ -61,7 +61,7 @@ interface SessionDao {
         pausedDurationMillis: Long,
         finalDistanceMeters: Double,
         finalAverageSpeedMps: Float,
-        thumbnailPath: String?,
+        routePolyline: String?,
     ): Int
 
     // ORDER BY makes recovery deterministic. Nothing enforces a single active row at the schema

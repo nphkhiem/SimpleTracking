@@ -1,11 +1,9 @@
 package com.khiemnph.simpletracking.ui.record
 
 import android.content.Context
-import android.graphics.Bitmap
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.khiemnph.data.thumbnail.ThumbnailFileStore
 import com.khiemnph.domain.interactor.ObserveActiveSessionUseCase
 import com.khiemnph.domain.interactor.StartSessionUseCase
 import com.khiemnph.domain.model.ActiveSessionState
@@ -38,7 +36,6 @@ private const val CURRENT_SPEED_WINDOW_SIZE = 4
 class RecordViewModel @Inject constructor(
     private val startSessionUseCase: StartSessionUseCase,
     private val observeActiveSessionUseCase: ObserveActiveSessionUseCase,
-    private val thumbnailFileStore: ThumbnailFileStore,
     @ApplicationContext private val context: Context,
     @ApplicationScope private val applicationScope: CoroutineScope,
 ) : ViewModel() {
@@ -142,14 +139,10 @@ class RecordViewModel @Inject constructor(
      * the thumbnail save and the Stop intent still reliably complete even then - otherwise the
      * Stop intent would silently never reach [TrackingService] and tracking would keep running.
      */
-    fun onStopClicked(bitmap: Bitmap?) {
+    fun onStopClicked() {
         val id = sessionId ?: return
         applicationScope.launch {
-            // The thumbnail is decoration; the Stop intent is the whole point. A failing save (a
-            // full disk being the realistic one) must not take the intent down with it, or GPS
-            // collection keeps running after the user believes they stopped.
-            val thumbnailPath = bitmap?.let { runCatching { thumbnailFileStore.save(id, it) }.getOrNull() }
-            ContextCompat.startForegroundService(context, TrackingService.stopIntent(context, id, thumbnailPath))
+            ContextCompat.startForegroundService(context, TrackingService.stopIntent(context, id))
         }
     }
 
