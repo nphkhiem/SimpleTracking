@@ -5,8 +5,10 @@ import android.content.Context
 import android.content.Intent
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
+import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
 import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.IdlingRegistry
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
@@ -27,7 +29,7 @@ import com.khiemnph.domain.repository.LocationTrackingRepository
 import com.khiemnph.domain.repository.SessionRepository
 import com.khiemnph.simpletracking.service.TrackingService
 import com.khiemnph.simpletracking.ui.MainActivity
-import com.khiemnph.simpletracking.util.EspressoIdlingResource
+import com.khiemnph.simpletracking.ui.history.HistoryTestTags
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -111,6 +113,14 @@ class RecordFlowInstrumentedTest {
     val permissionRule: GrantPermissionRule =
         GrantPermissionRule.grant(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.POST_NOTIFICATIONS)
 
+    /**
+     * Empty rather than launching its own Activity: these tests seed the repository first and then
+     * launch, and a rule-launched Activity would already be up before `@Before` ran. This still
+     * gives Compose's own synchronisation for the Runs screen.
+     */
+    @get:Rule(order = 2)
+    val composeRule = createEmptyComposeRule()
+
     @Inject
     lateinit var sessionRepository: SessionRepository
 
@@ -130,7 +140,6 @@ class RecordFlowInstrumentedTest {
         // brand-new MockedSessionRepository instance) in practice, but resetting explicitly here
         // costs nothing and removes any dependency on that lifecycle detail staying true.
         mockedSessionRepository.reset()
-        IdlingRegistry.getInstance().register(EspressoIdlingResource.countingIdlingResource)
     }
 
     @After
@@ -146,7 +155,6 @@ class RecordFlowInstrumentedTest {
         // until TrackingService.onDestroy() has genuinely finished, so the next test method's own
         // startForegroundService call can never race this still-tearing-down instance.
         assertTrue("Expected TrackingService.onDestroy() to finish before teardown returns", TrackingService.awaitDestroyed())
-        IdlingRegistry.getInstance().unregister(EspressoIdlingResource.countingIdlingResource)
     }
 
     private fun activeSessionId(): String? = runBlocking { mockedSessionRepository.getActiveSessionId() }
@@ -154,13 +162,12 @@ class RecordFlowInstrumentedTest {
     @Test
     fun givenPermissionGranted_whenRecordTapped_thenSessionStartsAndUiReflectsARunningSession() {
         ActivityScenario.launch(MainActivity::class.java).use {
-            onView(withId(R.id.history_record_button)).perform(click())
+            composeRule.onNodeWithTag(HistoryTestTags.RECORD_BUTTON).performClick()
 
-            assertNotNull("Expected a new session to have been created", activeSessionId())
-            onView(withId(R.id.record_paused_tag)).check(matches(not(isDisplayed())))
+            val sessionId = awaitNotNull("a new session to be created") { activeSessionId() }
+            assertNotNull("Expected a new session to have been created", sessionId)
+            awaitView(R.id.record_paused_tag, not(isDisplayed()))
 
-            val sessionId = requireNotNull(activeSessionId())
-            EspressoIdlingResource.increment()
             mockedLocationTrackingRepository.emitFix(
                 RawLocationFix(
                     sessionId = sessionId,
@@ -172,7 +179,9 @@ class RecordFlowInstrumentedTest {
                 ),
             )
 
-            onView(withId(R.id.record_current_speed_value)).check(matches(withText("18.0")))
+            // 5 m/s is a 3:20 min/km pace. Waiting for the value rather than asserting it
+            // immediately is what the idling resource used to buy, now without the production hook.
+            awaitView(R.id.record_current_speed_value, withText("3:20"))
         }
     }
 
@@ -194,21 +203,27 @@ class RecordFlowInstrumentedTest {
         // A concrete active session at cold start routes MainActivity straight to RecordFragment
         // (Phase 4's recovery routing) - the same entry RecoveryInstrumentedTest exercises.
         ActivityScenario.launch(MainActivity::class.java).use {
-            onView(withId(R.id.record_paused_tag)).check(matches(not(isDisplayed())))
-            onView(withId(R.id.record_pause_resume_button))
-                .check(matches(withContentDescription(R.string.record_pause_content_description)))
+            awaitView(R.id.record_paused_tag, not(isDisplayed()))
+            awaitView(
+                R.id.record_pause_resume_button,
+                withContentDescription(R.string.record_pause_content_description),
+            )
 
             onView(withId(R.id.record_pause_resume_button)).perform(click())
 
-            onView(withId(R.id.record_paused_tag)).check(matches(isDisplayed()))
-            onView(withId(R.id.record_pause_resume_button))
-                .check(matches(withContentDescription(R.string.record_resume_content_description)))
+            awaitView(R.id.record_paused_tag, isDisplayed())
+            awaitView(
+                R.id.record_pause_resume_button,
+                withContentDescription(R.string.record_resume_content_description),
+            )
 
             onView(withId(R.id.record_pause_resume_button)).perform(click())
 
-            onView(withId(R.id.record_paused_tag)).check(matches(not(isDisplayed())))
-            onView(withId(R.id.record_pause_resume_button))
-                .check(matches(withContentDescription(R.string.record_pause_content_description)))
+            awaitView(R.id.record_paused_tag, not(isDisplayed()))
+            awaitView(
+                R.id.record_pause_resume_button,
+                withContentDescription(R.string.record_pause_content_description),
+            )
         }
     }
 }

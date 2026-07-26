@@ -13,7 +13,6 @@ import com.khiemnph.domain.interactor.StartSessionUseCase
 import com.khiemnph.domain.model.LocationPoint
 import com.khiemnph.domain.model.SessionStatus
 import com.khiemnph.simpletracking.service.TrackingService
-import com.khiemnph.simpletracking.util.EspressoIdlingResource
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -80,23 +79,6 @@ class RecordViewModelTest {
     )
 
     private fun nextStartedServiceIntent(): Intent? = shadowOf(context as Application).nextStartedService
-
-    /**
-     * [EspressoIdlingResource] is a JVM-wide singleton, so other tests in this class (or this
-     * whole module, sharing one test JVM by default) can leave it in a non-idle state - e.g. a
-     * [RecordViewModel.onPauseOrResumeClicked] increment with no matching emission ever following
-     * it under this Robolectric fake, since nothing here runs a real [TrackingService] to produce
-     * one. Draining first gives the exception-safety tests below a known-idle baseline to assert
-     * against, independent of suite ordering.
-     */
-    private fun drainIdlingResourceToIdle() {
-        var guard = 0
-        while (!EspressoIdlingResource.countingIdlingResource.isIdleNow) {
-            EspressoIdlingResource.decrement()
-            guard++
-            check(guard < 10_000) { "Failed to drain EspressoIdlingResource to idle before the test" }
-        }
-    }
 
     /** Forces [ContextCompat.startForegroundService]'s underlying call to fail for one specific
      * intent action, so [RecordViewModel]'s exception-safety `finally`/`catch` blocks around it can
@@ -274,8 +256,7 @@ class RecordViewModelTest {
      * innocent test instead.
      */
     @Test
-    fun givenStartSessionUseCaseThrows_whenResolveSessionCalled_thenIdlingResourceIsBalancedNotLeaked() {
-        drainIdlingResourceToIdle()
+    fun givenStartSessionUseCaseThrows_whenResolveSessionCalled_thenTheFailureSurfaces() {
         coEvery { startSessionUseCase() } throws IllegalStateException("Simulated startSessionUseCase failure")
         val viewModel = createViewModel()
 
@@ -287,27 +268,15 @@ class RecordViewModelTest {
         }
 
         assertNotNull("Expected the simulated startSessionUseCase failure to surface", thrown)
-        assertTrue(
-            "Expected resolveSession's increment() to be balanced by a decrement even though " +
-                "startSessionUseCase() threw before collect ever ran",
-            EspressoIdlingResource.countingIdlingResource.isIdleNow,
-        )
     }
 
     /**
-     * Regression test for the onPauseOrResumeClicked leak: this function had no try/finally at all
-     * around its [ContextCompat.startForegroundService] call, so an exception there (e.g. the OS's
-     * background-start restrictions on a real device) left its `increment()` permanently
-     * unbalanced, since only the *next* state emission was ever meant to balance it.
-     *
-     * Unlike `givenStartSessionUseCaseThrows_...` above, [RecordViewModel.onPauseOrResumeClicked]
-     * doesn't launch a coroutine at all - its `startForegroundService` call is plain, synchronous
-     * code, so the simulated failure below is an ordinary thrown exception this test can catch
-     * directly with no `runTest`/`CoroutineExceptionHandler` involved.
+     * [ContextCompat.startForegroundService] can fail for reasons the app does not control, most
+     * obviously the OS's background-start restrictions on a real device. The failure must reach the
+     * caller rather than being swallowed into a screen that looks like it paused and did not.
      */
     @Test
-    fun givenStartForegroundServiceThrows_whenPauseOrResumeClicked_thenIdlingResourceIsBalancedNotLeaked() {
-        drainIdlingResourceToIdle()
+    fun givenStartForegroundServiceThrows_whenPauseOrResumeClicked_thenTheFailurePropagates() {
         val sessionId = runBlocking { repository.startSession() }
         val throwingContext = ThrowingStartForegroundServiceContext(
             base = context,
@@ -320,10 +289,6 @@ class RecordViewModelTest {
             applicationScope = applicationScope,
         )
         viewModel.resolveSession(sessionId)
-        assertTrue(
-            "Expected resolveSession to leave the resource idle before exercising Pause",
-            EspressoIdlingResource.countingIdlingResource.isIdleNow,
-        )
 
         val thrown = try {
             viewModel.onPauseOrResumeClicked()
@@ -333,11 +298,6 @@ class RecordViewModelTest {
         }
 
         assertNotNull("Expected the simulated startForegroundService failure to propagate", thrown)
-        assertTrue(
-            "Expected onPauseOrResumeClicked's increment() to be balanced by a decrement even " +
-                "though startForegroundService() threw",
-            EspressoIdlingResource.countingIdlingResource.isIdleNow,
-        )
     }
 
     @Test
