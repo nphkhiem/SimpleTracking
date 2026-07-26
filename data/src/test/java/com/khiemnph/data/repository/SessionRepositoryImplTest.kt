@@ -141,13 +141,71 @@ class SessionRepositoryImplTest {
         repository.recordLocationPoint(
             LocationPoint(sessionId, 10.7630, 106.6602, 2_000L, 5f, speedMetersPerSec = 4f),
         )
+        clock.currentMillis = 10_000L
 
         val state = repository.observeActiveSession().first()
 
         assertTrue(state!!.distanceMeters > 0.0)
         assertEquals(4f, state.currentSpeedMps, 0.0001f)
-        assertEquals(3f, state.averageSpeedMps, 0.0001f)
+        // Derived from the route over 10 s, not the mean of the two samples (which would be 3 m/s).
+        assertEquals(10_000L, state.elapsedDurationMillis)
+        assertEquals((state.distanceMeters / 10.0).toFloat(), state.averageSpeedMps, 0.0001f)
         assertEquals(2, state.route.size)
+    }
+
+    @Test
+    fun givenKnownDistanceAndDuration_whenStop_thenAverageSpeedIsDistanceOverMovingTime() = runTest {
+        clock.currentMillis = 0L
+        val sessionId = repository.startSession()
+        clock.currentMillis = 100_000L
+
+        // Average speed is not a parameter at all: it is derived from the distance and duration
+        // actually persisted, so the caller cannot make the three numbers disagree.
+        val summary = repository.stopSession(sessionId, null, finalDistanceMeters = 500.0)
+
+        // 500 m over 100 s = 5 m/s.
+        assertEquals(5f, summary.averageSpeedMps, 0.0001f)
+    }
+
+    @Test
+    fun givenPausedInterval_whenStop_thenAverageSpeedExcludesPausedTime() = runTest {
+        clock.currentMillis = 0L
+        val sessionId = repository.startSession()
+        clock.currentMillis = 40_000L
+        repository.pauseSession(sessionId)
+        clock.currentMillis = 90_000L
+        repository.resumeSession(sessionId)
+        clock.currentMillis = 100_000L
+
+        val summary = repository.stopSession(sessionId, null, finalDistanceMeters = 500.0)
+
+        // Moving time is 100 s minus the 50 s pause = 50 s, so 500 m / 50 s = 10 m/s.
+        assertEquals(50_000L, summary.durationMillis)
+        assertEquals(10f, summary.averageSpeedMps, 0.0001f)
+    }
+
+    @Test
+    fun givenZeroMovingTime_whenStop_thenAverageSpeedIsZeroRatherThanInfinite() = runTest {
+        clock.currentMillis = 5_000L
+        val sessionId = repository.startSession()
+
+        val summary = repository.stopSession(sessionId, null, finalDistanceMeters = 10.0)
+
+        assertEquals(0f, summary.averageSpeedMps, 0.0001f)
+    }
+
+    @Test
+    fun givenStoppedSession_whenReadBackFromHistory_thenAverageSpeedAgreesWithDistanceAndDuration() = runTest {
+        clock.currentMillis = 0L
+        val sessionId = repository.startSession()
+        clock.currentMillis = 100_000L
+        repository.stopSession(sessionId, null, finalDistanceMeters = 500.0)
+
+        val stored = repository.observeSessionSummaries().first().single()
+
+        assertEquals(500.0, stored.distanceMeters, 0.0001)
+        assertEquals(100_000L, stored.durationMillis)
+        assertEquals(5f, stored.averageSpeedMps, 0.0001f)
     }
 
     @Test
@@ -180,7 +238,7 @@ class SessionRepositoryImplTest {
         // still suspended, and the Pause write arrives afterwards. It must not resurrect the row.
         val sessionId = repository.startSession()
         clock.currentMillis = 10_000L
-        repository.stopSession(sessionId, "/thumb.png", finalDistanceMeters = 500.0, finalAverageSpeedMps = 2f)
+        repository.stopSession(sessionId, "/thumb.png", finalDistanceMeters = 500.0)
 
         repository.pauseSession(sessionId)
 
@@ -192,7 +250,7 @@ class SessionRepositoryImplTest {
     fun givenSessionAlreadyStopped_whenLateResumeArrives_thenSessionStaysStopped() = runTest {
         val sessionId = repository.startSession()
         clock.currentMillis = 10_000L
-        repository.stopSession(sessionId, null, finalDistanceMeters = 500.0, finalAverageSpeedMps = 2f)
+        repository.stopSession(sessionId, null, finalDistanceMeters = 500.0)
 
         repository.resumeSession(sessionId)
 
@@ -203,7 +261,7 @@ class SessionRepositoryImplTest {
     fun givenSessionAlreadyStopped_whenLatePauseArrives_thenFinalStatsAreNotOverwritten() = runTest {
         val sessionId = repository.startSession()
         clock.currentMillis = 10_000L
-        repository.stopSession(sessionId, "/thumb.png", finalDistanceMeters = 500.0, finalAverageSpeedMps = 2f)
+        repository.stopSession(sessionId, "/thumb.png", finalDistanceMeters = 500.0)
 
         clock.currentMillis = 99_000L
         repository.pauseSession(sessionId)
@@ -220,7 +278,7 @@ class SessionRepositoryImplTest {
         clock.currentMillis = 10_000L
 
         val pause = launch { repository.pauseSession(sessionId) }
-        val stop = launch { repository.stopSession(sessionId, null, finalDistanceMeters = 1.0, finalAverageSpeedMps = 1f) }
+        val stop = launch { repository.stopSession(sessionId, null, finalDistanceMeters = 1.0) }
         pause.join()
         stop.join()
 
@@ -291,12 +349,12 @@ class SessionRepositoryImplTest {
             sessionId = sessionId,
             thumbnailPath = "/thumb.png",
             finalDistanceMeters = 500.0,
-            finalAverageSpeedMps = 3.5f,
         )
 
         assertEquals(sessionId, summary.id)
         assertEquals(500.0, summary.distanceMeters, 0.0001)
-        assertEquals(3.5f, summary.averageSpeedMps, 0.0001f)
+        // 500 m over the 10 s between start and stop.
+        assertEquals(50f, summary.averageSpeedMps, 0.0001f)
         assertEquals("/thumb.png", summary.thumbnailPath)
         assertEquals(10_000L, summary.durationMillis)
 
@@ -317,7 +375,7 @@ class SessionRepositoryImplTest {
         repository.resumeSession(sessionId)
 
         clock.currentMillis = 10_000L
-        val summary = repository.stopSession(sessionId, null, 0.0, 0f)
+        val summary = repository.stopSession(sessionId, null, 0.0)
 
         // duration = 10000 - 0 - 3000 = 7000
         assertEquals(7_000L, summary.durationMillis)
@@ -364,7 +422,7 @@ class SessionRepositoryImplTest {
         repository.pauseSession(sessionId)
 
         clock.currentMillis = 8_000L
-        val summary = repository.stopSession(sessionId, null, 0.0, 0f)
+        val summary = repository.stopSession(sessionId, null, 0.0)
 
         // duration = pausedAt(5000) - start(0) - pausedDuration(0) = 5000, NOT 8000.
         assertEquals(5_000L, summary.durationMillis)
@@ -380,7 +438,7 @@ class SessionRepositoryImplTest {
             repository.pauseSession(sessionId)
 
             clock.currentMillis = 8_000L
-            repository.stopSession(sessionId, null, 0.0, 0f)
+            repository.stopSession(sessionId, null, 0.0)
 
             val summaries = repository.observeSessionSummaries().first()
 

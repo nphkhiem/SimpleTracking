@@ -55,10 +55,11 @@ class StopSessionUseCaseTest {
     }
 
     @Test
-    fun givenMultipleAcceptedSpeedSamples_whenStop_thenAverageSpeedEqualsArithmeticMeanNotTotalDistanceOverDuration() = runTest {
+    fun givenSamplesReportingSpeedButNoActualMovement_whenStop_thenAverageSpeedIsZero() = runTest {
         val sessionId = repository.startSession()
-        // Speeds chosen so the arithmetic mean (2.0) differs sharply from distance/duration,
-        // which would be a tiny fraction of a m/s over this short synthetic path/time span.
+        // Identical coordinates, so nothing was travelled, while the provider still reported a
+        // speed for every sample. Averaging those samples would claim 2 m/s over a 0 m route: the
+        // exact contradiction that made a history row read "0.70 km, 0:42, 0.2 km/h avg".
         val points = listOf(
             point(10.7626, 106.6602, 1_000L, 1f),
             point(10.7626, 106.6602, 2_000L, 2f),
@@ -68,7 +69,8 @@ class StopSessionUseCaseTest {
 
         val summary = useCase(sessionId, thumbnailPath = null)
 
-        assertEquals(2.0f, summary.averageSpeedMps, 0.0001f)
+        assertEquals(0.0, summary.distanceMeters, 0.0001)
+        assertEquals(0f, summary.averageSpeedMps, 0.0001f)
     }
 
     @Test

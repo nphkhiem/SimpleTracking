@@ -65,10 +65,13 @@ class MockedSessionRepository : SessionRepository {
         sessionId: String,
         thumbnailPath: String?,
         finalDistanceMeters: Double,
-        finalAverageSpeedMps: Float,
     ): SessionSummary {
         val session = sessionsById[sessionId] ?: error("Unknown session: $sessionId")
         val stoppedTimestamp = System.currentTimeMillis()
+        val durationMillis = stoppedTimestamp - session.startTimestamp - session.pausedDurationMillis
+        // Mirrors SessionRepositoryImpl: average speed is derived, never supplied by the caller.
+        val finalAverageSpeedMps =
+            if (durationMillis <= 0L) 0f else (finalDistanceMeters / (durationMillis / 1_000.0)).toFloat()
         val updated = session.copy(
             status = SessionStatus.STOPPED,
             stoppedTimestamp = stoppedTimestamp,
@@ -82,7 +85,7 @@ class MockedSessionRepository : SessionRepository {
         val summary = SessionSummary(
             id = sessionId,
             distanceMeters = finalDistanceMeters,
-            durationMillis = stoppedTimestamp - session.startTimestamp - session.pausedDurationMillis,
+            durationMillis = durationMillis,
             averageSpeedMps = finalAverageSpeedMps,
             thumbnailPath = thumbnailPath,
             recordedAt = stoppedTimestamp,
