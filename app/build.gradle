@@ -37,7 +37,8 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled = false
+            minifyEnabled = true
+            shrinkResources = true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -82,10 +83,6 @@ dependencies {
     ksp libs.hilt.compiler
 
     // Espresso's CountingIdlingResource - a tiny, dependency-free artifact safe to ship in the
-    // production APK (unlike espresso-core). RecordViewModel increments/decrements it around the
-    // async state updates androidTest's IdlingRegistry needs to synchronize with; it costs nothing
-    // when no test ever registers it with IdlingRegistry.
-    implementation libs.androidx.espresso.idling.resource
 
     testImplementation libs.junit
     testImplementation libs.mockk

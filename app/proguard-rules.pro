@@ -1,21 +1,18 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# R8 is on for release (minifyEnabled + shrinkResources). Most of this app's dependencies ship
+# their own consumer rules -- Room, Hilt, Navigation, Compose, Play Services -- so only the things
+# R8 cannot see through belong here.
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# SessionStatus is persisted by name: the enum constant is written into the `status` column and read
+# back with valueOf(). The default android-optimize rules keep values()/valueOf() themselves, but
+# not the constant names, so obfuscation would rename PAUSED to something like a and every row
+# written by a previous install would fail to parse on first launch after an update.
+-keepclassmembers enum com.khiemnph.domain.model.** {
+    <fields>;
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Keeps the original names in stack traces from a shrunk build; without this a crash report from
+# release is unreadable. mapping.txt is still produced for deobfuscation.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
