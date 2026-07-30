@@ -22,7 +22,7 @@ private const val NO_PACE = "--:--"
  * the same sheet already describe how fast the run is going, so this is the reading that has to be
  * glanceable mid-stride.
  */
-internal fun formatPaceMinPerKm(speedMps: Float): String {
+fun formatPaceMinPerKm(speedMps: Float): String {
     if (speedMps < SLOWEST_MEANINGFUL_SPEED_MPS) return NO_PACE
 
     // Rounded, not truncated: 322.6 s per km is 5:23, and truncating would under-report

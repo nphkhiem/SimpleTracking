@@ -243,11 +243,11 @@ class RecordFragmentTest {
      * Robolectric can reach - and is the regression test for the fix that moved the Stop intent
      * dispatch off `viewModelScope` and onto the injected application-scoped
      * [com.khiemnph.simpletracking.di.ApplicationScope] [kotlinx.coroutines.CoroutineScope]: it
-     * proves the Stop button still both navigates back to Runs AND reliably sends the Stop
+     * proves the Stop button both navigates forward to Summary AND reliably sends the Stop
      * intent to [TrackingService].
      */
     @Test
-    fun givenStopButtonClicked_whenInvoked_thenNavigatesBackToRunsAndSendsStopIntentToTrackingService() {
+    fun givenStopButtonClicked_whenInvoked_thenNavigatesToSummaryAndSendsStopIntentToTrackingService() {
         seedActiveSession()
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
@@ -263,7 +263,7 @@ class RecordFragmentTest {
             scenario.onActivity { activity ->
                 val navHostFragment =
                     activity.supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-                assertEquals(R.id.runsFragment, navHostFragment.navController.currentDestination?.id)
+                assertEquals(R.id.summaryFragment, navHostFragment.navController.currentDestination?.id)
             }
         }
 
@@ -465,7 +465,7 @@ class RecordFragmentTest {
     /** [RecordViewModel] never mutates [SessionRepository] directly - every pause goes through a
      * `TrackingService` intent (see [RecordViewModel.onPauseOrResumeClicked]), the same as the
      * Pause button itself. This drains the full started-service queue - matching
-     * [givenStopButtonClicked_whenInvoked_thenNavigatesBackToRunsAndSendsStopIntentToTrackingService]'s
+     * [givenStopButtonClicked_whenInvoked_thenNavigatesToSummaryAndSendsStopIntentToTrackingService]'s
      * approach - so it must only be called once all broadcasts for a test have already fired. */
     private fun pauseIntentsSentToTrackingService(appContext: Application): List<Intent> {
         val expectedAction = TrackingService.pauseIntent(appContext, sessionId).action
@@ -670,6 +670,38 @@ class RecordFragmentTest {
                 val paceView = fragment.view?.findViewById<TextView>(R.id.record_current_speed_value)
                 // 5 m/s is 18 km/h, which runners read as 3:20 per kilometre.
                 assertEquals("3:20", paceView?.text.toString())
+            }
+        }
+    }
+
+    /**
+     * The whole point of routing Stop through an action with `popUpTo(runsFragment)` rather than a
+     * bare `navigate`: Record has to leave the stack on the way, or Back from Summary returns the
+     * user to a session they already finished.
+     */
+    @Test
+    fun givenStopped_whenBackPressedFromSummary_thenLandsOnRunsNotOnTheFinishedRecordScreen() {
+        seedActiveSession()
+
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            idleMainLooper()
+
+            scenario.onActivity { activity ->
+                recordFragmentOf(activity).view?.findViewById<View>(R.id.record_stop_button)?.performClick()
+            }
+            idleMainLooper()
+
+            scenario.onActivity { activity ->
+                val navHostFragment =
+                    activity.supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+                navHostFragment.navController.popBackStack()
+            }
+            idleMainLooper()
+
+            scenario.onActivity { activity ->
+                val navHostFragment =
+                    activity.supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+                assertEquals(R.id.runsFragment, navHostFragment.navController.currentDestination?.id)
             }
         }
     }

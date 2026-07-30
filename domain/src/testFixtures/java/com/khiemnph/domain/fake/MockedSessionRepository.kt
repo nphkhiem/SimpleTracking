@@ -9,6 +9,7 @@ import com.khiemnph.domain.model.SessionSummary
 import com.khiemnph.domain.repository.SessionRepository
 import com.khiemnph.domain.util.DistanceCalculator
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
@@ -94,6 +95,9 @@ class MockedSessionRepository : SessionRepository {
         return summary
     }
 
+    override fun observeSessionSummary(sessionId: String): Flow<SessionSummary?> =
+        sessionSummariesFlow.map { summaries -> summaries.firstOrNull { it.id == sessionId } }
+
     override suspend fun getSessionStatus(sessionId: String): SessionStatus? =
         sessionsById[sessionId]?.status
 
@@ -144,6 +148,11 @@ class MockedSessionRepository : SessionRepository {
         if (session.status != SessionStatus.STOPPED) {
             refreshActiveSessionState(session.id)
         }
+    }
+
+    /** Test-only hook: seeds finished-session summaries directly, bypassing [stopSession]. */
+    fun seedSummaries(summaries: List<SessionSummary>) {
+        sessionSummariesFlow.value = summaries
     }
 
     /** Test-only hook: seeds persisted points directly, bypassing [recordLocationPoint]. */

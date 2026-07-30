@@ -15,8 +15,10 @@ import java.util.concurrent.Executor
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import app.cash.turbine.test
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -667,5 +669,80 @@ class SessionRepositoryImplTest {
         val sessionId = repository.startSession()
 
         assertNull(repository.getMostRecentPoint(sessionId))
+    }
+
+    @Test
+    fun givenAStoppedSession_whenObservingItsSummary_thenEmitsItsFinalStats() = runTest {
+        clock.currentMillis = 1_000L
+        val sessionId = repository.startSession()
+        clock.currentMillis = 61_000L
+        repository.stopSession(sessionId, finalDistanceMeters = 1_200.0, routePolyline = "poly")
+
+        val summary = repository.observeSessionSummary(sessionId).first()
+
+        assertNotNull(summary)
+        assertEquals(sessionId, summary!!.id)
+        assertEquals(1_200.0, summary.distanceMeters, 0.001)
+        assertEquals(60_000L, summary.durationMillis)
+        assertEquals("poly", summary.routePolyline)
+    }
+
+    @Test
+    fun givenAnUnknownId_whenObservingItsSummary_thenEmitsNullRatherThanThrowing() = runTest {
+        assertNull(repository.observeSessionSummary("no-such-session").first())
+    }
+
+    @Test
+    fun givenASessionStillRunning_whenObservingItsSummary_thenEmitsNull() = runTest {
+        // A running session has no final distance and no stop timestamp, so it has no summary yet.
+        val sessionId = repository.startSession()
+
+        assertNull(repository.observeSessionSummary(sessionId).first())
+    }
+
+    @Test
+    fun givenAPausedSession_whenObservingItsSummary_thenEmitsNull() = runTest {
+        val sessionId = repository.startSession()
+        repository.pauseSession(sessionId)
+
+        assertNull(repository.observeSessionSummary(sessionId).first())
+    }
+
+    /**
+     * The post-run screen opens while the stop is still being written, so it starts observing a
+     * session that has no summary yet and must see one appear. A one-shot read reported a run that
+     * did exist as missing, which this reproduces.
+     */
+    @Test
+    fun givenObservingBeforeTheStopIsWritten_whenTheSessionStops_thenTheSummaryArrives() = runTest {
+        clock.currentMillis = 1_000L
+        val sessionId = repository.startSession()
+
+        repository.observeSessionSummary(sessionId).test {
+            assertNull("no summary while the session is still running", awaitItem())
+
+            clock.currentMillis = 61_000L
+            repository.stopSession(sessionId, finalDistanceMeters = 900.0, routePolyline = null)
+
+            val arrived = awaitItem()
+            assertNotNull("the summary must appear once the stop lands", arrived)
+            assertEquals(900.0, arrived!!.distanceMeters, 0.001)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun givenASummaryOnScreen_whenTheSessionIsDeleted_thenObservingEmitsNullAgain() = runTest {
+        val sessionId = repository.startSession()
+        repository.stopSession(sessionId, finalDistanceMeters = 500.0, routePolyline = null)
+
+        repository.observeSessionSummary(sessionId).test {
+            assertNotNull(awaitItem())
+
+            repository.deleteSession(sessionId)
+
+            assertNull("a deleted session must stop reporting a summary", awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 }

@@ -143,6 +143,11 @@ class SessionRepositoryImpl @Inject constructor(
     override suspend fun getSessionStatus(sessionId: String): SessionStatus? =
         sessionDao.getStatusById(sessionId)?.let(SessionStatus::valueOf)
 
+    override fun observeSessionSummary(sessionId: String): Flow<SessionSummary?> =
+        sessionDao.observeById(sessionId).map { entity ->
+            entity?.takeIf { it.status == SessionStatus.STOPPED.name }?.toSummary()
+        }
+
     override suspend fun deleteSession(sessionId: String) = sessionWriteMutex.withLock {
         sessionDao.deleteById(sessionId)
     }

@@ -52,6 +52,10 @@ class RecordViewModel @Inject constructor(
     val hasResolvedSession: Boolean
         get() = sessionId != null
 
+    /** The session this screen resolved, so Stop can hand it to the post-run screen. */
+    val currentSessionId: String?
+        get() = sessionId
+
     /**
      * Presentation-only rolling window of the last few genuinely-new [ActiveSessionState.currentSpeedMps]
      * samples - see [isGenuinelyNewSample].

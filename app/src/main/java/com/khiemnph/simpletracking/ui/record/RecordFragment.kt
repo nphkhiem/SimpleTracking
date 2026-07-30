@@ -419,12 +419,24 @@ class RecordFragment : Fragment() {
         }
     }
 
+    /**
+     * Stop now goes forward to Summary rather than back to Runs.
+     *
+     * The action pops Record on the way, so Back from Summary lands on Runs instead of returning to
+     * a finished session. The session id is read before dispatching: `onStopClicked` is what
+     * finalises the session, and Summary needs the id to read the result back.
+     */
     private fun handleStopClicked() {
         if (stopDispatched) return
         stopDispatched = true
 
+        val sessionId = viewModel.currentSessionId
         viewModel.onStopClicked()
-        findNavController().popBackStack()
+        if (sessionId == null) {
+            findNavController().popBackStack()
+            return
+        }
+        findNavController().navigate(RecordFragmentDirections.actionRecordFragmentToSummaryFragment(sessionId))
     }
 
     private fun renderUiState(state: RecordUiState) {
