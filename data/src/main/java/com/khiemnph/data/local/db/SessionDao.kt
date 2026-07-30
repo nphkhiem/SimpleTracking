@@ -15,6 +15,9 @@ interface SessionDao {
     @Query("SELECT * FROM session WHERE id = :sessionId")
     suspend fun getById(sessionId: String): SessionEntity?
 
+    @Query("SELECT * FROM session WHERE id = :sessionId")
+    fun observeById(sessionId: String): Flow<SessionEntity?>
+
     /**
      * Status-guarded so a write computed against a stale read cannot land. Two commands can be in
      * flight at once (in-app buttons and the notification's own actions both dispatch into the same

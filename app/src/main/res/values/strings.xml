@@ -30,6 +30,16 @@
     <string name="unit_distance_km">%1$s km</string>
     <string name="unit_speed_kmh_avg">%1$s km/h avg</string>
     <string name="summary_title">Summary</string>
+    <string name="route_not_enough_points">Not enough map data</string>
+    <string name="summary_headline">Nice run</string>
+    <string name="summary_metric_distance">km</string>
+    <string name="summary_metric_duration">time</string>
+    <string name="summary_metric_pace">pace</string>
+    <string name="summary_keep">Save</string>
+    <string name="summary_discard">Delete</string>
+    <string name="summary_too_short">That was a very short run. Delete it?</string>
+    <string name="summary_not_found">This run is no longer available.</string>
+    <string name="summary_back_to_runs">Back to Runs</string>
     <string name="session_detail_title">Run</string>
     <string name="settings_title">Settings</string>
     <string name="record_title">Record</string>

@@ -34,6 +34,17 @@ interface SessionRepository {
      */
     suspend fun getSessionStatus(sessionId: String): SessionStatus?
 
+    /**
+     * The finished session's stats, re-emitted whenever the row changes. Null while the id is
+     * unknown, while the session has not stopped yet, and again once it is deleted.
+     *
+     * A Flow rather than a one-shot read because both screens that need this can open while the
+     * row is still moving. The post-run screen is reached the instant Stop is dispatched, before
+     * the Service has written the final stats, and a session open on screen can be deleted from
+     * elsewhere. A single read would show the first case as "missing" and never notice the second.
+     */
+    fun observeSessionSummary(sessionId: String): Flow<SessionSummary?>
+
     /** Removes a session and everything it recorded. Unknown ids are a no-op, not an error. */
     suspend fun deleteSession(sessionId: String)
 

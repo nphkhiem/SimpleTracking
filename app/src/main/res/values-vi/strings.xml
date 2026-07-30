@@ -34,6 +34,16 @@
     <string name="route_scale_kilometers">%1$d km</string>
 
     <string name="summary_title">Tổng kết</string>
+    <string name="route_not_enough_points">Không đủ dữ liệu bản đồ</string>
+    <string name="summary_headline">Chạy tốt lắm</string>
+    <string name="summary_metric_distance">km</string>
+    <string name="summary_metric_duration">thời gian</string>
+    <string name="summary_metric_pace">tốc độ</string>
+    <string name="summary_keep">Lưu</string>
+    <string name="summary_discard">Xoá</string>
+    <string name="summary_too_short">Buổi chạy này rất ngắn. Bạn có muốn xoá không?</string>
+    <string name="summary_not_found">Không còn buổi chạy này nữa.</string>
+    <string name="summary_back_to_runs">Quay lại Hoạt động</string>
     <string name="session_detail_title">Buổi chạy</string>
     <string name="settings_title">Cài đặt</string>
 
