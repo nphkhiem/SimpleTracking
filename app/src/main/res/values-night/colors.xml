@@ -13,10 +13,10 @@
       the semantic roles in themes.xml (?attr/colorOnSurface and friends) instead; these disappear
       when the screens are rebuilt.
     -->
-    <color name="history_surface">#221C18</color>
-    <color name="history_ink">#F4ECE6</color>
-    <color name="history_ink_soft">#B3A89F</color>
-    <color name="history_border">#1AF4ECE6</color>
+    <color name="history_surface">#211F19</color>
+    <color name="history_ink">#EFEEEB</color>
+    <color name="history_ink_soft">#B1ADA1</color>
+    <color name="history_border">#1AEFEEEB</color>
     <color name="history_accent">#FF6D52</color>
 
     <color name="record_accent_ink">#1C0D09</color>
