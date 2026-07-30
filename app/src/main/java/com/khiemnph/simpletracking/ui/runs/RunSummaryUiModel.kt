@@ -10,9 +10,10 @@ import com.khiemnph.domain.model.LatLngPoint
 data class RunSummaryUiModel(
     val id: String,
     val recordedAtLabel: String,
-    val distanceLabel: String,
+    /** The number alone, e.g. "0.21". The unit is applied by the composable, from resources. */
+    val distanceKm: String,
     val durationLabel: String,
-    val averageSpeedLabel: String,
+    val averageSpeedKmh: String,
     /** Empty when the session has no recorded shape, which the row renders as its empty state. */
     val routePoints: List<LatLngPoint>,
 )

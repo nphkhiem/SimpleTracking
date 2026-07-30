@@ -143,7 +143,7 @@ class RunsViewModelTest {
     fun givenDistanceOf5420Meters_whenMappedToUiModel_thenDistanceLabelIsFormattedInKilometersWithTwoDecimals() {
         val uiModel = sessionSummary(distanceMeters = 5420.0).toRunSummaryUiModel()
 
-        assertEquals("5.42 km", uiModel.distanceLabel)
+        assertEquals("5.42", uiModel.distanceKm)
     }
 
     @Test
@@ -164,7 +164,7 @@ class RunsViewModelTest {
     fun givenAverageSpeedOf2Point5Mps_whenMappedToUiModel_thenAverageSpeedLabelIsConvertedToKmPerHour() {
         val uiModel = sessionSummary(averageSpeedMps = 2.5f).toRunSummaryUiModel()
 
-        assertEquals("9.0 km/h avg", uiModel.averageSpeedLabel)
+        assertEquals("9.0", uiModel.averageSpeedKmh)
     }
 
     @Test

@@ -56,8 +56,8 @@ internal object RunsGrouping {
         val best = perDayMeters.maxOrNull() ?: 0.0
 
         return WeekSummaryUiModel(
-            distanceLabel = "${formatDistanceKm(thisWeek.sumOf { it.distanceMeters })} km",
-            runCountLabel = if (thisWeek.size == 1) "1 run" else "${thisWeek.size} runs",
+            distanceKm = formatDistanceKm(thisWeek.sumOf { it.distanceMeters }),
+            runCount = thisWeek.size,
             durationLabel = formatDuration(thisWeek.sumOf { it.durationMillis }),
             dailyDistanceFractions = perDayMeters.map { meters ->
                 if (best <= 0.0) 0f else (meters / best).toFloat()
@@ -65,10 +65,10 @@ internal object RunsGrouping {
         )
     }
 
-    private fun labelFor(date: LocalDate, today: LocalDate): String = when (date) {
-        today -> "Today"
-        today.minusDays(1) -> "Yesterday"
-        else -> groupDateFormatter().format(date)
+    private fun labelFor(date: LocalDate, today: LocalDate): DayLabel = when (date) {
+        today -> DayLabel.Today
+        today.minusDays(1) -> DayLabel.Yesterday
+        else -> DayLabel.Dated(groupDateFormatter().format(date))
     }
 
     private fun Long.toLocalDate(zone: ZoneId): LocalDate =

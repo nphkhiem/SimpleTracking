@@ -33,15 +33,15 @@ class RunsScreenTest {
     private fun session(id: String, distance: String) = RunSummaryUiModel(
         id = id,
         recordedAtLabel = "Sat, 9:41 AM",
-        distanceLabel = distance,
+        distanceKm = distance,
         durationLabel = "28:14",
-        averageSpeedLabel = "11.1 km/h avg",
+        averageSpeedKmh = "11.1",
         routePoints = emptyList(),
     )
 
     private val week = WeekSummaryUiModel(
-        distanceLabel = "12.50 km",
-        runCountLabel = "3 runs",
+        distanceKm = "12.50",
+        runCount = 3,
         durationLabel = "1:12:00",
         dailyDistanceFractions = listOf(0f, 0.4f, 0f, 1f, 0f, 0.6f, 0.2f),
     )
@@ -54,7 +54,7 @@ class RunsScreenTest {
         state = if (sessions.isEmpty()) {
             RunsUiState.Empty
         } else {
-            RunsUiState.Sessions(week, listOf(SessionGroupUiModel("Today", sessions)))
+            RunsUiState.Sessions(week, listOf(SessionGroupUiModel(DayLabel.Today, sessions)))
         },
         onRecordClick = onRecordClick,
         onSessionSwipedAway = onSessionSwipedAway,
@@ -77,7 +77,7 @@ class RunsScreenTest {
 
     @Test
     fun givenSessions_whenScreenRendered_thenEachSessionsFormattedLabelsAreShown() {
-        setScreen(listOf(session("a", "5.23 km")))
+        setScreen(listOf(session("a", "5.23")))
 
         composeRule.onNodeWithText("5.23 km").assertIsDisplayed()
         composeRule.onNodeWithText("Sat, 9:41 AM").assertIsDisplayed()
@@ -103,7 +103,7 @@ class RunsScreenTest {
 
     @Test
     fun givenSessions_whenScreenRendered_thenTheWeekSummaryIsShownAboveThem() {
-        setScreen(listOf(session("a", "5.23 km")))
+        setScreen(listOf(session("a", "5.23")))
 
         composeRule.onNodeWithTag(RunsTestTags.WEEK_SUMMARY).assertIsDisplayed()
         composeRule.onNodeWithText("12.50 km").assertIsDisplayed()
@@ -115,14 +115,14 @@ class RunsScreenTest {
             RunsUiState.Sessions(
                 week = week,
                 groups = listOf(
-                    SessionGroupUiModel("Today", listOf(session("a", "5.23 km"))),
-                    SessionGroupUiModel("Yesterday", listOf(session("b", "3.56 km"))),
+                    SessionGroupUiModel(DayLabel.Today, listOf(session("a", "5.23"))),
+                    SessionGroupUiModel(DayLabel.Yesterday, listOf(session("b", "3.56"))),
                 ),
             ),
         )
 
-        composeRule.onNodeWithTag(RunsTestTags.groupHeaderFor("Today")).assertIsDisplayed()
-        composeRule.onNodeWithTag(RunsTestTags.groupHeaderFor("Yesterday")).assertIsDisplayed()
+        composeRule.onNodeWithTag(RunsTestTags.groupHeaderFor(DayLabel.Today.key)).assertIsDisplayed()
+        composeRule.onNodeWithTag(RunsTestTags.groupHeaderFor(DayLabel.Yesterday.key)).assertIsDisplayed()
     }
 
     /** A heading already separates two days, so a rule under a group's last row would be noise. */
@@ -132,8 +132,8 @@ class RunsScreenTest {
             RunsUiState.Sessions(
                 week = week,
                 groups = listOf(
-                    SessionGroupUiModel("Today", listOf(session("a", "5.23 km"))),
-                    SessionGroupUiModel("Yesterday", listOf(session("b", "3.56 km"))),
+                    SessionGroupUiModel(DayLabel.Today, listOf(session("a", "5.23"))),
+                    SessionGroupUiModel(DayLabel.Yesterday, listOf(session("b", "3.56"))),
                 ),
             ),
         )
@@ -198,7 +198,7 @@ class RunsScreenTest {
     /** The list must not stop at a screenful: a real history grows past what fits. */
     @Test
     fun givenMoreSessionsThanFitOnScreen_whenScrolledToTheLast_thenItIsRendered() {
-        val many = (1..40).map { session("s$it", "$it.00 km") }
+        val many = (1..40).map { session("s$it", "$it.00") }
         setScreen(many)
 
         composeRule.onNodeWithTag(RunsTestTags.LIST).performScrollToIndex(many.lastIndex)

@@ -21,7 +21,7 @@ sealed interface RunsUiState {
 
 /** Runs recorded on the same day, under one heading. */
 data class SessionGroupUiModel(
-    val label: String,
+    val label: DayLabel,
     val sessions: List<RunSummaryUiModel>,
 )
 
@@ -33,8 +33,9 @@ data class SessionGroupUiModel(
  * with no run is simply 0 rather than a missing entry.
  */
 data class WeekSummaryUiModel(
-    val distanceLabel: String,
-    val runCountLabel: String,
+    /** The number alone, e.g. "12.50". The unit is applied by the composable, from resources. */
+    val distanceKm: String,
+    val runCount: Int,
     val durationLabel: String,
     val dailyDistanceFractions: List<Float>,
 )
