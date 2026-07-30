@@ -13,7 +13,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.fragment.findNavController
 import com.khiemnph.simpletracking.R
 import com.khiemnph.simpletracking.ui.theme.ChayNgayDiTheme
+import com.khiemnph.simpletracking.settings.UserPreferences
+import com.khiemnph.simpletracking.settings.UserPreferencesRepository
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 /**
  * The post-run moment, reached from Stop.
@@ -25,6 +28,8 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class SummaryFragment : Fragment() {
 
+    @Inject lateinit var userPreferencesRepository: UserPreferencesRepository
+
     private val viewModel: SummaryViewModel by viewModels()
 
     override fun onCreateView(
@@ -34,7 +39,9 @@ class SummaryFragment : Fragment() {
     ): View = ComposeView(requireContext()).apply {
         setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
         setContent {
-            ChayNgayDiTheme {
+            val preferences by userPreferencesRepository.preferences
+                .collectAsStateWithLifecycle(UserPreferences())
+            ChayNgayDiTheme(dynamicColour = preferences.dynamicColour) {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
                 SummaryScreen(
                     state = state,

@@ -4,22 +4,22 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.compose.material3.Text
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.fragment.findNavController
+import com.khiemnph.simpletracking.R
 import com.khiemnph.simpletracking.ui.theme.ChayNgayDiTheme
 import dagger.hilt.android.AndroidEntryPoint
 
-/**
- * Units, theme, dynamic colour and about, built in P5.
- *
- * Placeholder. The destination exists so the navigation graph settles in one change, which means
- * the phase that builds this screen never has to touch `nav_graph.xml` and cannot collide with
- * the phases building the other new screens.
- */
+/** Units, theme, dynamic colour and about. */
 @AndroidEntryPoint
 class SettingsFragment : Fragment() {
+
+    private val viewModel: SettingsViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -27,6 +27,21 @@ class SettingsFragment : Fragment() {
         savedInstanceState: Bundle?,
     ): View = ComposeView(requireContext()).apply {
         setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-        setContent { ChayNgayDiTheme { Text("Settings") } }
+        setContent {
+            val state by viewModel.uiState.collectAsStateWithLifecycle()
+            ChayNgayDiTheme(dynamicColour = state.dynamicColour) {
+                SettingsScreen(
+                    state = state,
+                    onThemeChosen = viewModel::onThemeChosen,
+                    onDynamicColourChanged = viewModel::onDynamicColourChanged,
+                    onBack = ::leave,
+                )
+            }
+        }
+    }
+
+    private fun leave() {
+        val navController = findNavController()
+        if (navController.currentDestination?.id == R.id.settingsFragment) navController.popBackStack()
     }
 }

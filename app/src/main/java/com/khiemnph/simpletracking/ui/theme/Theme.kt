@@ -2,10 +2,14 @@ package com.khiemnph.simpletracking.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
+import android.os.Build
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import com.khiemnph.simpletracking.R
 
@@ -63,13 +67,32 @@ private fun colorSchemeFromResources(dark: Boolean): ColorScheme {
     )
 }
 
+/**
+ * [dynamicColour] is off by default and stays that way unless the user asks for it in Settings.
+ *
+ * The brief's reasoning: this app's visual identity *is* its palette, and handing that to whatever
+ * the wallpaper happens to be on first launch would delete the one part of the design that was
+ * already good. Offering it is a courtesy to people who want their phone to match; assuming it is
+ * not.
+ *
+ * Below Android 12 the platform cannot extract a scheme at all, so the request is simply ignored
+ * rather than failing.
+ */
 @Composable
 fun ChayNgayDiTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    dynamicColour: Boolean = false,
     content: @Composable () -> Unit,
 ) {
+    val context = LocalContext.current
+    val scheme = when {
+        dynamicColour && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
+            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+        else -> colorSchemeFromResources(darkTheme)
+    }
+
     MaterialTheme(
-        colorScheme = colorSchemeFromResources(darkTheme),
+        colorScheme = scheme,
         typography = chayNgayDiTypography(),
         shapes = ChayNgayDiShapes,
         content = content,
