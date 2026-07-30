@@ -131,9 +131,9 @@ fun SessionSummary.toRunSummaryUiModel(
 ): RunSummaryUiModel = RunSummaryUiModel(
     id = id,
     recordedAtLabel = formatRecordedAt(recordedAt, zoneId),
-    distanceLabel = "${formatDistanceKm(distanceMeters)} km",
+    distanceKm = formatDistanceKm(distanceMeters),
     durationLabel = formatDuration(durationMillis),
-    averageSpeedLabel = formatAverageSpeedKmh(averageSpeedMps),
+    averageSpeedKmh = formatAverageSpeedKmh(averageSpeedMps),
     routePoints = routePolyline?.let(RoutePolyline::decode).orEmpty(),
 )
 
@@ -141,5 +141,6 @@ private fun formatRecordedAt(recordedAtMillis: Long, zoneId: ZoneId): String =
     Instant.ofEpochMilli(recordedAtMillis).atZone(zoneId).format(recordedAtFormatter())
 
 
+/** The number alone. The unit is applied by the composable, from resources. */
 private fun formatAverageSpeedKmh(averageSpeedMps: Float): String =
-    String.format(Locale.getDefault(), "%.1f km/h avg", averageSpeedMps * MPS_TO_KMH_FACTOR)
+    String.format(Locale.getDefault(), "%.1f", averageSpeedMps * MPS_TO_KMH_FACTOR)

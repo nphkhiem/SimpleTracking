@@ -1,0 +1,71 @@
+<resources>
+    <!--
+      Vietnamese is the app's primary language: it is what the name Chạy Ngay Đi is, and what the
+      design brief assumes the reader speaks. English stays as the default resource so the app
+      still works on a device set to anything else.
+
+      Voice: plain and calm, matching the brief's "quiet and confident". No exclamation marks, no
+      motivational shouting, sentence case throughout.
+    -->
+    <string name="tracking_notification_channel_name">Theo dõi</string>
+    <string name="tracking_notification_title">Đang theo dõi buổi chạy</string>
+    <string name="tracking_notification_text_running">Đang ghi lại lộ trình</string>
+    <string name="tracking_notification_text_paused">Đã tạm dừng</string>
+    <string name="tracking_notification_action_pause">Tạm dừng</string>
+    <string name="tracking_notification_action_resume">Tiếp tục</string>
+    <string name="tracking_notification_action_stop">Dừng</string>
+
+    <string name="runs_title">Hoạt động</string>
+    <string name="runs_week_heading">7 ngày qua</string>
+    <string name="runs_empty_title">Chưa có buổi chạy nào</string>
+    <string name="runs_empty_body">Chạm Ghi lại để bắt đầu theo dõi. Lộ trình của bạn sẽ xuất hiện ở đây.</string>
+    <string name="runs_delete">Xoá</string>
+    <string name="runs_session_deleted">Đã xoá buổi chạy</string>
+    <string name="runs_undo">Hoàn tác</string>
+    <string name="runs_record_button_text">Ghi lại</string>
+    <string name="runs_group_today">Hôm nay</string>
+    <string name="runs_group_yesterday">Hôm qua</string>
+
+    <!-- "km/h tb" is the usual short form: tb is trung bình, average. -->
+    <string name="unit_speed_kmh_avg">%1$s km/h tb</string>
+    <!-- Same as the default today, declared so a locale can reorder or respace it later. -->
+    <string name="unit_distance_km">%1$s km</string>
+    <string name="route_scale_meters">%1$d m</string>
+    <string name="route_scale_kilometers">%1$d km</string>
+
+    <string name="summary_title">Tổng kết</string>
+    <string name="session_detail_title">Buổi chạy</string>
+    <string name="settings_title">Cài đặt</string>
+
+    <string name="record_title">Ghi lại</string>
+    <string name="record_back_content_description">Quay lại Hoạt động</string>
+    <string name="record_paused_tag">Đã tạm dừng</string>
+    <string name="record_current_speed_unit">/km</string>
+    <string name="record_signal_acquiring">Đang tìm tín hiệu GPS…</string>
+    <string name="record_signal_weak">GPS yếu</string>
+    <string name="record_signal_lost">Mất tín hiệu GPS</string>
+    <string name="record_duration_unit">thời gian</string>
+    <string name="record_pause_content_description">Tạm dừng</string>
+    <string name="record_resume_content_description">Tiếp tục</string>
+    <string name="record_stop_content_description">Dừng</string>
+    <string name="record_start_marker_title">Điểm bắt đầu</string>
+    <string name="record_current_marker_title">Vị trí hiện tại</string>
+    <string name="record_location_settings_unknown_message">Không kiểm tra được cài đặt vị trí. Vẫn ghi lại, và nếu không thấy lộ trình, hãy kiểm tra xem Vị trí đã bật chưa.</string>
+    <string name="record_map_offline_caption">Không có bản đồ khi ngoại tuyến</string>
+
+    <string name="permission_location_rationale_title">Cần quyền truy cập vị trí</string>
+    <string name="permission_location_rationale_message">Chạy Ngay Đi cần quyền truy cập vị trí để ghi lại lộ trình trong lúc bạn chạy.</string>
+    <string name="permission_location_rationale_positive">Tiếp tục</string>
+    <string name="permission_location_rationale_negative">Để sau</string>
+    <string name="permission_location_permanently_denied_title">Quyền vị trí đang tắt</string>
+    <string name="permission_location_permanently_denied_message">Quyền truy cập vị trí đã bị từ chối vĩnh viễn. Hãy bật lại trong phần Cài đặt của ứng dụng để ghi lại buổi chạy.</string>
+    <string name="permission_location_permanently_denied_positive">Mở Cài đặt</string>
+    <string name="permission_location_permanently_denied_negative">Để sau</string>
+
+    <!-- Vietnamese does not inflect for number, so both quantities read the same. Declaring both
+         is still required: the framework picks by quantity, not by language. -->
+    <plurals name="runs_week_count">
+        <item quantity="one">%1$d buổi chạy</item>
+        <item quantity="other">%1$d buổi chạy</item>
+    </plurals>
+</resources>

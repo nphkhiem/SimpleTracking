@@ -41,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
@@ -62,7 +63,7 @@ object RunsTestTags {
     const val SKELETON = "runs_skeleton"
     const val WEEK_SUMMARY = "runs_week_summary"
 
-    fun groupHeaderFor(label: String) = "runs_group_$label"
+    fun groupHeaderFor(key: String) = "runs_group_$key"
 
     fun rowFor(sessionId: String) = "runs_row_$sessionId"
 }
@@ -169,7 +170,7 @@ private fun SessionList(
         item(key = "week") { WeekSummary(week) }
 
         groups.forEach { group ->
-            item(key = "header-" + group.label) { GroupHeader(group.label) }
+            item(key = "header-" + group.label.key) { GroupHeader(group.label) }
 
             itemsIndexed(group.sessions, key = { _, session -> session.id }) { index, session ->
                 SwipeToDeleteRow(session = session, onSwipedAway = { onSwipedAway(session.id) })
@@ -190,15 +191,20 @@ private fun SessionList(
 }
 
 @Composable
-private fun GroupHeader(label: String, modifier: Modifier = Modifier) {
+private fun GroupHeader(label: DayLabel, modifier: Modifier = Modifier) {
+    val text = when (label) {
+        DayLabel.Today -> stringResource(R.string.runs_group_today)
+        DayLabel.Yesterday -> stringResource(R.string.runs_group_yesterday)
+        is DayLabel.Dated -> label.formattedDate
+    }
     Text(
-        text = label,
+        text = text,
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.SemiBold,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = modifier
             .padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 4.dp)
-            .testTag(RunsTestTags.groupHeaderFor(label)),
+            .testTag(RunsTestTags.groupHeaderFor(label.key)),
     )
 }
 
@@ -219,14 +225,15 @@ private fun WeekSummary(week: WeekSummaryUiModel, modifier: Modifier = Modifier)
         Spacer(Modifier.height(6.dp))
         Row(verticalAlignment = Alignment.Bottom) {
             Text(
-                text = week.distanceLabel,
+                text = stringResource(R.string.unit_distance_km, week.distanceKm),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
             )
             Spacer(Modifier.width(12.dp))
             Text(
-                text = week.runCountLabel + stringResource(R.string.runs_item_stats_separator) + week.durationLabel,
+                text = pluralStringResource(R.plurals.runs_week_count, week.runCount, week.runCount) +
+                    stringResource(R.string.runs_item_stats_separator) + week.durationLabel,
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 2.dp),
@@ -395,7 +402,7 @@ private fun SessionRow(session: RunSummaryUiModel, modifier: Modifier = Modifier
             Spacer(Modifier.width(14.dp))
             Column(verticalArrangement = Arrangement.Center) {
                 Text(
-                    text = session.distanceLabel,
+                    text = stringResource(R.string.unit_distance_km, session.distanceKm),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -404,7 +411,7 @@ private fun SessionRow(session: RunSummaryUiModel, modifier: Modifier = Modifier
                 Text(
                     text = session.durationLabel +
                         stringResource(R.string.runs_item_stats_separator) +
-                        session.averageSpeedLabel,
+                        stringResource(R.string.unit_speed_kmh_avg, session.averageSpeedKmh),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.fillMaxWidth(),

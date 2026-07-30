@@ -36,21 +36,21 @@ class RunsGroupingTest {
     fun givenRunsToday_whenGrouped_thenTheHeadingSaysToday() {
         val groups = RunsGrouping.groupsFor(listOf(summaryOn(today)), today, zone)
 
-        assertEquals("Today", groups.single().label)
+        assertEquals(DayLabel.Today, groups.single().label)
     }
 
     @Test
     fun givenRunsYesterday_whenGrouped_thenTheHeadingSaysYesterday() {
         val groups = RunsGrouping.groupsFor(listOf(summaryOn(today.minusDays(1))), today, zone)
 
-        assertEquals("Yesterday", groups.single().label)
+        assertEquals(DayLabel.Yesterday, groups.single().label)
     }
 
     @Test
     fun givenAnOlderRun_whenGrouped_thenTheHeadingIsItsDate() {
         val groups = RunsGrouping.groupsFor(listOf(summaryOn(LocalDate.of(2026, 7, 4))), today, zone)
 
-        assertEquals("Sat, 4 Jul", groups.single().label)
+        assertEquals(DayLabel.Dated("Sat, 4 Jul"), groups.single().label)
     }
 
     @Test
@@ -70,7 +70,10 @@ class RunsGroupingTest {
 
         val groups = RunsGrouping.groupsFor(summaries, today, zone)
 
-        assertEquals(listOf("Today", "Yesterday", "Tue, 21 Jul"), groups.map { it.label })
+        assertEquals(
+            listOf(DayLabel.Today, DayLabel.Yesterday, DayLabel.Dated("Tue, 21 Jul")),
+            groups.map { it.label },
+        )
     }
 
     /**
@@ -84,7 +87,7 @@ class RunsGroupingTest {
 
         val groups = RunsGrouping.groupsFor(listOf(earlyToday, lateLastNight), today, zone)
 
-        assertEquals(listOf("Today", "Yesterday"), groups.map { it.label })
+        assertEquals(listOf(DayLabel.Today, DayLabel.Yesterday), groups.map { it.label })
     }
 
     @Test
@@ -98,8 +101,8 @@ class RunsGroupingTest {
 
         val week = RunsGrouping.weekFor(summaries, today, zone)
 
-        assertEquals("8.00 km", week.distanceLabel)
-        assertEquals("2 runs", week.runCountLabel)
+        assertEquals("8.00", week.distanceKm)
+        assertEquals(2, week.runCount)
         assertEquals("50:00", week.durationLabel)
     }
 
@@ -107,7 +110,7 @@ class RunsGroupingTest {
     fun givenASingleRunThisWeek_whenSummarised_thenTheCountIsSingular() {
         val week = RunsGrouping.weekFor(listOf(summaryOn(today)), today, zone)
 
-        assertEquals("1 run", week.runCountLabel)
+        assertEquals(1, week.runCount)
     }
 
     @Test

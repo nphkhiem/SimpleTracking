@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Chạy Ngay Đi</string>
+    <string name="app_name" translatable="false">Chạy Ngay Đi</string>
 
     <string name="tracking_notification_channel_name">Tracking</string>
     <string name="tracking_notification_title">Tracking your session</string>
@@ -21,14 +21,21 @@
     <string name="runs_session_deleted">Run deleted</string>
     <string name="runs_undo">Undo</string>
     <string name="runs_record_button_text">Record</string>
-    <string name="runs_item_stats_separator">" · "</string>
+    <string name="runs_item_stats_separator" translatable="false">" · "</string>
+    <string name="runs_group_today">Today</string>
+    <string name="runs_group_yesterday">Yesterday</string>
+
+    <!-- Units live apart from the numbers so a translation can move them, or drop the space that
+         some locales do not use. -->
+    <string name="unit_distance_km">%1$s km</string>
+    <string name="unit_speed_kmh_avg">%1$s km/h avg</string>
     <string name="summary_title">Summary</string>
     <string name="session_detail_title">Run</string>
     <string name="settings_title">Settings</string>
     <string name="record_title">Record</string>
     <string name="record_back_content_description">Back to Runs</string>
     <string name="record_paused_tag">Paused</string>
-    <string name="record_distance_unit">km</string>
+    <string name="record_distance_unit" translatable="false">km</string>
     <string name="record_current_speed_unit">/km</string>
     <string name="record_signal_acquiring">Finding GPS…</string>
     <string name="record_signal_weak">Weak GPS</string>
@@ -39,7 +46,7 @@
     <string name="record_stop_content_description">Stop</string>
     <string name="record_start_marker_title">Start</string>
     <string name="record_current_marker_title">Current position</string>
-    <string name="record_location_settings_unknown_message">Couldn\'t check your location settings. Recording anyway \u2014 if no route appears, check that Location is on.</string>
+    <string name="record_location_settings_unknown_message">Couldn\'t check your location settings. Recording anyway, and if no route appears, check that Location is on.</string>
     <string name="record_map_offline_caption">Map unavailable offline</string>
     <string name="route_scale_meters">%1$d m</string>
     <string name="route_scale_kilometers">%1$d km</string>
@@ -52,4 +59,9 @@
     <string name="permission_location_permanently_denied_message">Location access was permanently denied. Turn it on from this app\'s Settings to record a session.</string>
     <string name="permission_location_permanently_denied_positive">Open Settings</string>
     <string name="permission_location_permanently_denied_negative">Not now</string>
+
+    <plurals name="runs_week_count">
+        <item quantity="one">%1$d run</item>
+        <item quantity="other">%1$d runs</item>
+    </plurals>
 </resources>
