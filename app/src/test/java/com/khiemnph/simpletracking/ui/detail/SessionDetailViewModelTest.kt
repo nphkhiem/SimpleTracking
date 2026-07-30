@@ -5,6 +5,7 @@ import com.khiemnph.domain.fake.MockedSessionRepository
 import com.khiemnph.domain.interactor.DeleteSessionUseCase
 import com.khiemnph.domain.interactor.GetSessionSplitsUseCase
 import com.khiemnph.domain.interactor.ObserveSessionSummaryUseCase
+import com.khiemnph.domain.interactor.RenameSessionUseCase
 import com.khiemnph.domain.model.LocationPoint
 import com.khiemnph.domain.model.SessionSummary
 import com.khiemnph.simpletracking.testing.DefaultLocaleRule
@@ -75,6 +76,7 @@ class SessionDetailViewModelTest {
     private fun viewModel(id: String = sessionId) = SessionDetailViewModel(
         observeSessionSummaryUseCase = ObserveSessionSummaryUseCase(repository),
         getSessionSplitsUseCase = GetSessionSplitsUseCase(repository),
+        renameSessionUseCase = RenameSessionUseCase(repository),
         deleteSessionUseCase = DeleteSessionUseCase(repository),
         savedStateHandle = SavedStateHandle(mapOf("sessionId" to id)),
     )
@@ -194,5 +196,31 @@ class SessionDetailViewModelTest {
         advanceUntilIdle()
 
         assertTrue(reported)
+    }
+
+    @Test
+    fun `an unnamed run shows its date as the title`() = runTest {
+        seedRun(2_000.0, 4.0)
+
+        val vm = viewModel()
+        advanceUntilIdle()
+
+        val state = vm.uiState.value as SessionDetailUiState.Ready
+        assertEquals(false, state.hasCustomTitle)
+        assertTrue("expected a date, got ${state.titleLabel}", state.titleLabel.contains(","))
+    }
+
+    @Test
+    fun `renaming replaces the date with the chosen name`() = runTest {
+        seedRun(2_000.0, 4.0)
+        val vm = viewModel()
+        advanceUntilIdle()
+
+        vm.onRename("Morning loop")
+        advanceUntilIdle()
+
+        val state = vm.uiState.value as SessionDetailUiState.Ready
+        assertEquals("Morning loop", state.titleLabel)
+        assertEquals(true, state.hasCustomTitle)
     }
 }

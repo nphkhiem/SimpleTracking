@@ -1,5 +1,6 @@
 package com.khiemnph.simpletracking.ui.detail
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -33,10 +34,34 @@ class SessionDetailFragment : Fragment() {
                 SessionDetailScreen(
                     state = state,
                     onBack = ::leave,
+                    onRename = viewModel::onRename,
+                    onShare = { (state as? SessionDetailUiState.Ready)?.let(::share) },
                     onDelete = { viewModel.onDelete(::leave) },
                 )
             }
         }
+    }
+
+    /**
+     * Hands the run to the OS share sheet as plain text.
+     *
+     * Text rather than an image or a file: it needs no storage permission, no FileProvider and no
+     * rendering step, and it pastes usefully into every target. The brief rules out a social layer,
+     * so sharing is the system's job, not the app's.
+     */
+    private fun share(state: SessionDetailUiState.Ready) {
+        val body = getString(
+            R.string.detail_share_body,
+            state.distanceKm,
+            state.durationLabel,
+            state.averagePaceLabel,
+        )
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_SUBJECT, getString(R.string.detail_share_subject))
+            putExtra(Intent.EXTRA_TEXT, body)
+        }
+        startActivity(Intent.createChooser(intent, getString(R.string.detail_share)))
     }
 
     /** Guarded so a delete that resolves after the screen has already gone cannot pop twice. */

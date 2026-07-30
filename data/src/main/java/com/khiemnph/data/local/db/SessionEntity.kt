@@ -40,4 +40,7 @@ data class SessionEntity(
     val finalDistanceMeters: Double?,
     val finalAverageSpeedMps: Float?,
     val routePolyline: String?,
+
+    /** A name the user chose. Null means never named, which the UI shows as the date instead. */
+    val title: String? = null,
 )

@@ -19,7 +19,10 @@ sealed interface SessionDetailUiState {
     data object NotFound : SessionDetailUiState
 
     data class Ready(
+        /** The user's name for the run, or its date when never named. */
         val titleLabel: String,
+        /** True when [titleLabel] is a name the user chose, so Rename can pre-fill it. */
+        val hasCustomTitle: Boolean,
         val distanceKm: String,
         val durationLabel: String,
         val averagePaceLabel: String,

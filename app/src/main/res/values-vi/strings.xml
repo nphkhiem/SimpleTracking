@@ -46,6 +46,14 @@
     <string name="summary_back_to_runs">Quay lại Hoạt động</string>
     <string name="session_detail_title">Buổi chạy</string>
     <string name="detail_back">Quay lại</string>
+    <string name="detail_more_actions">Thêm tuỳ chọn</string>
+    <string name="detail_rename">Đổi tên</string>
+    <string name="detail_rename_hint">Đặt tên cho buổi chạy</string>
+    <string name="detail_rename_confirm">Lưu</string>
+    <string name="detail_rename_cancel">Huỷ</string>
+    <string name="detail_share">Chia sẻ</string>
+    <string name="detail_share_subject">Buổi chạy của tôi</string>
+    <string name="detail_share_body">%1$s km trong %2$s, %3$s phút/km. Ghi lại bằng Chạy Ngay Đi.</string>
     <string name="detail_metric_distance">km</string>
     <string name="detail_metric_duration">thời gian</string>
     <string name="detail_metric_avg_pace">tốc độ tb</string>

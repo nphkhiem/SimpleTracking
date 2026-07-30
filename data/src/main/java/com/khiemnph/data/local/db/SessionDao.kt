@@ -88,6 +88,9 @@ interface SessionDao {
     @Query("SELECT status FROM session WHERE id = :sessionId")
     suspend fun getStatusById(sessionId: String): String?
 
+    @Query("UPDATE session SET title = :title WHERE id = :sessionId")
+    suspend fun updateTitle(sessionId: String, title: String?)
+
     @Query("DELETE FROM session WHERE id = :sessionId")
     suspend fun deleteById(sessionId: String)
 

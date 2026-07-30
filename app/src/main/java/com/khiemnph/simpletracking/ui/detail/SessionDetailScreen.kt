@@ -14,7 +14,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -24,6 +28,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,6 +48,11 @@ import com.khiemnph.simpletracking.ui.route.RouteHero
 
 object SessionDetailTestTags {
     const val TITLE = "detail_title"
+    const val OVERFLOW = "detail_overflow"
+    const val RENAME = "detail_rename"
+    const val RENAME_FIELD = "detail_rename_field"
+    const val RENAME_CONFIRM = "detail_rename_confirm"
+    const val SHARE = "detail_share"
     const val SPLITS = "detail_splits"
     const val NOT_FOUND = "detail_not_found"
     const val DELETE = "detail_delete"
@@ -58,9 +71,13 @@ object SessionDetailTestTags {
 fun SessionDetailScreen(
     state: SessionDetailUiState,
     onBack: () -> Unit,
+    onRename: (String) -> Unit,
+    onShare: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var menuOpen by remember { mutableStateOf(false) }
+    var renaming by remember { mutableStateOf(false) }
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surface,
@@ -83,6 +100,31 @@ fun SessionDetailScreen(
                         )
                     }
                 },
+                actions = {
+                    if (state is SessionDetailUiState.Ready) {
+                        IconButton(
+                            onClick = { menuOpen = true },
+                            modifier = Modifier.testTag(SessionDetailTestTags.OVERFLOW),
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_more_vert),
+                                contentDescription = stringResource(R.string.detail_more_actions),
+                            )
+                        }
+                        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.detail_rename)) },
+                                onClick = { menuOpen = false; renaming = true },
+                                modifier = Modifier.testTag(SessionDetailTestTags.RENAME),
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.detail_share)) },
+                                onClick = { menuOpen = false; onShare() },
+                                modifier = Modifier.testTag(SessionDetailTestTags.SHARE),
+                            )
+                        }
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
@@ -90,6 +132,13 @@ fun SessionDetailScreen(
             )
         },
     ) { insets ->
+        if (renaming && state is SessionDetailUiState.Ready) {
+            RenameDialog(
+                initial = if (state.hasCustomTitle) state.titleLabel else "",
+                onConfirm = { renaming = false; onRename(it) },
+                onDismiss = { renaming = false },
+            )
+        }
         when (state) {
             SessionDetailUiState.Loading -> Box(Modifier.fillMaxSize())
             SessionDetailUiState.NotFound -> NotFound(onBack, Modifier.padding(insets))
@@ -213,6 +262,41 @@ private fun SplitRow(split: SplitUiModel, modifier: Modifier = Modifier) {
                 .width(56.dp),
         )
     }
+}
+
+/** Pre-filled only when the run already has a name, so the date is never offered as one to edit. */
+@Composable
+private fun RenameDialog(
+    initial: String,
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var text by remember { mutableStateOf(initial) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.detail_rename)) },
+        text = {
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = it },
+                singleLine = true,
+                label = { Text(stringResource(R.string.detail_rename_hint)) },
+                modifier = Modifier.testTag(SessionDetailTestTags.RENAME_FIELD),
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(text) },
+                modifier = Modifier.testTag(SessionDetailTestTags.RENAME_CONFIRM),
+            ) {
+                Text(stringResource(R.string.detail_rename_confirm))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.detail_rename_cancel)) }
+        },
+    )
 }
 
 @Composable

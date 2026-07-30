@@ -174,4 +174,55 @@ class AppDatabaseMigrationTest {
         assertTrue("Query plan was: $plan", plan.contains("index_location_point_sessionId_timestamp"))
         assertFalse("Query plan still sorts: $plan", plan.contains("TEMP B-TREE"))
     }
+
+    /**
+     * A nullable ADD COLUMN, which SQLite has always supported and which cannot lose data. The
+     * point of the test is the "cannot lose data" half: an existing run must survive with every
+     * field intact and simply gain a null title.
+     */
+    @Test
+    fun givenSessionsRecordedBeforeTitles_whenMigratingTo5_thenTheySurviveWithNoTitle() {
+        helper.createDatabase(TEST_DB, 4).use { db ->
+            db.execSQL(
+                """
+                INSERT INTO session
+                    (id, startTimestamp, startElapsedRealtimeMillis, pausedDurationMillis, status,
+                     pausedAtTimestamp, pausedAtElapsedRealtimeMillis, stoppedTimestamp,
+                     finalDistanceMeters, finalAverageSpeedMps, routePolyline)
+                VALUES ('s1', 1000, 500, 0, 'STOPPED', NULL, NULL, 61000, 1200.0, 20.0, 'poly')
+                """.trimIndent(),
+            )
+        }
+
+        val migrated = helper.runMigrationsAndValidate(TEST_DB, 5, true, MIGRATION_4_5)
+
+        migrated.query("SELECT id, finalDistanceMeters, routePolyline, title FROM session").use {
+            assertTrue(it.moveToFirst())
+            assertEquals("s1", it.getString(0))
+            assertEquals(1200.0, it.getDouble(1), 0.001)
+            assertEquals("poly", it.getString(2))
+            assertTrue("an existing run must have no title, not an empty one", it.isNull(3))
+        }
+    }
+
+    @Test
+    fun givenTheMigratedSchema_whenATitleIsWritten_thenItReadsBack() {
+        helper.createDatabase(TEST_DB, 4).close()
+        val migrated = helper.runMigrationsAndValidate(TEST_DB, 5, true, MIGRATION_4_5)
+
+        migrated.execSQL(
+            """
+            INSERT INTO session
+                (id, startTimestamp, startElapsedRealtimeMillis, pausedDurationMillis, status,
+                 pausedAtTimestamp, pausedAtElapsedRealtimeMillis, stoppedTimestamp,
+                 finalDistanceMeters, finalAverageSpeedMps, routePolyline, title)
+            VALUES ('s2', 1000, 500, 0, 'STOPPED', NULL, NULL, 61000, 1200.0, 20.0, NULL, 'Morning loop')
+            """.trimIndent(),
+        )
+
+        migrated.query("SELECT title FROM session WHERE id = 's2'").use {
+            assertTrue(it.moveToFirst())
+            assertEquals("Morning loop", it.getString(0))
+        }
+    }
 }
