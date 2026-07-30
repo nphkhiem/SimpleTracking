@@ -49,6 +49,7 @@ class RunsScreenTest {
     private fun setScreen(
         sessions: List<RunSummaryUiModel>,
         onRecordClick: () -> Unit = {},
+        onSessionClick: (String) -> Unit = {},
         onSessionSwipedAway: (String) -> Unit = {},
     ) = setState(
         state = if (sessions.isEmpty()) {
@@ -57,22 +58,35 @@ class RunsScreenTest {
             RunsUiState.Sessions(week, listOf(SessionGroupUiModel(DayLabel.Today, sessions)))
         },
         onRecordClick = onRecordClick,
+        onSessionClick = onSessionClick,
         onSessionSwipedAway = onSessionSwipedAway,
     )
 
     private fun setState(
         state: RunsUiState,
         onRecordClick: () -> Unit = {},
+        onSessionClick: (String) -> Unit = {},
         onSessionSwipedAway: (String) -> Unit = {},
     ) = composeRule.setContent {
         ChayNgayDiTheme {
             RunsScreen(
                 state = state,
                 onRecordClick = onRecordClick,
+                onSessionClick = onSessionClick,
                 onSessionSwipedAway = onSessionSwipedAway,
                 onUndoDelete = {},
             )
         }
+    }
+
+    @Test
+    fun givenASession_whenItsRowIsTapped_thenItsIdIsReported() {
+        var tapped: String? = null
+        setScreen(listOf(session("a", "5.23")), onSessionClick = { tapped = it })
+
+        composeRule.onNodeWithTag(RunsTestTags.rowFor("a")).performClick()
+
+        assertEquals("a", tapped)
     }
 
     @Test

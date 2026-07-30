@@ -45,6 +45,11 @@ class RunsFragment : Fragment() {
                     state = state,
                     onSessionSwipedAway = viewModel::onSessionSwipedAway,
                     onUndoDelete = viewModel::onUndoDelete,
+                    onSessionClick = { sessionId ->
+                        findNavController().navigate(
+                            RunsFragmentDirections.actionRunsFragmentToSessionDetailFragment(sessionId),
+                        )
+                    },
                     onRecordClick = {
                         findNavController().navigate(
                             RunsFragmentDirections.actionRunsFragmentToRecordFragment(sessionId = null),

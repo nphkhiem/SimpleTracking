@@ -1,6 +1,7 @@
 package com.khiemnph.simpletracking.ui.runs
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -78,6 +80,7 @@ object RunsTestTags {
 fun RunsScreen(
     state: RunsUiState,
     onRecordClick: () -> Unit,
+    onSessionClick: (String) -> Unit,
     onSessionSwipedAway: (String) -> Unit,
     onUndoDelete: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -137,6 +140,7 @@ fun RunsScreen(
                 week = state.week,
                 groups = state.groups,
                 contentPadding = contentPadding,
+                onSessionClick = onSessionClick,
                 onSwipedAway = { sessionId ->
                     onSessionSwipedAway(sessionId)
                     scope.launch {
@@ -158,6 +162,7 @@ private fun SessionList(
     week: WeekSummaryUiModel,
     groups: List<SessionGroupUiModel>,
     contentPadding: PaddingValues,
+    onSessionClick: (String) -> Unit,
     onSwipedAway: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -173,7 +178,11 @@ private fun SessionList(
             item(key = "header-" + group.label.key) { GroupHeader(group.label) }
 
             itemsIndexed(group.sessions, key = { _, session -> session.id }) { index, session ->
-                SwipeToDeleteRow(session = session, onSwipedAway = { onSwipedAway(session.id) })
+                SwipeToDeleteRow(
+                    session = session,
+                    onClick = { onSessionClick(session.id) },
+                    onSwipedAway = { onSwipedAway(session.id) },
+                )
                 // No rule after a group's last row: the next heading already separates them, and a
                 // rule there would fence off empty space rather than divide two rows.
                 if (index < group.sessions.lastIndex) {
@@ -318,6 +327,7 @@ private fun LoadingSkeleton(modifier: Modifier = Modifier) {
 @Composable
 private fun SwipeToDeleteRow(
     session: RunSummaryUiModel,
+    onClick: () -> Unit,
     onSwipedAway: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -351,7 +361,7 @@ private fun SwipeToDeleteRow(
             }
         },
     ) {
-        Box(Modifier.background(MaterialTheme.colorScheme.surface)) { SessionRow(session) }
+        Box(Modifier.background(MaterialTheme.colorScheme.surface)) { SessionRow(session, onClick) }
     }
 }
 
@@ -382,8 +392,18 @@ private fun EmptyRuns(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun SessionRow(session: RunSummaryUiModel, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+private fun SessionRow(
+    session: RunSummaryUiModel,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .heightIn(min = 88.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+    ) {
         Text(
             text = session.recordedAtLabel,
             style = MaterialTheme.typography.bodyMedium,
