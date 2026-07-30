@@ -101,6 +101,12 @@ class MockedSessionRepository : SessionRepository {
     override suspend fun getSessionStatus(sessionId: String): SessionStatus? =
         sessionsById[sessionId]?.status
 
+    override suspend fun renameSession(sessionId: String, title: String?) {
+        sessionSummariesFlow.value = sessionSummariesFlow.value.map { summary ->
+            if (summary.id == sessionId) summary.copy(title = title) else summary
+        }
+    }
+
     override suspend fun deleteSession(sessionId: String) {
         sessionsById.remove(sessionId)
         pointsBySessionId.remove(sessionId)

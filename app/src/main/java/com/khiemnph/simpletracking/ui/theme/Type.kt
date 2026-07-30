@@ -6,7 +6,6 @@ import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.khiemnph.simpletracking.R
@@ -19,23 +18,28 @@ import com.khiemnph.simpletracking.R
  * two must be changed together until the View layer is gone. Each figure below appears in exactly
  * one place in `type.xml`, so a mismatch is a visible diff rather than a silent drift.
  *
- * Letter spacing is expressed in `em` because that is the unit `android:letterSpacing` uses; the
- * XML value carries across unchanged rather than being converted to `sp`.
+ * Letter spacing is expressed in `sp`, not the `em` that `android:letterSpacing` uses, even though
+ * that means the XML figure does not carry across unchanged. Material's own styles use `sp`, and
+ * Compose cannot interpolate between the two units: it throws "Cannot perform operation for Em and
+ * Sp". Any component that animates between two type styles hits that, and `OutlinedTextField`'s
+ * floating label animates between `bodyLarge` and `bodySmall`, so every labelled text field in the
+ * app crashed until this was made consistent. Each value below is its `em` equivalent multiplied by
+ * its own font size, so nothing renders differently.
  */
 @Composable
 fun chayNgayDiTypography(): Typography {
     val base = MaterialTheme.typography
     return base.copy(
-        displayLarge = base.displayLarge.copy(fontSize = 57.sp, lineHeight = 64.sp, letterSpacing = (-0.025).em),
-        displayMedium = base.displayMedium.copy(fontSize = 45.sp, lineHeight = 52.sp, letterSpacing = (-0.02).em),
-        displaySmall = base.displaySmall.copy(fontSize = 36.sp, lineHeight = 44.sp, letterSpacing = (-0.015).em),
-        headlineLarge = base.headlineLarge.copy(fontSize = 32.sp, lineHeight = 40.sp, letterSpacing = (-0.015).em),
-        headlineMedium = base.headlineMedium.copy(fontSize = 28.sp, lineHeight = 36.sp, letterSpacing = (-0.01).em),
-        headlineSmall = base.headlineSmall.copy(fontSize = 24.sp, lineHeight = 32.sp, letterSpacing = (-0.005).em),
-        titleLarge = base.titleLarge.copy(fontSize = 22.sp, lineHeight = 28.sp, letterSpacing = 0.em),
-        titleMedium = base.titleMedium.copy(fontSize = 16.sp, lineHeight = 24.sp, letterSpacing = 0.009.em),
-        bodyLarge = base.bodyLarge.copy(fontSize = 16.sp, lineHeight = 24.sp, letterSpacing = 0.009.em),
-        bodyMedium = base.bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp, letterSpacing = 0.017.em),
+        displayLarge = base.displayLarge.copy(fontSize = 57.sp, lineHeight = 64.sp, letterSpacing = -1.425.sp),
+        displayMedium = base.displayMedium.copy(fontSize = 45.sp, lineHeight = 52.sp, letterSpacing = -0.9.sp),
+        displaySmall = base.displaySmall.copy(fontSize = 36.sp, lineHeight = 44.sp, letterSpacing = -0.54.sp),
+        headlineLarge = base.headlineLarge.copy(fontSize = 32.sp, lineHeight = 40.sp, letterSpacing = -0.48.sp),
+        headlineMedium = base.headlineMedium.copy(fontSize = 28.sp, lineHeight = 36.sp, letterSpacing = -0.28.sp),
+        headlineSmall = base.headlineSmall.copy(fontSize = 24.sp, lineHeight = 32.sp, letterSpacing = -0.12.sp),
+        titleLarge = base.titleLarge.copy(fontSize = 22.sp, lineHeight = 28.sp, letterSpacing = 0.sp),
+        titleMedium = base.titleMedium.copy(fontSize = 16.sp, lineHeight = 24.sp, letterSpacing = 0.144.sp),
+        bodyLarge = base.bodyLarge.copy(fontSize = 16.sp, lineHeight = 24.sp, letterSpacing = 0.144.sp),
+        bodyMedium = base.bodyMedium.copy(fontSize = 14.sp, lineHeight = 20.sp, letterSpacing = 0.238.sp),
     )
 }
 

@@ -148,6 +148,10 @@ class SessionRepositoryImpl @Inject constructor(
             entity?.takeIf { it.status == SessionStatus.STOPPED.name }?.toSummary()
         }
 
+    override suspend fun renameSession(sessionId: String, title: String?) {
+        sessionDao.updateTitle(sessionId, title)
+    }
+
     override suspend fun deleteSession(sessionId: String) = sessionWriteMutex.withLock {
         sessionDao.deleteById(sessionId)
     }

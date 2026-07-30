@@ -7,4 +7,6 @@ data class SessionSummary(
     val averageSpeedMps: Float,
     val routePolyline: String?,
     val recordedAt: Long,
+    /** A name the user chose, or null to show the date instead. */
+    val title: String? = null,
 )

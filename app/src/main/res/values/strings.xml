@@ -42,6 +42,14 @@
     <string name="summary_back_to_runs">Back to Runs</string>
     <string name="session_detail_title">Run</string>
     <string name="detail_back">Back</string>
+    <string name="detail_more_actions">More actions</string>
+    <string name="detail_rename">Rename</string>
+    <string name="detail_rename_hint">Name this run</string>
+    <string name="detail_rename_confirm">Save</string>
+    <string name="detail_rename_cancel">Cancel</string>
+    <string name="detail_share">Share</string>
+    <string name="detail_share_subject">My run</string>
+    <string name="detail_share_body">%1$s km in %2$s, %3$s min/km. Recorded with Chạy Ngay Đi.</string>
     <string name="detail_metric_distance">km</string>
     <string name="detail_metric_duration">time</string>
     <string name="detail_metric_avg_pace">avg pace</string>

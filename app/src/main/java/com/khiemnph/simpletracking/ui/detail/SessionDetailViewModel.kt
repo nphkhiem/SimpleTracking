@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.khiemnph.domain.interactor.DeleteSessionUseCase
 import com.khiemnph.domain.interactor.GetSessionSplitsUseCase
 import com.khiemnph.domain.interactor.ObserveSessionSummaryUseCase
+import com.khiemnph.domain.interactor.RenameSessionUseCase
 import com.khiemnph.domain.model.SessionSummary
 import com.khiemnph.domain.util.RoutePolyline
 import com.khiemnph.domain.util.Split
@@ -34,6 +35,7 @@ private fun titleFormatter(): DateTimeFormatter =
 class SessionDetailViewModel @Inject constructor(
     private val observeSessionSummaryUseCase: ObserveSessionSummaryUseCase,
     private val getSessionSplitsUseCase: GetSessionSplitsUseCase,
+    private val renameSessionUseCase: RenameSessionUseCase,
     private val deleteSessionUseCase: DeleteSessionUseCase,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
@@ -59,6 +61,10 @@ class SessionDetailViewModel @Inject constructor(
         }
     }
 
+    fun onRename(title: String) {
+        viewModelScope.launch { renameSessionUseCase(sessionId, title) }
+    }
+
     fun onDelete(onDeleted: () -> Unit) {
         viewModelScope.launch {
             deleteSessionUseCase(sessionId)
@@ -73,9 +79,10 @@ class SessionDetailViewModel @Inject constructor(
         val slowestPace = splits.maxOfOrNull { it.paceSecondsPerKm } ?: 0.0
 
         return SessionDetailUiState.Ready(
-            titleLabel = Instant.ofEpochMilli(summary.recordedAt)
+            titleLabel = summary.title ?: Instant.ofEpochMilli(summary.recordedAt)
                 .atZone(ZoneId.systemDefault())
                 .format(titleFormatter()),
+            hasCustomTitle = summary.title != null,
             distanceKm = formatDistanceKm(summary.distanceMeters),
             durationLabel = formatDuration(summary.durationMillis),
             averagePaceLabel = formatPaceMinPerKm(averageSpeedMps(summary.distanceMeters, summary.durationMillis)),

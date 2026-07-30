@@ -130,7 +130,8 @@ fun SessionSummary.toRunSummaryUiModel(
     zoneId: ZoneId = ZoneId.systemDefault(),
 ): RunSummaryUiModel = RunSummaryUiModel(
     id = id,
-    recordedAtLabel = formatRecordedAt(recordedAt, zoneId),
+    // A name the user chose replaces the timestamp: naming a run is for recognising it here.
+    recordedAtLabel = title ?: formatRecordedAt(recordedAt, zoneId),
     distanceKm = formatDistanceKm(distanceMeters),
     durationLabel = formatDuration(durationMillis),
     averageSpeedKmh = formatAverageSpeedKmh(averageSpeedMps),

@@ -3,6 +3,7 @@ package com.khiemnph.simpletracking.di
 import com.khiemnph.domain.interactor.DeleteSessionUseCase
 import com.khiemnph.domain.interactor.GetSessionSplitsUseCase
 import com.khiemnph.domain.interactor.ObserveSessionSummaryUseCase
+import com.khiemnph.domain.interactor.RenameSessionUseCase
 import com.khiemnph.domain.interactor.ObserveActiveSessionUseCase
 import com.khiemnph.domain.interactor.ObserveSessionHistoryUseCase
 import com.khiemnph.domain.interactor.PauseSessionUseCase
@@ -55,6 +56,10 @@ object TestUseCaseModule {
     @Provides
     fun provideGetSessionSplitsUseCase(sessionRepository: SessionRepository): GetSessionSplitsUseCase =
         GetSessionSplitsUseCase(sessionRepository)
+
+    @Provides
+    fun provideRenameSessionUseCase(sessionRepository: SessionRepository): RenameSessionUseCase =
+        RenameSessionUseCase(sessionRepository)
 
     @Provides
     @Singleton

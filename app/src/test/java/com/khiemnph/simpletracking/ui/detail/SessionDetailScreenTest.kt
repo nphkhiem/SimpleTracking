@@ -7,6 +7,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performTextInput
 import com.khiemnph.domain.model.LatLngPoint
 import com.khiemnph.simpletracking.testing.DefaultLocaleRule
 import com.khiemnph.simpletracking.ui.components.MetricGridTestTags
@@ -36,13 +37,16 @@ class SessionDetailScreenTest {
     )
 
     private fun ready(
+        titleLabel: String = "Sat, 9 Aug · 9:41 AM",
+        hasCustomTitle: Boolean = false,
         splits: List<SplitUiModel> = listOf(
             SplitUiModel("1", "5:12", 1f, isFastest = false),
             SplitUiModel("2", "4:48", 0.92f, isFastest = true),
         ),
         routePoints: List<LatLngPoint> = route,
     ) = SessionDetailUiState.Ready(
-        titleLabel = "Sat, 9 Aug · 9:41 AM",
+        titleLabel = titleLabel,
+        hasCustomTitle = hasCustomTitle,
         distanceKm = "5.42",
         durationLabel = "28:14",
         averagePaceLabel = "5:12",
@@ -54,11 +58,19 @@ class SessionDetailScreenTest {
     private fun render(
         state: SessionDetailUiState,
         onBack: () -> Unit = {},
+        onRename: (String) -> Unit = {},
+        onShare: () -> Unit = {},
         onDelete: () -> Unit = {},
     ) {
         composeRule.setContent {
             ChayNgayDiTheme {
-                SessionDetailScreen(state = state, onBack = onBack, onDelete = onDelete)
+                SessionDetailScreen(
+                    state = state,
+                    onBack = onBack,
+                    onRename = onRename,
+                    onShare = onShare,
+                    onDelete = onDelete,
+                )
             }
         }
     }
@@ -128,5 +140,60 @@ class SessionDetailScreenTest {
 
         composeRule.onNodeWithTag(SessionDetailTestTags.NOT_FOUND).assertIsDisplayed()
         composeRule.onNodeWithTag(SessionDetailTestTags.DELETE).assertDoesNotExist()
+    }
+
+    @Test
+    fun `sharing reports it once`() {
+        var shared = 0
+        render(ready(), onShare = { shared++ })
+
+        composeRule.onNodeWithTag(SessionDetailTestTags.OVERFLOW).performClick()
+        composeRule.onNodeWithTag(SessionDetailTestTags.SHARE).performClick()
+
+        assertEquals(1, shared)
+    }
+
+    @Test
+    fun `renaming reports the typed name`() {
+        var renamed: String? = null
+        render(ready(), onRename = { renamed = it })
+
+        composeRule.onNodeWithTag(SessionDetailTestTags.OVERFLOW).performClick()
+        composeRule.onNodeWithTag(SessionDetailTestTags.RENAME).performClick()
+        composeRule.onNodeWithTag(SessionDetailTestTags.RENAME_FIELD).performTextInput("Morning loop")
+        composeRule.onNodeWithTag(SessionDetailTestTags.RENAME_CONFIRM).performClick()
+
+        assertEquals("Morning loop", renamed)
+    }
+
+    @Test
+    fun `the rename field starts empty for an unnamed run rather than offering its date to edit`() {
+        var renamed: String? = null
+        render(ready(hasCustomTitle = false), onRename = { renamed = it })
+
+        composeRule.onNodeWithTag(SessionDetailTestTags.OVERFLOW).performClick()
+        composeRule.onNodeWithTag(SessionDetailTestTags.RENAME).performClick()
+        composeRule.onNodeWithTag(SessionDetailTestTags.RENAME_CONFIRM).performClick()
+
+        assertEquals("", renamed)
+    }
+
+    @Test
+    fun `the rename field pre-fills an existing name so it can be edited`() {
+        var renamed: String? = null
+        render(ready(titleLabel = "Morning loop", hasCustomTitle = true), onRename = { renamed = it })
+
+        composeRule.onNodeWithTag(SessionDetailTestTags.OVERFLOW).performClick()
+        composeRule.onNodeWithTag(SessionDetailTestTags.RENAME).performClick()
+        composeRule.onNodeWithTag(SessionDetailTestTags.RENAME_CONFIRM).performClick()
+
+        assertEquals("Morning loop", renamed)
+    }
+
+    @Test
+    fun `a session that is gone offers no actions to perform on it`() {
+        render(SessionDetailUiState.NotFound)
+
+        composeRule.onNodeWithTag(SessionDetailTestTags.OVERFLOW).assertDoesNotExist()
     }
 }

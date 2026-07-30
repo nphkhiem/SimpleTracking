@@ -45,6 +45,12 @@ interface SessionRepository {
      */
     fun observeSessionSummary(sessionId: String): Flow<SessionSummary?>
 
+    /**
+     * Names a session, or clears its name when [title] is null. Blank input is the caller's to
+     * reject; this stores what it is given.
+     */
+    suspend fun renameSession(sessionId: String, title: String?)
+
     /** Removes a session and everything it recorded. Unknown ids are a no-op, not an error. */
     suspend fun deleteSession(sessionId: String)
 

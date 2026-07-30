@@ -99,3 +99,16 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
         )
     }
 }
+
+/**
+ * Adds an optional user-chosen name for a run.
+ *
+ * Nullable and with no default, so an existing run is untitled rather than carrying an invented
+ * name, and the UI can tell "never named" apart from "named empty". A nullable ADD COLUMN rewrites
+ * no rows and cannot lose data, unlike the table recreate MIGRATION_1_2 needed.
+ */
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE session ADD COLUMN title TEXT")
+    }
+}

@@ -30,6 +30,7 @@ internal fun SessionEntity.toSummary(): SessionSummary {
         averageSpeedMps = averageSpeed,
         routePolyline = routePolyline,
         recordedAt = stopped,
+        title = title,
     )
 }
 
