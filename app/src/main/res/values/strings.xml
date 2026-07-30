@@ -41,6 +41,14 @@
     <string name="summary_not_found">This run is no longer available.</string>
     <string name="summary_back_to_runs">Back to Runs</string>
     <string name="session_detail_title">Run</string>
+    <string name="detail_back">Back</string>
+    <string name="detail_metric_distance">km</string>
+    <string name="detail_metric_duration">time</string>
+    <string name="detail_metric_avg_pace">avg pace</string>
+    <string name="detail_metric_best_pace">best pace</string>
+    <string name="detail_splits_heading">Splits</string>
+    <string name="detail_delete">Delete this run</string>
+    <string name="detail_not_found">This run is no longer available.</string>
     <string name="settings_title">Settings</string>
     <string name="record_title">Record</string>
     <string name="record_back_content_description">Back to Runs</string>

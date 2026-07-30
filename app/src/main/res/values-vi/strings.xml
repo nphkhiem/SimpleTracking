@@ -45,6 +45,14 @@
     <string name="summary_not_found">Không còn buổi chạy này nữa.</string>
     <string name="summary_back_to_runs">Quay lại Hoạt động</string>
     <string name="session_detail_title">Buổi chạy</string>
+    <string name="detail_back">Quay lại</string>
+    <string name="detail_metric_distance">km</string>
+    <string name="detail_metric_duration">thời gian</string>
+    <string name="detail_metric_avg_pace">tốc độ tb</string>
+    <string name="detail_metric_best_pace">tốc độ tốt nhất</string>
+    <string name="detail_splits_heading">Từng ki lô mét</string>
+    <string name="detail_delete">Xoá buổi chạy này</string>
+    <string name="detail_not_found">Không còn buổi chạy này nữa.</string>
     <string name="settings_title">Cài đặt</string>
 
     <string name="record_title">Ghi lại</string>
