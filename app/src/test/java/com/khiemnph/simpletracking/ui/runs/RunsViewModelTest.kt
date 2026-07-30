@@ -1,4 +1,4 @@
-package com.khiemnph.simpletracking.ui.history
+package com.khiemnph.simpletracking.ui.runs
 
 import app.cash.turbine.test
 import com.khiemnph.domain.fake.MockedSessionRepository
@@ -24,14 +24,14 @@ import org.junit.Rule
 import org.junit.Test
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-class HistoryViewModelTest {
+class RunsViewModelTest {
 
     @get:Rule
     val localeRule = DefaultLocaleRule()
 
     private val repository = MockedSessionRepository()
     private val viewModel by lazy {
-        HistoryViewModel(ObserveSessionHistoryUseCase(repository), DeleteSessionUseCase(repository))
+        RunsViewModel(ObserveSessionHistoryUseCase(repository), DeleteSessionUseCase(repository))
     }
 
     @Before
@@ -77,7 +77,7 @@ class HistoryViewModelTest {
 
         viewModel.onSessionSwipedAway(sessionId)
 
-        assertEquals(HistoryUiState.Empty, viewModel.uiState.value)
+        assertEquals(RunsUiState.Empty, viewModel.uiState.value)
         // Still on disk: the row is hidden optimistically so Undo has something to bring back.
         assertEquals(1, repository.observeSessionSummaries().first().size)
     }
@@ -123,7 +123,7 @@ class HistoryViewModelTest {
     @Test
     fun givenNoSessionSummaries_whenUiStateCollected_thenTheStateIsEmptyRatherThanAnEmptyList() = runTest {
         viewModel.uiState.test {
-            assertEquals(HistoryUiState.Empty, awaitItem())
+            assertEquals(RunsUiState.Empty, awaitItem())
         }
     }
 
@@ -141,28 +141,28 @@ class HistoryViewModelTest {
 
     @Test
     fun givenDistanceOf5420Meters_whenMappedToUiModel_thenDistanceLabelIsFormattedInKilometersWithTwoDecimals() {
-        val uiModel = sessionSummary(distanceMeters = 5420.0).toHistorySummaryUiModel()
+        val uiModel = sessionSummary(distanceMeters = 5420.0).toRunSummaryUiModel()
 
         assertEquals("5.42 km", uiModel.distanceLabel)
     }
 
     @Test
     fun givenDurationUnder1Hour_whenMappedToUiModel_thenDurationLabelIsFormattedAsMinutesColonSeconds() {
-        val uiModel = sessionSummary(durationMillis = 1_938_000L).toHistorySummaryUiModel()
+        val uiModel = sessionSummary(durationMillis = 1_938_000L).toRunSummaryUiModel()
 
         assertEquals("32:18", uiModel.durationLabel)
     }
 
     @Test
     fun givenDurationOver1Hour_whenMappedToUiModel_thenDurationLabelIncludesHours() {
-        val uiModel = sessionSummary(durationMillis = 3_725_000L).toHistorySummaryUiModel()
+        val uiModel = sessionSummary(durationMillis = 3_725_000L).toRunSummaryUiModel()
 
         assertEquals("1:02:05", uiModel.durationLabel)
     }
 
     @Test
     fun givenAverageSpeedOf2Point5Mps_whenMappedToUiModel_thenAverageSpeedLabelIsConvertedToKmPerHour() {
-        val uiModel = sessionSummary(averageSpeedMps = 2.5f).toHistorySummaryUiModel()
+        val uiModel = sessionSummary(averageSpeedMps = 2.5f).toRunSummaryUiModel()
 
         assertEquals("9.0 km/h avg", uiModel.averageSpeedLabel)
     }
@@ -172,14 +172,14 @@ class HistoryViewModelTest {
         // 2024-01-02T07:12:00Z is a Tuesday; a fixed UTC zone keeps this test timezone-independent.
         val recordedAtMillis = 1_704_179_520_000L
         val uiModel = sessionSummary(recordedAt = recordedAtMillis)
-            .toHistorySummaryUiModel(zoneId = ZoneId.of("UTC"))
+            .toRunSummaryUiModel(zoneId = ZoneId.of("UTC"))
 
         assertEquals("Tue, 7:12 AM", uiModel.recordedAtLabel)
     }
 
     @Test
     fun givenNoRecordedRoute_whenMappedToUiModel_thenThereAreNoPointsToDraw() {
-        val uiModel = sessionSummary(routePolyline = null).toHistorySummaryUiModel()
+        val uiModel = sessionSummary(routePolyline = null).toRunSummaryUiModel()
 
         assertTrue(uiModel.routePoints.isEmpty())
     }
@@ -189,7 +189,7 @@ class HistoryViewModelTest {
         // Decoding here rather than in the composable keeps the screen dumb: it draws points, it
         // does not parse storage formats.
         val uiModel = sessionSummary(routePolyline = "2103850,10585420;2103900,10585470")
-            .toHistorySummaryUiModel()
+            .toRunSummaryUiModel()
 
         assertEquals(2, uiModel.routePoints.size)
         assertEquals(21.0385, uiModel.routePoints.first().latitude, 0.0001)
@@ -197,12 +197,12 @@ class HistoryViewModelTest {
 
     @Test
     fun givenAnUnparseableRoute_whenMappedToUiModel_thenTheRowStillRendersWithNoRoute() {
-        val uiModel = sessionSummary(routePolyline = "corrupt").toHistorySummaryUiModel()
+        val uiModel = sessionSummary(routePolyline = "corrupt").toRunSummaryUiModel()
 
         assertTrue(uiModel.routePoints.isEmpty())
     }
 
     /** Flattens the day groups, so assertions about which runs are visible stay readable. */
-    private fun HistoryUiState.sessionsOrEmpty(): List<HistorySummaryUiModel> =
-        (this as? HistoryUiState.Sessions)?.groups?.flatMap { it.sessions }.orEmpty()
+    private fun RunsUiState.sessionsOrEmpty(): List<RunSummaryUiModel> =
+        (this as? RunsUiState.Sessions)?.groups?.flatMap { it.sessions }.orEmpty()
 }

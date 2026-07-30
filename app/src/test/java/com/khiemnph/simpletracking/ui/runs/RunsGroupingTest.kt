@@ -1,4 +1,4 @@
-package com.khiemnph.simpletracking.ui.history
+package com.khiemnph.simpletracking.ui.runs
 
 import com.khiemnph.domain.model.SessionSummary
 import java.time.LocalDate
@@ -9,7 +9,7 @@ import com.khiemnph.simpletracking.testing.DefaultLocaleRule
 import org.junit.Rule
 import org.junit.Test
 
-class HistoryGroupingTest {
+class RunsGroupingTest {
 
     @get:Rule
     val localeRule = DefaultLocaleRule()
@@ -34,21 +34,21 @@ class HistoryGroupingTest {
 
     @Test
     fun givenRunsToday_whenGrouped_thenTheHeadingSaysToday() {
-        val groups = HistoryGrouping.groupsFor(listOf(summaryOn(today)), today, zone)
+        val groups = RunsGrouping.groupsFor(listOf(summaryOn(today)), today, zone)
 
         assertEquals("Today", groups.single().label)
     }
 
     @Test
     fun givenRunsYesterday_whenGrouped_thenTheHeadingSaysYesterday() {
-        val groups = HistoryGrouping.groupsFor(listOf(summaryOn(today.minusDays(1))), today, zone)
+        val groups = RunsGrouping.groupsFor(listOf(summaryOn(today.minusDays(1))), today, zone)
 
         assertEquals("Yesterday", groups.single().label)
     }
 
     @Test
     fun givenAnOlderRun_whenGrouped_thenTheHeadingIsItsDate() {
-        val groups = HistoryGrouping.groupsFor(listOf(summaryOn(LocalDate.of(2026, 7, 4))), today, zone)
+        val groups = RunsGrouping.groupsFor(listOf(summaryOn(LocalDate.of(2026, 7, 4))), today, zone)
 
         assertEquals("Sat, 4 Jul", groups.single().label)
     }
@@ -57,7 +57,7 @@ class HistoryGroupingTest {
     fun givenTwoRunsOnTheSameDay_whenGrouped_thenTheyShareOneHeading() {
         val summaries = listOf(summaryOn(today, hour = 6), summaryOn(today, hour = 18))
 
-        val groups = HistoryGrouping.groupsFor(summaries, today, zone)
+        val groups = RunsGrouping.groupsFor(summaries, today, zone)
 
         assertEquals(1, groups.size)
         assertEquals(2, groups.single().sessions.size)
@@ -68,7 +68,7 @@ class HistoryGroupingTest {
     fun givenRunsAcrossDays_whenGrouped_thenGroupOrderFollowsTheInputOrder() {
         val summaries = listOf(summaryOn(today), summaryOn(today.minusDays(1)), summaryOn(today.minusDays(5)))
 
-        val groups = HistoryGrouping.groupsFor(summaries, today, zone)
+        val groups = RunsGrouping.groupsFor(summaries, today, zone)
 
         assertEquals(listOf("Today", "Yesterday", "Tue, 21 Jul"), groups.map { it.label })
     }
@@ -82,7 +82,7 @@ class HistoryGroupingTest {
         val lateLastNight = summaryOn(today.minusDays(1), hour = 23, id = "late")
         val earlyToday = summaryOn(today, hour = 0, id = "early")
 
-        val groups = HistoryGrouping.groupsFor(listOf(earlyToday, lateLastNight), today, zone)
+        val groups = RunsGrouping.groupsFor(listOf(earlyToday, lateLastNight), today, zone)
 
         assertEquals(listOf("Today", "Yesterday"), groups.map { it.label })
     }
@@ -96,7 +96,7 @@ class HistoryGroupingTest {
             summaryOn(today.minusDays(9), distanceMeters = 99_000.0, durationMillis = 9_000_000L),
         )
 
-        val week = HistoryGrouping.weekFor(summaries, today, zone)
+        val week = RunsGrouping.weekFor(summaries, today, zone)
 
         assertEquals("8.00 km", week.distanceLabel)
         assertEquals("2 runs", week.runCountLabel)
@@ -105,14 +105,14 @@ class HistoryGroupingTest {
 
     @Test
     fun givenASingleRunThisWeek_whenSummarised_thenTheCountIsSingular() {
-        val week = HistoryGrouping.weekFor(listOf(summaryOn(today)), today, zone)
+        val week = RunsGrouping.weekFor(listOf(summaryOn(today)), today, zone)
 
         assertEquals("1 run", week.runCountLabel)
     }
 
     @Test
     fun givenNoRunsThisWeek_whenSummarised_thenEveryBarIsZero() {
-        val week = HistoryGrouping.weekFor(listOf(summaryOn(today.minusDays(30))), today, zone)
+        val week = RunsGrouping.weekFor(listOf(summaryOn(today.minusDays(30))), today, zone)
 
         assertEquals(7, week.dailyDistanceFractions.size)
         assertEquals(0f, week.dailyDistanceFractions.max(), 0.0001f)
@@ -125,7 +125,7 @@ class HistoryGroupingTest {
             summaryOn(today.minusDays(6), distanceMeters = 5_000.0),
         )
 
-        val week = HistoryGrouping.weekFor(summaries, today, zone)
+        val week = RunsGrouping.weekFor(summaries, today, zone)
 
         assertEquals(7, week.dailyDistanceFractions.size)
         assertEquals(0.5f, week.dailyDistanceFractions.first(), 0.0001f)
@@ -140,7 +140,7 @@ class HistoryGroupingTest {
             summaryOn(today.minusDays(2), distanceMeters = 8_000.0, id = "c"),
         )
 
-        val week = HistoryGrouping.weekFor(summaries, today, zone)
+        val week = RunsGrouping.weekFor(summaries, today, zone)
 
         // Today totals 8 km, matching the other day, so both bars are full height.
         assertEquals(1f, week.dailyDistanceFractions.last(), 0.0001f)

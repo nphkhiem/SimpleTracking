@@ -1,13 +1,13 @@
-package com.khiemnph.simpletracking.ui.history
+package com.khiemnph.simpletracking.ui.runs
 
 import com.khiemnph.domain.model.LatLngPoint
 
 /**
  * Pre-formatted, display-ready representation of a [com.khiemnph.domain.model.SessionSummary] row.
- * All strings are already formatted by [HistoryViewModel], and [routePoints] is already decoded, so
- * [HistoryScreen] only ever draws what it is given.
+ * All strings are already formatted by [RunsViewModel], and [routePoints] is already decoded, so
+ * [RunsScreen] only ever draws what it is given.
  */
-data class HistorySummaryUiModel(
+data class RunSummaryUiModel(
     val id: String,
     val recordedAtLabel: String,
     val distanceLabel: String,

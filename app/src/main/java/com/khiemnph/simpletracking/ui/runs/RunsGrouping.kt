@@ -1,4 +1,4 @@
-package com.khiemnph.simpletracking.ui.history
+package com.khiemnph.simpletracking.ui.runs
 
 import com.khiemnph.domain.model.SessionSummary
 import com.khiemnph.simpletracking.ui.format.formatDistanceKm
@@ -25,7 +25,7 @@ private fun groupDateFormatter(): DateTimeFormatter =
  * every interesting case here is a date boundary: a run at 23:50 and one at 00:10 belong to
  * different days, and that is only testable if the day can be fixed by the caller.
  */
-internal object HistoryGrouping {
+internal object RunsGrouping {
 
     /** Preserves the input order; the repository already returns newest first. */
     fun groupsFor(
@@ -38,7 +38,7 @@ internal object HistoryGrouping {
             .map { (date, sessions) ->
                 SessionGroupUiModel(
                     label = labelFor(date, today),
-                    sessions = sessions.map { it.toHistorySummaryUiModel(zone) },
+                    sessions = sessions.map { it.toRunSummaryUiModel(zone) },
                 )
             }
 

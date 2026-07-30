@@ -1,19 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  The whole graph shape lands in one change, including destinations whose screens are still
+  placeholders. The alternative, adding each destination alongside the screen that needs it, would
+  have three separate phases editing this file and colliding over it.
+-->
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/historyFragment">
+    app:startDestination="@id/runsFragment">
 
     <fragment
-        android:id="@+id/historyFragment"
-        android:name="com.khiemnph.simpletracking.ui.history.HistoryFragment"
-        android:label="@string/history_title"
-        tools:layout="@layout/fragment_history">
+        android:id="@+id/runsFragment"
+        android:name="com.khiemnph.simpletracking.ui.runs.RunsFragment"
+        android:label="@string/runs_title">
+
+        <!--
+          launchSingleTop because two entry points lead here: the Record button, and MainActivity's
+          cold-start recovery for a session that is already running. Without it, reopening the app
+          from Recents mid-session can stack a second Record screen over the first.
+        -->
+        <action
+            android:id="@+id/action_runsFragment_to_recordFragment"
+            app:destination="@id/recordFragment"
+            app:launchSingleTop="true" />
 
         <action
-            android:id="@+id/action_historyFragment_to_recordFragment"
-            app:destination="@id/recordFragment" />
+            android:id="@+id/action_runsFragment_to_sessionDetailFragment"
+            app:destination="@id/sessionDetailFragment" />
+
+        <action
+            android:id="@+id/action_runsFragment_to_settingsFragment"
+            app:destination="@id/settingsFragment" />
     </fragment>
 
     <fragment
@@ -27,6 +45,47 @@
             app:argType="string"
             app:nullable="true"
             android:defaultValue="@null" />
+
+        <!--
+          Stop pops Record off the stack on its way to Summary, so Back from Summary lands on Runs
+          rather than returning to a finished session. popUpTo targets Runs without including it,
+          which also guarantees this can never pop the stack empty, the shape that used to drop the
+          user out to the launcher.
+        -->
+        <action
+            android:id="@+id/action_recordFragment_to_summaryFragment"
+            app:destination="@id/summaryFragment"
+            app:popUpTo="@id/runsFragment"
+            app:popUpToInclusive="false" />
     </fragment>
+
+    <fragment
+        android:id="@+id/summaryFragment"
+        android:name="com.khiemnph.simpletracking.ui.summary.SummaryFragment"
+        android:label="@string/summary_title">
+
+        <argument
+            android:name="sessionId"
+            app:argType="string" />
+
+        <action
+            android:id="@+id/action_summaryFragment_to_sessionDetailFragment"
+            app:destination="@id/sessionDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/sessionDetailFragment"
+        android:name="com.khiemnph.simpletracking.ui.detail.SessionDetailFragment"
+        android:label="@string/session_detail_title">
+
+        <argument
+            android:name="sessionId"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.khiemnph.simpletracking.ui.settings.SettingsFragment"
+        android:label="@string/settings_title" />
 
 </navigation>

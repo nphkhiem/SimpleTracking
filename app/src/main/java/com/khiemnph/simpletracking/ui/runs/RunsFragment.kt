@@ -1,4 +1,4 @@
-package com.khiemnph.simpletracking.ui.history
+package com.khiemnph.simpletracking.ui.runs
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -22,13 +22,13 @@ import dagger.hilt.android.AndroidEntryPoint
  *
  * The screen itself is Compose, hosted in a [ComposeView] rather than a Compose NavHost, so
  * Navigation Component and Safe Args keep working unchanged while Record is still a View-based
- * screen. [HistoryViewModel] is untouched by the move: it already exposed a `StateFlow` of
+ * screen. [RunsViewModel] is untouched by the move: it already exposed a `StateFlow` of
  * pre-formatted models, which [collectAsStateWithLifecycle] consumes directly.
  */
 @AndroidEntryPoint
-class HistoryFragment : Fragment() {
+class RunsFragment : Fragment() {
 
-    private val viewModel: HistoryViewModel by viewModels()
+    private val viewModel: RunsViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -41,13 +41,13 @@ class HistoryFragment : Fragment() {
         setContent {
             ChayNgayDiTheme {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
-                HistoryScreen(
+                RunsScreen(
                     state = state,
                     onSessionSwipedAway = viewModel::onSessionSwipedAway,
                     onUndoDelete = viewModel::onUndoDelete,
                     onRecordClick = {
                         findNavController().navigate(
-                            HistoryFragmentDirections.actionHistoryFragmentToRecordFragment(sessionId = null),
+                            RunsFragmentDirections.actionRunsFragmentToRecordFragment(sessionId = null),
                         )
                     },
                 )

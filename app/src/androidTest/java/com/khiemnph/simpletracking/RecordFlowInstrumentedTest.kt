@@ -29,7 +29,7 @@ import com.khiemnph.domain.repository.LocationTrackingRepository
 import com.khiemnph.domain.repository.SessionRepository
 import com.khiemnph.simpletracking.service.TrackingService
 import com.khiemnph.simpletracking.ui.MainActivity
-import com.khiemnph.simpletracking.ui.history.HistoryTestTags
+import com.khiemnph.simpletracking.ui.runs.RunsTestTags
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -51,7 +51,7 @@ import org.junit.runner.RunWith
 
 /**
  * Exercises [com.khiemnph.simpletracking.ui.record.RecordFragment] end-to-end on a real device:
- * a real Fragment transaction from [com.khiemnph.simpletracking.ui.history.HistoryFragment], a
+ * a real Fragment transaction from [com.khiemnph.simpletracking.ui.runs.RunsFragment], a
  * real [com.khiemnph.simpletracking.service.TrackingService] instance actually started via
  * `startForegroundService` and dispatching through `onStartCommand`, and a real cross-thread hop
  * from that Service's background dispatcher back to the Main-thread UI - none of which
@@ -162,7 +162,7 @@ class RecordFlowInstrumentedTest {
     @Test
     fun givenPermissionGranted_whenRecordTapped_thenSessionStartsAndUiReflectsARunningSession() {
         ActivityScenario.launch(MainActivity::class.java).use {
-            composeRule.onNodeWithTag(HistoryTestTags.RECORD_BUTTON).performClick()
+            composeRule.onNodeWithTag(RunsTestTags.RECORD_BUTTON).performClick()
 
             val sessionId = awaitNotNull("a new session to be created") { activeSessionId() }
             assertNotNull("Expected a new session to have been created", sessionId)

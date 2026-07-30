@@ -89,13 +89,13 @@ class MainActivityTest {
     }
 
     @Test
-    fun givenNoActiveSession_whenActivityStarted_thenHistoryFragmentRemainsCurrentDestination() {
+    fun givenNoActiveSession_whenActivityStarted_thenRunsFragmentRemainsCurrentDestination() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             idleMainLooper()
 
             scenario.onActivity { activity ->
                 val navController = navControllerOf(activity)
-                assertEquals(R.id.historyFragment, navController.currentDestination?.id)
+                assertEquals(R.id.runsFragment, navController.currentDestination?.id)
             }
         }
     }
@@ -108,7 +108,7 @@ class MainActivityTest {
         val capturedThrowables = mutableListOf<Throwable>()
 
         // A wrong implementation that re-invokes navigate() while already on recordFragment
-        // throws (the action is only declared from historyFragment) - but since that call is made
+        // throws (the action is only declared from runsFragment) - but since that call is made
         // from a lifecycleScope coroutine, the exception never reaches JUnit on its own; it is
         // instead delivered to the thread's uncaught-exception handler. Capturing that handler is
         // what makes this test an effective regression guard rather than one that passes no
@@ -165,7 +165,7 @@ class MainActivityTest {
                 )
                 scenario.onActivity { activity ->
                     val navController = navControllerOf(activity)
-                    assertEquals(R.id.historyFragment, navController.currentDestination?.id)
+                    assertEquals(R.id.runsFragment, navController.currentDestination?.id)
                 }
             }
         } finally {

@@ -1,4 +1,4 @@
-package com.khiemnph.simpletracking.ui.history
+package com.khiemnph.simpletracking.ui.runs
 
 /**
  * What the session list has to show right now.
@@ -7,22 +7,22 @@ package com.khiemnph.simpletracking.ui.history
  * recorded yet" from "the database has not answered", and a first-run user would see the empty
  * state flash before their history appeared.
  */
-sealed interface HistoryUiState {
+sealed interface RunsUiState {
 
-    data object Loading : HistoryUiState
+    data object Loading : RunsUiState
 
-    data object Empty : HistoryUiState
+    data object Empty : RunsUiState
 
     data class Sessions(
         val week: WeekSummaryUiModel,
         val groups: List<SessionGroupUiModel>,
-    ) : HistoryUiState
+    ) : RunsUiState
 }
 
 /** Runs recorded on the same day, under one heading. */
 data class SessionGroupUiModel(
     val label: String,
-    val sessions: List<HistorySummaryUiModel>,
+    val sessions: List<RunSummaryUiModel>,
 )
 
 /**

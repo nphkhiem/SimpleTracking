@@ -17,4 +17,7 @@
          that reads as a deliberate mark rather than a rendering artefact, and at 420dpi a hairline
          is barely over two pixels. -->
     <dimen name="divider_thickness">2dp</dimen>
+
+    <!-- Read by both the layout and the window-inset listener, so the two cannot drift apart. -->
+    <dimen name="record_close_button_margin">16dp</dimen>
 </resources>

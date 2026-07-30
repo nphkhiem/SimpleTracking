@@ -1,6 +1,6 @@
 package com.khiemnph.simpletracking.ui.record
 
-import com.khiemnph.simpletracking.ui.history.HistoryFragmentDirections
+import com.khiemnph.simpletracking.ui.runs.RunsFragmentDirections
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -11,7 +11,7 @@ import org.robolectric.annotation.Config
 /**
  * Regression coverage for widening [RecordFragmentArgs.sessionId] from a required to a nullable
  * Safe Args argument: the new "start a brand-new session" navigation case from
- * [com.khiemnph.simpletracking.ui.history.HistoryFragment] has no sessionId yet, while
+ * [com.khiemnph.simpletracking.ui.runs.RunsFragment] has no sessionId yet, while
  * [com.khiemnph.simpletracking.ui.MainActivity]'s existing "resume an active session" case
  * (covered by `MainActivityTest`) always passes a concrete one - both must keep working.
  */
@@ -45,22 +45,22 @@ class RecordFragmentArgsTest {
     }
 
     @Test
-    fun givenHistoryFragmentDirectionsCalledWithNullSessionId_whenArgumentsBuilt_thenBundleHasNullSessionId() {
-        val direction = HistoryFragmentDirections.actionHistoryFragmentToRecordFragment(sessionId = null)
+    fun givenRunsFragmentDirectionsCalledWithNullSessionId_whenArgumentsBuilt_thenBundleHasNullSessionId() {
+        val direction = RunsFragmentDirections.actionRunsFragmentToRecordFragment(sessionId = null)
 
         assertNull(RecordFragmentArgs.fromBundle(direction.arguments).sessionId)
     }
 
     @Test
-    fun givenHistoryFragmentDirectionsCalledWithNoArguments_whenArgumentsBuilt_thenSessionIdDefaultsToNull() {
-        val direction = HistoryFragmentDirections.actionHistoryFragmentToRecordFragment()
+    fun givenRunsFragmentDirectionsCalledWithNoArguments_whenArgumentsBuilt_thenSessionIdDefaultsToNull() {
+        val direction = RunsFragmentDirections.actionRunsFragmentToRecordFragment()
 
         assertNull(RecordFragmentArgs.fromBundle(direction.arguments).sessionId)
     }
 
     @Test
-    fun givenHistoryFragmentDirectionsCalledWithAConcreteSessionId_whenArgumentsBuilt_thenBundleHasThatSessionId() {
-        val direction = HistoryFragmentDirections.actionHistoryFragmentToRecordFragment(sessionId = "session-99")
+    fun givenRunsFragmentDirectionsCalledWithAConcreteSessionId_whenArgumentsBuilt_thenBundleHasThatSessionId() {
+        val direction = RunsFragmentDirections.actionRunsFragmentToRecordFragment(sessionId = "session-99")
 
         assertEquals("session-99", RecordFragmentArgs.fromBundle(direction.arguments).sessionId)
     }
