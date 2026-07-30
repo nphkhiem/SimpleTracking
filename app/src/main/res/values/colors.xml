@@ -24,21 +24,21 @@
          This warmth is the app's fingerprint - do not cool it toward
          blue-grey, which is where every competitor already sits.
          ============================================================ -->
-    <color name="ref_neutral_4">#FF0F0B0A</color>
-    <color name="ref_neutral_6">#FF191110</color>
-    <color name="ref_neutral_10">#FF211C19</color>
-    <color name="ref_neutral_12">#FF251E1C</color>
-    <color name="ref_neutral_17">#FF302826</color>
-    <color name="ref_neutral_20">#FF372F2C</color>
-    <color name="ref_neutral_22">#FF3B3331</color>
-    <color name="ref_neutral_24">#FF403734</color>
-    <color name="ref_neutral_87">#FFE9D7D2</color>
-    <color name="ref_neutral_90">#FFF0DEDA</color>
-    <color name="ref_neutral_92">#FFF6E4DF</color>
-    <color name="ref_neutral_94">#FFFCEAE5</color>
-    <color name="ref_neutral_95">#FFFFEDE8</color>
-    <color name="ref_neutral_96">#FFFFF0EC</color>
-    <color name="ref_neutral_98">#FFFFF8F6</color>
+    <color name="ref_neutral_4">#FF0E0D0B</color>
+    <color name="ref_neutral_6">#FF171612</color>
+    <color name="ref_neutral_10">#FF211F19</color>
+    <color name="ref_neutral_12">#FF24221D</color>
+    <color name="ref_neutral_17">#FF302E26</color>
+    <color name="ref_neutral_20">#FF37342C</color>
+    <color name="ref_neutral_22">#FF3C3930</color>
+    <color name="ref_neutral_24">#FF403D34</color>
+    <color name="ref_neutral_87">#FFE2E0D9</color>
+    <color name="ref_neutral_90">#FFE8E7E2</color>
+    <color name="ref_neutral_92">#FFEDECE8</color>
+    <color name="ref_neutral_94">#FFF2F1EF</color>
+    <color name="ref_neutral_95">#FFF5F4F2</color>
+    <color name="ref_neutral_96">#FFF7F6F4</color>
+    <color name="ref_neutral_98">#FFFBFBFA</color>
     <color name="ref_neutral_100">#FFFFFFFF</color>
 
     <!-- ============================================================
@@ -46,12 +46,12 @@
          ============================================================ -->
     <!-- Light-theme onSurfaceVariant. On surface #FFF8F6 = 8.93:1 ✓
          (replaces today's #8B7F77, which measures only 3.89:1 and fails AA). -->
-    <color name="ref_neutral_variant_30">#FF53433E</color>
-    <color name="ref_neutral_variant_50">#FF85736E</color>
-    <color name="ref_neutral_variant_60">#FFA08C87</color>
+    <color name="ref_neutral_variant_30">#FF504C41</color>
+    <color name="ref_neutral_variant_50">#FF827E71</color>
+    <color name="ref_neutral_variant_60">#FF9C988B</color>
     <!-- Dark-theme onSurfaceVariant. On #191110 = 10.9:1 ✓ -->
-    <color name="ref_neutral_variant_80">#FFD8C2BC</color>
-    <color name="ref_neutral_variant_90">#FFF5DED8</color>
+    <color name="ref_neutral_variant_80">#FFD0CDC4</color>
+    <color name="ref_neutral_variant_90">#FFEAE8E3</color>
 
     <!-- ============================================================
          SECONDARY · desaturated clay, for quiet supporting surfaces
@@ -104,9 +104,9 @@
       md_theme.xml. These disappear entirely when Record is rebuilt.
     -->
     <color name="history_surface">#FFFFFF</color>
-    <color name="history_ink">#211C19</color>
-    <color name="history_ink_soft">#8B7F77</color>
-    <color name="history_border">#14211C19</color>
+    <color name="history_ink">#211F19</color>
+    <color name="history_ink_soft">#7A7669</color>
+    <color name="history_border">#14211F19</color>
     <color name="history_accent">#E2432E</color>
 
     <!--
