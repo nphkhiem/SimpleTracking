@@ -32,6 +32,9 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberSwipeToDismissBoxState
@@ -41,9 +44,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
@@ -61,13 +66,18 @@ object RunsTestTags {
     const val LIST = "runs_list"
     const val EMPTY = "runs_empty"
     const val RECORD_BUTTON = "runs_record_button"
+    const val SETTINGS_BUTTON = "runs_settings_button"
     const val DIVIDER = "runs_divider"
     const val SKELETON = "runs_skeleton"
     const val WEEK_SUMMARY = "runs_week_summary"
 
     fun groupHeaderFor(key: String) = "runs_group_$key"
 
+    /** The swipe container. Swipe gestures target this. */
     fun rowFor(sessionId: String) = "runs_row_$sessionId"
+
+    /** The tappable content inside the swipe container. Taps target this. */
+    fun rowContentFor(sessionId: String) = "runs_row_content_$sessionId"
 }
 
 /**
@@ -81,23 +91,39 @@ fun RunsScreen(
     state: RunsUiState,
     onRecordClick: () -> Unit,
     onSessionClick: (String) -> Unit,
+    onSettingsClick: () -> Unit,
     onSessionSwipedAway: (String) -> Unit,
     onUndoDelete: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Collapses on scroll, so the list gets the room when the user is reading it and the title
+    // gets it when they arrive.
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val deletedMessage = stringResource(R.string.runs_session_deleted)
     val undoLabel = stringResource(R.string.runs_undo)
 
     Scaffold(
-        modifier = modifier,
+        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = MaterialTheme.colorScheme.surface,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
+            LargeTopAppBar(
                 title = { Text(stringResource(R.string.runs_title)) },
-                colors = TopAppBarDefaults.topAppBarColors(
+                actions = {
+                    IconButton(
+                        onClick = onSettingsClick,
+                        modifier = Modifier.testTag(RunsTestTags.SETTINGS_BUTTON),
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_settings),
+                            contentDescription = stringResource(R.string.settings_title),
+                        )
+                    }
+                },
+                scrollBehavior = scrollBehavior,
+                colors = TopAppBarDefaults.largeTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
                 ),
@@ -361,7 +387,9 @@ private fun SwipeToDeleteRow(
             }
         },
     ) {
-        Box(Modifier.background(MaterialTheme.colorScheme.surface)) { SessionRow(session, onClick) }
+        Box(Modifier.background(MaterialTheme.colorScheme.surface)) {
+            SessionRow(session, onClick, Modifier.testTag(RunsTestTags.rowContentFor(session.id)))
+        }
     }
 }
 

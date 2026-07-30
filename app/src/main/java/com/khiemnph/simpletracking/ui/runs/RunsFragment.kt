@@ -11,8 +11,12 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.fragment.findNavController
+import com.khiemnph.simpletracking.R
 import com.khiemnph.simpletracking.ui.theme.ChayNgayDiTheme
+import com.khiemnph.simpletracking.settings.UserPreferences
+import com.khiemnph.simpletracking.settings.UserPreferencesRepository
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 /**
  * Start destination for [com.khiemnph.simpletracking.ui.MainActivity]'s Navigation graph: the
@@ -28,6 +32,8 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class RunsFragment : Fragment() {
 
+    @Inject lateinit var userPreferencesRepository: UserPreferencesRepository
+
     private val viewModel: RunsViewModel by viewModels()
 
     override fun onCreateView(
@@ -39,12 +45,17 @@ class RunsFragment : Fragment() {
         // composition outlives onDestroyView and leaks on every navigation.
         setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
         setContent {
-            ChayNgayDiTheme {
+            val preferences by userPreferencesRepository.preferences
+                .collectAsStateWithLifecycle(UserPreferences())
+            ChayNgayDiTheme(dynamicColour = preferences.dynamicColour) {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
                 RunsScreen(
                     state = state,
                     onSessionSwipedAway = viewModel::onSessionSwipedAway,
                     onUndoDelete = viewModel::onUndoDelete,
+                    onSettingsClick = {
+                        findNavController().navigate(R.id.action_runsFragment_to_settingsFragment)
+                    },
                     onSessionClick = { sessionId ->
                         findNavController().navigate(
                             RunsFragmentDirections.actionRunsFragmentToSessionDetailFragment(sessionId),

@@ -58,6 +58,15 @@
     <string name="detail_delete">Delete this run</string>
     <string name="detail_not_found">This run is no longer available.</string>
     <string name="settings_title">Settings</string>
+    <string name="settings_back">Back</string>
+    <string name="settings_theme_heading">Theme</string>
+    <string name="settings_theme_system">Follow system</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_dynamic_colour">Dynamic colour</string>
+    <string name="settings_dynamic_colour_summary">Take colours from your wallpaper instead of the app\'s own palette.</string>
+    <string name="settings_about_heading">About</string>
+    <string name="settings_version">Version %1$s</string>
     <string name="record_title">Record</string>
     <string name="record_back_content_description">Back to Runs</string>
     <string name="record_paused_tag">Paused</string>

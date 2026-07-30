@@ -14,11 +14,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.fragment.findNavController
 import com.khiemnph.simpletracking.R
 import com.khiemnph.simpletracking.ui.theme.ChayNgayDiTheme
+import com.khiemnph.simpletracking.settings.UserPreferences
+import com.khiemnph.simpletracking.settings.UserPreferencesRepository
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 /** A recorded run in full, reached by tapping a row in Runs. */
 @AndroidEntryPoint
 class SessionDetailFragment : Fragment() {
+
+    @Inject lateinit var userPreferencesRepository: UserPreferencesRepository
 
     private val viewModel: SessionDetailViewModel by viewModels()
 
@@ -29,7 +34,9 @@ class SessionDetailFragment : Fragment() {
     ): View = ComposeView(requireContext()).apply {
         setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
         setContent {
-            ChayNgayDiTheme {
+            val preferences by userPreferencesRepository.preferences
+                .collectAsStateWithLifecycle(UserPreferences())
+            ChayNgayDiTheme(dynamicColour = preferences.dynamicColour) {
                 val state by viewModel.uiState.collectAsStateWithLifecycle()
                 SessionDetailScreen(
                     state = state,
