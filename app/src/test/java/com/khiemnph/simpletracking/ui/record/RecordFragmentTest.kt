@@ -26,7 +26,7 @@ import com.khiemnph.data.location.LocationSettingsResult
 import com.khiemnph.simpletracking.permission.LocationPermissionAskTracker
 import com.khiemnph.simpletracking.service.TrackingService
 import com.khiemnph.simpletracking.ui.MainActivity
-import com.khiemnph.simpletracking.ui.history.HistoryFragmentDirections
+import com.khiemnph.simpletracking.ui.runs.RunsFragmentDirections
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
@@ -53,7 +53,7 @@ import org.robolectric.util.ReflectionHelpers
  * [MainActivity] under [HiltTestApplication], mirroring
  * [com.khiemnph.simpletracking.ui.MainActivityTest]'s approach. Covers the "resume an active
  * session" entry (cold-start recovery) and the "start a brand-new session" entry (navigating from
- * History), including the permission-gating branch that's only reachable for the latter.
+ * Runs), including the permission-gating branch that's only reachable for the latter.
  */
 @HiltAndroidTest
 @RunWith(RobolectricTestRunner::class)
@@ -152,7 +152,7 @@ class RecordFragmentTest {
         val navHostFragment =
             activity.supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         navHostFragment.navController.navigate(
-            HistoryFragmentDirections.actionHistoryFragmentToRecordFragment(sessionId = null),
+            RunsFragmentDirections.actionRunsFragmentToRecordFragment(sessionId = null),
         )
     }
 
@@ -209,7 +209,7 @@ class RecordFragmentTest {
     }
 
     @Test
-    fun givenBackButtonClicked_whenInvoked_thenNavigatesBackToHistoryWithoutStoppingTheSession() {
+    fun givenBackButtonClicked_whenInvoked_thenNavigatesBackToRunsWithoutStoppingTheSession() {
         seedActiveSession()
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
@@ -225,7 +225,7 @@ class RecordFragmentTest {
             scenario.onActivity { activity ->
                 val navHostFragment =
                     activity.supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-                assertEquals(R.id.historyFragment, navHostFragment.navController.currentDestination?.id)
+                assertEquals(R.id.runsFragment, navHostFragment.navController.currentDestination?.id)
             }
         }
         runBlockingSessionStillActive()
@@ -243,11 +243,11 @@ class RecordFragmentTest {
      * Robolectric can reach - and is the regression test for the fix that moved the Stop intent
      * dispatch off `viewModelScope` and onto the injected application-scoped
      * [com.khiemnph.simpletracking.di.ApplicationScope] [kotlinx.coroutines.CoroutineScope]: it
-     * proves the Stop button still both navigates back to History AND reliably sends the Stop
+     * proves the Stop button still both navigates back to Runs AND reliably sends the Stop
      * intent to [TrackingService].
      */
     @Test
-    fun givenStopButtonClicked_whenInvoked_thenNavigatesBackToHistoryAndSendsStopIntentToTrackingService() {
+    fun givenStopButtonClicked_whenInvoked_thenNavigatesBackToRunsAndSendsStopIntentToTrackingService() {
         seedActiveSession()
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
@@ -263,7 +263,7 @@ class RecordFragmentTest {
             scenario.onActivity { activity ->
                 val navHostFragment =
                     activity.supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-                assertEquals(R.id.historyFragment, navHostFragment.navController.currentDestination?.id)
+                assertEquals(R.id.runsFragment, navHostFragment.navController.currentDestination?.id)
             }
         }
 
@@ -288,7 +288,7 @@ class RecordFragmentTest {
                 val navHostFragment =
                     activity.supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
                 navHostFragment.navController.navigate(
-                    HistoryFragmentDirections.actionHistoryFragmentToRecordFragment(sessionId = null),
+                    RunsFragmentDirections.actionRunsFragmentToRecordFragment(sessionId = null),
                 )
             }
             idleMainLooper()
@@ -313,7 +313,7 @@ class RecordFragmentTest {
                 val navHostFragment =
                     activity.supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
                 navHostFragment.navController.navigate(
-                    HistoryFragmentDirections.actionHistoryFragmentToRecordFragment(sessionId = null),
+                    RunsFragmentDirections.actionRunsFragmentToRecordFragment(sessionId = null),
                 )
             }
             idleMainLooper()
@@ -465,7 +465,7 @@ class RecordFragmentTest {
     /** [RecordViewModel] never mutates [SessionRepository] directly - every pause goes through a
      * `TrackingService` intent (see [RecordViewModel.onPauseOrResumeClicked]), the same as the
      * Pause button itself. This drains the full started-service queue - matching
-     * [givenStopButtonClicked_whenInvoked_thenNavigatesBackToHistoryAndSendsStopIntentToTrackingService]'s
+     * [givenStopButtonClicked_whenInvoked_thenNavigatesBackToRunsAndSendsStopIntentToTrackingService]'s
      * approach - so it must only be called once all broadcasts for a test have already fired. */
     private fun pauseIntentsSentToTrackingService(appContext: Application): List<Intent> {
         val expectedAction = TrackingService.pauseIntent(appContext, sessionId).action
@@ -604,7 +604,7 @@ class RecordFragmentTest {
     }
 
     @Test
-    fun givenRecordFragmentStopped_whenNavigatingBackToHistory_thenLocationServiceReceiverIsUnregistered() {
+    fun givenRecordFragmentStopped_whenNavigatingBackToRuns_thenLocationServiceReceiverIsUnregistered() {
         seedActiveSession()
 
         val appContext = ApplicationProvider.getApplicationContext<Application>()

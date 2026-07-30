@@ -13,17 +13,20 @@
          Deliberately not the app name, which the launcher and task switcher already show, and
          deliberately "Runs" rather than "History": it names the content rather than the container.
          Becomes "Hoạt động" when Vietnamese strings land. -->
-    <string name="history_title">Runs</string>
-    <string name="history_week_heading">Last 7 days</string>
-    <string name="history_empty_title">No runs yet</string>
-    <string name="history_empty_body">Tap Record to start tracking. Your route will show up here.</string>
-    <string name="history_delete">Delete</string>
-    <string name="history_session_deleted">Run deleted</string>
-    <string name="history_undo">Undo</string>
-    <string name="history_record_button_text">Record</string>
-    <string name="history_item_stats_separator">" · "</string>
+    <string name="runs_title">Runs</string>
+    <string name="runs_week_heading">Last 7 days</string>
+    <string name="runs_empty_title">No runs yet</string>
+    <string name="runs_empty_body">Tap Record to start tracking. Your route will show up here.</string>
+    <string name="runs_delete">Delete</string>
+    <string name="runs_session_deleted">Run deleted</string>
+    <string name="runs_undo">Undo</string>
+    <string name="runs_record_button_text">Record</string>
+    <string name="runs_item_stats_separator">" · "</string>
+    <string name="summary_title">Summary</string>
+    <string name="session_detail_title">Run</string>
+    <string name="settings_title">Settings</string>
     <string name="record_title">Record</string>
-    <string name="record_back_content_description">Back to History</string>
+    <string name="record_back_content_description">Back to Runs</string>
     <string name="record_paused_tag">Paused</string>
     <string name="record_distance_unit">km</string>
     <string name="record_current_speed_unit">/km</string>

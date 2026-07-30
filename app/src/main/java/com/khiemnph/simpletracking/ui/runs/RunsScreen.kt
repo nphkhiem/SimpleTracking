@@ -1,4 +1,4 @@
-package com.khiemnph.simpletracking.ui.history
+package com.khiemnph.simpletracking.ui.runs
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -54,28 +54,28 @@ private const val MINIMUM_BAR_FRACTION = 0.08f
 private const val SKELETON_ROW_COUNT = 3
 
 /** Stable handles for tests, so assertions do not depend on user-visible copy. */
-object HistoryTestTags {
-    const val LIST = "history_list"
-    const val EMPTY = "history_empty"
-    const val RECORD_BUTTON = "history_record_button"
-    const val DIVIDER = "history_divider"
-    const val SKELETON = "history_skeleton"
-    const val WEEK_SUMMARY = "history_week_summary"
+object RunsTestTags {
+    const val LIST = "runs_list"
+    const val EMPTY = "runs_empty"
+    const val RECORD_BUTTON = "runs_record_button"
+    const val DIVIDER = "runs_divider"
+    const val SKELETON = "runs_skeleton"
+    const val WEEK_SUMMARY = "runs_week_summary"
 
-    fun groupHeaderFor(label: String) = "history_group_$label"
+    fun groupHeaderFor(label: String) = "runs_group_$label"
 
-    fun rowFor(sessionId: String) = "history_row_$sessionId"
+    fun rowFor(sessionId: String) = "runs_row_$sessionId"
 }
 
 /**
  * The session list. Stateless by design: it renders exactly the pre-formatted models
- * [HistoryViewModel] emits and reports clicks upward, so it can be previewed and tested without a
+ * [RunsViewModel] emits and reports clicks upward, so it can be previewed and tested without a
  * ViewModel, a database or a Fragment.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HistoryScreen(
-    state: HistoryUiState,
+fun RunsScreen(
+    state: RunsUiState,
     onRecordClick: () -> Unit,
     onSessionSwipedAway: (String) -> Unit,
     onUndoDelete: (String) -> Unit,
@@ -83,8 +83,8 @@ fun HistoryScreen(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    val deletedMessage = stringResource(R.string.history_session_deleted)
-    val undoLabel = stringResource(R.string.history_undo)
+    val deletedMessage = stringResource(R.string.runs_session_deleted)
+    val undoLabel = stringResource(R.string.runs_undo)
 
     Scaffold(
         modifier = modifier,
@@ -92,7 +92,7 @@ fun HistoryScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.history_title)) },
+                title = { Text(stringResource(R.string.runs_title)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
@@ -107,7 +107,7 @@ fun HistoryScreen(
                 onClick = onRecordClick,
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.testTag(HistoryTestTags.RECORD_BUTTON),
+                modifier = Modifier.testTag(RunsTestTags.RECORD_BUTTON),
             ) {
                 Box(
                     Modifier
@@ -116,7 +116,7 @@ fun HistoryScreen(
                         .background(MaterialTheme.colorScheme.onPrimary),
                 )
                 Spacer(Modifier.width(10.dp))
-                Text(stringResource(R.string.history_record_button_text))
+                Text(stringResource(R.string.runs_record_button_text))
             }
         },
     ) { insets ->
@@ -130,9 +130,9 @@ fun HistoryScreen(
             // a returning user they have no runs, a moment before their runs appear.
             // A skeleton rather than nothing: the list has a known shape, so showing it settles
             // the layout instead of letting rows appear against a blank screen.
-            HistoryUiState.Loading -> LoadingSkeleton(Modifier.padding(contentPadding))
-            HistoryUiState.Empty -> EmptyHistory(Modifier.padding(contentPadding))
-            is HistoryUiState.Sessions -> SessionList(
+            RunsUiState.Loading -> LoadingSkeleton(Modifier.padding(contentPadding))
+            RunsUiState.Empty -> EmptyRuns(Modifier.padding(contentPadding))
+            is RunsUiState.Sessions -> SessionList(
                 week = state.week,
                 groups = state.groups,
                 contentPadding = contentPadding,
@@ -163,7 +163,7 @@ private fun SessionList(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .testTag(HistoryTestTags.LIST),
+            .testTag(RunsTestTags.LIST),
         contentPadding = contentPadding,
     ) {
         item(key = "week") { WeekSummary(week) }
@@ -179,7 +179,7 @@ private fun SessionList(
                     HorizontalDivider(
                         modifier = Modifier
                             .padding(horizontal = 16.dp)
-                            .testTag(HistoryTestTags.DIVIDER),
+                            .testTag(RunsTestTags.DIVIDER),
                         thickness = dimensionResource(R.dimen.divider_thickness),
                         color = MaterialTheme.colorScheme.outlineVariant,
                     )
@@ -198,7 +198,7 @@ private fun GroupHeader(label: String, modifier: Modifier = Modifier) {
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = modifier
             .padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 4.dp)
-            .testTag(HistoryTestTags.groupHeaderFor(label)),
+            .testTag(RunsTestTags.groupHeaderFor(label)),
     )
 }
 
@@ -209,10 +209,10 @@ private fun WeekSummary(week: WeekSummaryUiModel, modifier: Modifier = Modifier)
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp)
-            .testTag(HistoryTestTags.WEEK_SUMMARY),
+            .testTag(RunsTestTags.WEEK_SUMMARY),
     ) {
         Text(
-            text = stringResource(R.string.history_week_heading),
+            text = stringResource(R.string.runs_week_heading),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -226,7 +226,7 @@ private fun WeekSummary(week: WeekSummaryUiModel, modifier: Modifier = Modifier)
             )
             Spacer(Modifier.width(12.dp))
             Text(
-                text = week.runCountLabel + stringResource(R.string.history_item_stats_separator) + week.durationLabel,
+                text = week.runCountLabel + stringResource(R.string.runs_item_stats_separator) + week.durationLabel,
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 2.dp),
@@ -271,7 +271,7 @@ private fun LoadingSkeleton(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .testTag(HistoryTestTags.SKELETON),
+            .testTag(RunsTestTags.SKELETON),
     ) {
         repeat(SKELETON_ROW_COUNT) {
             Row(
@@ -310,7 +310,7 @@ private fun LoadingSkeleton(modifier: Modifier = Modifier) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SwipeToDeleteRow(
-    session: HistorySummaryUiModel,
+    session: RunSummaryUiModel,
     onSwipedAway: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -324,7 +324,7 @@ private fun SwipeToDeleteRow(
 
     SwipeToDismissBox(
         state = dismissState,
-        modifier = modifier.testTag(HistoryTestTags.rowFor(session.id)),
+        modifier = modifier.testTag(RunsTestTags.rowFor(session.id)),
         // One direction only. A two-way swipe on a list whose only destructive action is delete
         // makes it twice as easy to lose a run by accident.
         enableDismissFromStartToEnd = false,
@@ -337,7 +337,7 @@ private fun SwipeToDeleteRow(
                 contentAlignment = Alignment.CenterEnd,
             ) {
                 Text(
-                    text = stringResource(R.string.history_delete),
+                    text = stringResource(R.string.runs_delete),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onErrorContainer,
                 )
@@ -349,24 +349,24 @@ private fun SwipeToDeleteRow(
 }
 
 @Composable
-private fun EmptyHistory(modifier: Modifier = Modifier) {
+private fun EmptyRuns(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 40.dp)
-            .testTag(HistoryTestTags.EMPTY),
+            .testTag(RunsTestTags.EMPTY),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
         Text(
-            text = stringResource(R.string.history_empty_title),
+            text = stringResource(R.string.runs_empty_title),
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            text = stringResource(R.string.history_empty_body),
+            text = stringResource(R.string.runs_empty_body),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -375,7 +375,7 @@ private fun EmptyHistory(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun SessionRow(session: HistorySummaryUiModel, modifier: Modifier = Modifier) {
+private fun SessionRow(session: RunSummaryUiModel, modifier: Modifier = Modifier) {
     Column(modifier = modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
         Text(
             text = session.recordedAtLabel,
@@ -403,7 +403,7 @@ private fun SessionRow(session: HistorySummaryUiModel, modifier: Modifier = Modi
                 Spacer(Modifier.height(2.dp))
                 Text(
                     text = session.durationLabel +
-                        stringResource(R.string.history_item_stats_separator) +
+                        stringResource(R.string.runs_item_stats_separator) +
                         session.averageSpeedLabel,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

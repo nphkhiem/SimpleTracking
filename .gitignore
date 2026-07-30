@@ -4,6 +4,7 @@
 .idea
 .superpowers/
 .design/
+hands_off/
 # Built application files
 *.apk
 *.ap_

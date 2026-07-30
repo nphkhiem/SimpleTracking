@@ -24,6 +24,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updateLayoutParams
+import androidx.core.view.updatePadding
 import androidx.core.view.doOnLayout
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -64,7 +68,7 @@ private const val ROUTE_POLYLINE_WIDTH_PX = 8f
 
 /**
  * The live-tracking destination, reached either from
- * [com.khiemnph.simpletracking.ui.history.HistoryFragment]'s Record button (a brand-new session,
+ * [com.khiemnph.simpletracking.ui.runs.RunsFragment]'s Record button (a brand-new session,
  * [args]' `sessionId` is null) or from [com.khiemnph.simpletracking.ui.MainActivity]'s cold-start
  * active-session recovery / an already-active session (`sessionId` is a concrete id, skipping the
  * permission check below entirely since it was already granted when that session started).
@@ -179,6 +183,7 @@ class RecordFragment : Fragment() {
         setUpMap()
         setUpRouteFallback()
         setUpBottomSheet()
+        applyWindowInsets()
 
         binding.recordBackButton.setOnClickListener { findNavController().popBackStack() }
         binding.recordPauseResumeButton.setOnClickListener { viewModel.onPauseOrResumeClicked() }
@@ -217,6 +222,30 @@ class RecordFragment : Fragment() {
 
     /** Test seam: exposes the configured behavior so a test can assert `isHideable == false`. */
     internal fun bottomSheetBehavior(): BottomSheetBehavior<View> = BottomSheetBehavior.from(binding.recordBottomSheet)
+
+    /**
+     * Keeps the chrome clear of the system bars while the map stays full-bleed behind them.
+     *
+     * Only the two pieces of chrome move: the close button drops below the status bar and the sheet
+     * pads above the navigation bar. The map itself is deliberately left edge to edge, since a map
+     * running under the bars is the point of the Instrument treatment.
+     */
+    private fun applyWindowInsets() {
+        val closeButtonMargin = resources.getDimensionPixelSize(R.dimen.record_close_button_margin)
+        val sheetBottomPadding = binding.recordBottomSheet.paddingBottom
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.recordRoot) { _, windowInsets ->
+            val bars = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            binding.recordBackButton.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                topMargin = bars.top + closeButtonMargin
+                leftMargin = bars.left + closeButtonMargin
+            }
+            binding.recordBottomSheet.updatePadding(bottom = sheetBottomPadding + bars.bottom)
+            // Not consumed: the fallback canvas measures the sheet for itself and needs to see the
+            // same insets.
+            windowInsets
+        }
+    }
 
     private fun setUpBottomSheet() {
         binding.recordBottomSheet.doOnLayout { sheet ->

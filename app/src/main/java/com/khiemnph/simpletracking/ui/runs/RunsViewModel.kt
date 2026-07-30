@@ -1,4 +1,4 @@
-package com.khiemnph.simpletracking.ui.history
+package com.khiemnph.simpletracking.ui.runs
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -35,7 +35,7 @@ private fun recordedAtFormatter(): DateTimeFormatter =
 
 /**
  * Exposes [ObserveSessionHistoryUseCase]'s session summaries as pre-formatted
- * [HistorySummaryUiModel]s for [HistoryFragment]/[HistoryAdapter]. Ordering is pass-through: the
+ * [RunSummaryUiModel]s for [RunsFragment]. Ordering is pass-through: the
  * underlying repository query already orders by `stoppedTimestamp DESC`, so this list is never
  * re-sorted here.
  *
@@ -47,19 +47,19 @@ private fun recordedAtFormatter(): DateTimeFormatter =
  * `recordedAt` (epoch millis) is formatted as `"EEE, h:mm a"` (e.g. `"Tue, 7:12 AM"`), matching
  * the reviewed mockup's per-row date/time label, resolved against the device's default time zone.
  */
-private const val TAG = "HistoryViewModel"
+private const val TAG = "RunsViewModel"
 
 /** Long enough to read the snackbar and reach for Undo, short enough not to feel unfinished. */
 private const val UNDO_WINDOW_MILLIS = 5_000L
 
 @HiltViewModel
-class HistoryViewModel @Inject constructor(
+class RunsViewModel @Inject constructor(
     observeSessionHistoryUseCase: ObserveSessionHistoryUseCase,
     private val deleteSessionUseCase: DeleteSessionUseCase,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<HistoryUiState>(HistoryUiState.Loading)
-    val uiState: StateFlow<HistoryUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow<RunsUiState>(RunsUiState.Loading)
+    val uiState: StateFlow<RunsUiState> = _uiState.asStateFlow()
 
     /**
      * Sessions the user has swiped away but whose deletion has not been committed yet, so Undo can
@@ -100,13 +100,13 @@ class HistoryViewModel @Inject constructor(
     private fun publish() {
         val visible = latestSummaries.filterNot { it.id in pendingDeletions.value }
         _uiState.value = if (visible.isEmpty()) {
-            HistoryUiState.Empty
+            RunsUiState.Empty
         } else {
             val zone = ZoneId.systemDefault()
             val today = LocalDate.now(zone)
-            HistoryUiState.Sessions(
-                week = HistoryGrouping.weekFor(visible, today, zone),
-                groups = HistoryGrouping.groupsFor(visible, today, zone),
+            RunsUiState.Sessions(
+                week = RunsGrouping.weekFor(visible, today, zone),
+                groups = RunsGrouping.groupsFor(visible, today, zone),
             )
         }
     }
@@ -126,9 +126,9 @@ class HistoryViewModel @Inject constructor(
     }
 }
 
-fun SessionSummary.toHistorySummaryUiModel(
+fun SessionSummary.toRunSummaryUiModel(
     zoneId: ZoneId = ZoneId.systemDefault(),
-): HistorySummaryUiModel = HistorySummaryUiModel(
+): RunSummaryUiModel = RunSummaryUiModel(
     id = id,
     recordedAtLabel = formatRecordedAt(recordedAt, zoneId),
     distanceLabel = "${formatDistanceKm(distanceMeters)} km",

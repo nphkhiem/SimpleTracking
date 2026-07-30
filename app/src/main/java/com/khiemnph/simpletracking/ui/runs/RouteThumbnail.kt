@@ -1,4 +1,4 @@
-package com.khiemnph.simpletracking.ui.history
+package com.khiemnph.simpletracking.ui.runs
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background

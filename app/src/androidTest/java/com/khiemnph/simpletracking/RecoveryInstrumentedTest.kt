@@ -27,7 +27,7 @@ import com.khiemnph.domain.repository.SessionRepository
 import com.khiemnph.simpletracking.service.TrackingService
 import com.khiemnph.simpletracking.ui.MainActivity
 import com.khiemnph.simpletracking.ui.record.RecordFragment
-import com.khiemnph.simpletracking.ui.history.HistoryTestTags
+import com.khiemnph.simpletracking.ui.runs.RunsTestTags
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -142,7 +142,7 @@ class RecoveryInstrumentedTest {
     @Test
     fun givenAppProcessKilledWhileSessionRunning_whenRelaunched_thenNavigatesStraightToRecordFragmentWithCorrectRunningState() {
         val sessionId = ActivityScenario.launch(MainActivity::class.java).use {
-            composeRule.onNodeWithTag(HistoryTestTags.RECORD_BUTTON).performClick()
+            composeRule.onNodeWithTag(RunsTestTags.RECORD_BUTTON).performClick()
             awaitView(R.id.record_paused_tag, not(isDisplayed()))
 
             awaitNotNull("the started session to be persisted") {

@@ -32,7 +32,7 @@ import javax.inject.Singleton
  * deliberately NOT mocked here: they're wired exactly the way [UseCaseModule] wires them in
  * production, delegating to whatever [SessionRepository] the graph provides (the in-memory fake
  * from [TestRepositoryModule]), because [com.khiemnph.simpletracking.ui.MainActivityTest],
- * [com.khiemnph.simpletracking.ui.history.HistoryFragment] (via `HistoryViewModel`), and
+ * [com.khiemnph.simpletracking.ui.runs.RunsFragment] (via `RunsViewModel`), and
  * [com.khiemnph.simpletracking.ui.record.RecordFragment] (via `RecordViewModel`) depend on their
  * real state-based behavior.
  */
@@ -40,7 +40,7 @@ import javax.inject.Singleton
 @TestInstallIn(components = [SingletonComponent::class], replaces = [UseCaseModule::class])
 object TestUseCaseModule {
 
-    /** Real, not a mock: the History tests assert that a deleted session actually leaves the list. */
+    /** Real, not a mock: the Runs tests assert that a deleted session actually leaves the list. */
     @Provides
     @Singleton
     fun provideDeleteSessionUseCase(sessionRepository: SessionRepository): DeleteSessionUseCase =
