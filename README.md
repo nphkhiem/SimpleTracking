@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="docs/screenshots/app-icon.png" width="96" alt="Chạy Ngay Đi app icon">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/app-icon-dark.png">
+    <img src="docs/screenshots/app-icon.png" width="96" alt="Chạy Ngay Đi app icon">
+  </picture>
 </p>
 
 <h1 align="center">Chạy Ngay Đi</h1>

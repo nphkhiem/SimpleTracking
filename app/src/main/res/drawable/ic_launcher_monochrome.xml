@@ -1,15 +1,39 @@
+<!--
+  The themed-icon layer. Android replaces every colour with a single system tint, so this is the
+  same letterforms with the ground removed. A wordmark survives that by construction; the route
+  line the previous round tried did not.
+
+  Keep these paths identical to ic_launcher_foreground.xml, which carries the geometry reasoning.
+  If the two drift, the themed icon stops being the same mark.
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- R: stem and bowl -->
     <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M31,63.928c0,0 6.4,-11 12.1,-13.1c7.2,-2.6 26,-1.4 26,-1.4l38.1,38.1L107,108.928l-32,-1L31,63.928z" />
+        android:pathData="M33.75,63 L33.75,47.25 L39.75,47.25 A3,3 0 0 1 42.75,50.25 L42.75,52.125 A3,3 0 0 1 39.75,55.125 L33.75,55.125"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="4.5"
+        android:strokeLineCap="butt"
+        android:strokeLineJoin="miter" />
+    <!-- R: the leg, filled so its terminal is flat on the baseline -->
     <path
-        android:fillColor="#FFFFFF"
-        android:fillType="nonZero"
-        android:pathData="M65.3,45.828l3.8,-6.6c0.2,-0.4 0.1,-0.9 -0.3,-1.1c-0.4,-0.2 -0.9,-0.1 -1.1,0.3l-3.9,6.7c-6.3,-2.8 -13.4,-2.8 -19.7,0l-3.9,-6.7c-0.2,-0.4 -0.7,-0.5 -1.1,-0.3C38.8,38.328 38.7,38.828 38.9,39.228l3.8,6.6C36.2,49.428 31.7,56.028 31,63.928h46C76.3,56.028 71.8,49.428 65.3,45.828zM43.4,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2c-0.3,-0.7 -0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C45.3,56.528 44.5,57.328 43.4,57.328L43.4,57.328zM64.6,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2s-0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C66.5,56.528 65.6,57.328 64.6,57.328L64.6,57.328z"
-        android:strokeWidth="1"
-        android:strokeColor="#00000000" />
+        android:pathData="M32.65,55.5 L38.57,55.5 L45,63 L39.08,63 Z"
+        android:fillColor="#FF000000" />
+    <!-- U -->
+    <path
+        android:pathData="M49.5,45 L49.5,57.75 A3,3 0 0 0 52.5,60.75 L55.5,60.75 A3,3 0 0 0 58.5,57.75 L58.5,45"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="4.5"
+        android:strokeLineCap="butt"
+        android:strokeLineJoin="miter" />
+    <!-- N: two square stems and a separate diagonal -->
+    <path
+        android:pathData="M65.25,63 L65.25,45 M74.25,45 L74.25,63 M65.25,46.5 L74.25,61.5"
+        android:strokeColor="#FF000000"
+        android:strokeWidth="4.5"
+        android:strokeLineCap="butt"
+        android:strokeLineJoin="miter" />
 </vector>
