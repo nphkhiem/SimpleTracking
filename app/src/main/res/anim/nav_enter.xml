@@ -1,0 +1,8 @@
+<!-- Forward navigation: the new screen rises slightly and fades in. Short, because the app's
+     stance is calm rather than showy, and a long transition on a tracking app is time the user
+     spends waiting to see a number. -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:interpolator="@android:interpolator/fast_out_slow_in">
+    <alpha android:fromAlpha="0.0" android:toAlpha="1.0" android:duration="220" />
+    <translate android:fromYDelta="4%p" android:toYDelta="0" android:duration="220" />
+</set>

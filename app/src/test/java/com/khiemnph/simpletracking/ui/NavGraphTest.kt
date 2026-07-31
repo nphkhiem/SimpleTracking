@@ -105,4 +105,32 @@ class NavGraphTest {
                 .getAction(R.id.action_summaryFragment_to_sessionDetailFragment)?.destinationId,
         )
     }
+
+    /**
+     * Every action animates. The app had no motion at all, and a destination added later without
+     * transitions would appear instantly next to ones that do not, which reads as a bug rather
+     * than a choice.
+     */
+    @Test
+    fun `every action declares enter and exit transitions`() {
+        val missing = mutableListOf<String>()
+
+        listOf(
+            R.id.runsFragment to listOf(
+                R.id.action_runsFragment_to_recordFragment,
+                R.id.action_runsFragment_to_sessionDetailFragment,
+                R.id.action_runsFragment_to_settingsFragment,
+            ),
+            R.id.recordFragment to listOf(R.id.action_recordFragment_to_summaryFragment),
+            R.id.summaryFragment to listOf(R.id.action_summaryFragment_to_sessionDetailFragment),
+        ).forEach { (destinationId, actionIds) ->
+            actionIds.forEach { actionId ->
+                val options = destination(destinationId).getAction(actionId)?.navOptions
+                if (options?.enterAnim == -1 || options?.exitAnim == -1) missing += "action $actionId"
+                if (options?.popEnterAnim == -1 || options?.popExitAnim == -1) missing += "pop of action $actionId"
+            }
+        }
+
+        assertEquals(emptyList<String>(), missing)
+    }
 }

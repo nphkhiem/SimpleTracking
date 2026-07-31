@@ -1,0 +1,7 @@
+<!-- Going back reverses the entrance: the screen sinks as it fades, so the direction of travel
+     is legible without any chrome saying so. -->
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:interpolator="@android:interpolator/fast_out_linear_in">
+    <alpha android:fromAlpha="1.0" android:toAlpha="0.0" android:duration="180" />
+    <translate android:fromYDelta="0" android:toYDelta="4%p" android:duration="180" />
+</set>
