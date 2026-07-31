@@ -55,6 +55,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.khiemnph.simpletracking.R
+import com.khiemnph.simpletracking.ui.motion.rememberAnimationsEnabled
 import kotlinx.coroutines.launch
 
 /** A rest day is drawn as a sliver rather than nothing, so the strip always reads as seven days. */
@@ -98,6 +99,7 @@ fun RunsScreen(
 ) {
     // Collapses on scroll, so the list gets the room when the user is reading it and the title
     // gets it when they arrive.
+    val animationsEnabled = rememberAnimationsEnabled()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -165,6 +167,7 @@ fun RunsScreen(
             is RunsUiState.Sessions -> SessionList(
                 week = state.week,
                 groups = state.groups,
+                animationsEnabled = animationsEnabled,
                 contentPadding = contentPadding,
                 onSessionClick = onSessionClick,
                 onSwipedAway = { sessionId ->
@@ -187,6 +190,7 @@ fun RunsScreen(
 private fun SessionList(
     week: WeekSummaryUiModel,
     groups: List<SessionGroupUiModel>,
+    animationsEnabled: Boolean,
     contentPadding: PaddingValues,
     onSessionClick: (String) -> Unit,
     onSwipedAway: (String) -> Unit,
@@ -208,6 +212,10 @@ private fun SessionList(
                     session = session,
                     onClick = { onSessionClick(session.id) },
                     onSwipedAway = { onSwipedAway(session.id) },
+                    // A saved run slides into place instead of appearing, which is the only
+                    // moment in the app that rewards finishing something. Skipped entirely when
+                    // the system has animations off.
+                    modifier = if (animationsEnabled) Modifier.animateItem() else Modifier,
                 )
                 // No rule after a group's last row: the next heading already separates them, and a
                 // rule there would fence off empty space rather than divide two rows.
