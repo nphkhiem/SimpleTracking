@@ -1,30 +1,63 @@
+<!--
+  RUN, drawn as paths rather than text so the icon never depends on a font being installed and
+  cannot reflow.
+
+  The letterforms follow PT Mono: monospaced, square, mechanical. Every glyph gets the same advance
+  of 15.75, so the three sit on a fixed pitch rather than being optically spaced. That squareness is
+  the whole difference from an earlier rounded geometric pass, which read as friendly when this
+  should read as an instrument.
+
+  Three details are load-bearing.
+
+  Outer edges, not centrelines, drive the geometry. Cap height (45) and baseline (63) are stated
+  once and every vertex derives from them, because a mitred corner sits half a stroke inside the
+  outer edge while a butt cap sits on it. An earlier pass put all three letters on one centreline
+  and the U came out short of its neighbours.
+
+  The N's diagonal is a separate subpath, not a corner of the stems. A mitre at that acute angle
+  throws a spike well past the cap height, and a bevel or round join cuts the stem short instead.
+  Held as its own stroke, its angled caps tuck entirely inside the square stems and the outer
+  silhouette stays exactly rectangular.
+
+  The R's leg is a filled quad rather than a stroke. A stroke's cap is always perpendicular to its
+  own direction, so a diagonal leg gets an angled terminal, and every other terminal in this mark is
+  a flat horizontal or vertical cut. Filled, it ends square on the baseline and flush with the
+  letter's right edge. Its top edge sits inside both the stem and the bowl's bottom bar, so the join
+  never shows. For the same reason the bowl turns with rounded corners rather than mitres: that is
+  the corner the U already uses, and the R was the one letter not speaking it.
+
+  The launcher shows a circle of radius 36 from the centre, not the full 108 canvas and not the
+  66dp square usually quoted. This mark reaches 24.2 at its worst corner, leaving 11.8 of clearance
+  under every mask. A route-line design tried first measured 39.9 and clipped on every device.
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path android:pathData="M31,63.928c0,0 6.4,-11 12.1,-13.1c7.2,-2.6 26,-1.4 26,-1.4l38.1,38.1L107,108.928l-32,-1L31,63.928z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:endX="85.84757"
-                android:endY="92.4963"
-                android:startX="42.9492"
-                android:startY="49.59793"
-                android:type="linear">
-                <item
-                    android:color="#44000000"
-                    android:offset="0.0" />
-                <item
-                    android:color="#00000000"
-                    android:offset="1.0" />
-            </gradient>
-        </aapt:attr>
-    </path>
+    <!-- R: stem and bowl. The bowl turns with the same 3-radius corners as the U's bottom. -->
     <path
-        android:fillColor="#FFFFFF"
-        android:fillType="nonZero"
-        android:pathData="M65.3,45.828l3.8,-6.6c0.2,-0.4 0.1,-0.9 -0.3,-1.1c-0.4,-0.2 -0.9,-0.1 -1.1,0.3l-3.9,6.7c-6.3,-2.8 -13.4,-2.8 -19.7,0l-3.9,-6.7c-0.2,-0.4 -0.7,-0.5 -1.1,-0.3C38.8,38.328 38.7,38.828 38.9,39.228l3.8,6.6C36.2,49.428 31.7,56.028 31,63.928h46C76.3,56.028 71.8,49.428 65.3,45.828zM43.4,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2c-0.3,-0.7 -0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C45.3,56.528 44.5,57.328 43.4,57.328L43.4,57.328zM64.6,57.328c-0.8,0 -1.5,-0.5 -1.8,-1.2s-0.1,-1.5 0.4,-2.1c0.5,-0.5 1.4,-0.7 2.1,-0.4c0.7,0.3 1.2,1 1.2,1.8C66.5,56.528 65.6,57.328 64.6,57.328L64.6,57.328z"
-        android:strokeWidth="1"
-        android:strokeColor="#00000000" />
+        android:pathData="M33.75,63 L33.75,47.25 L39.75,47.25 A3,3 0 0 1 42.75,50.25 L42.75,52.125 A3,3 0 0 1 39.75,55.125 L33.75,55.125"
+        android:strokeColor="#FF7A00"
+        android:strokeWidth="4.5"
+        android:strokeLineCap="butt"
+        android:strokeLineJoin="miter" />
+    <!-- R: the leg, filled rather than stroked so its terminal is flat on the baseline. -->
+    <path
+        android:pathData="M32.65,55.5 L38.57,55.5 L45,63 L39.08,63 Z"
+        android:fillColor="#FF7A00" />
+    <!-- U: straight sides into a flat bottom with small corners, not a semicircle. -->
+    <path
+        android:pathData="M49.5,45 L49.5,57.75 A3,3 0 0 0 52.5,60.75 L55.5,60.75 A3,3 0 0 0 58.5,57.75 L58.5,45"
+        android:strokeColor="#FF7A00"
+        android:strokeWidth="4.5"
+        android:strokeLineCap="butt"
+        android:strokeLineJoin="miter" />
+    <!-- N: two square stems and a diagonal held separately, so no join distorts the silhouette. -->
+    <path
+        android:pathData="M65.25,63 L65.25,45 M74.25,45 L74.25,63 M65.25,46.5 L74.25,61.5"
+        android:strokeColor="#FF7A00"
+        android:strokeWidth="4.5"
+        android:strokeLineCap="butt"
+        android:strokeLineJoin="miter" />
 </vector>
