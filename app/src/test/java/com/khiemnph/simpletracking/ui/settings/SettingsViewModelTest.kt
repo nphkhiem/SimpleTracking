@@ -51,8 +51,13 @@ class SettingsViewModelTest {
     /**
      * Real time, not runTest's virtual clock. These exercise a real DataStore writing on
      * Dispatchers.IO, so a scheduler that fast-forwards would assert before the write lands.
+     *
+     * The budget is deliberately generous. This is real file IO on whatever hardware the tests
+     * happen to run on, and a shared CI runner is far slower than a developer machine: five
+     * seconds passed locally every time and still timed out on CI. The number is a guard against
+     * hanging forever, not an assertion about how fast a write should be.
      */
-    private fun <T> awaiting(block: suspend () -> T): T = runBlocking { withTimeout(5_000) { block() } }
+    private fun <T> awaiting(block: suspend () -> T): T = runBlocking { withTimeout(30_000) { block() } }
 
     @Test
     fun `starts from the stored defaults`() = runBlocking {
