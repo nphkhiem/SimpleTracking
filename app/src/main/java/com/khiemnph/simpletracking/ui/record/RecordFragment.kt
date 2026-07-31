@@ -23,6 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.unit.dp
+import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -45,6 +46,9 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.PolylineOptions
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import androidx.appcompat.R as AppCompatR
+import com.google.android.material.R as MaterialR
+import com.google.android.material.color.MaterialColors
 import com.google.android.material.snackbar.Snackbar
 import com.khiemnph.domain.model.GpsSignal
 import com.khiemnph.domain.model.LatLngPoint
@@ -221,7 +225,13 @@ class RecordFragment : Fragment() {
     }
 
     /** Test seam: exposes the configured behavior so a test can assert `isHideable == false`. */
-    internal fun bottomSheetBehavior(): BottomSheetBehavior<View> = BottomSheetBehavior.from(binding.recordBottomSheet)
+    /**
+     * Null in landscape, where the sheet is a fixed side rail with no behavior attached. Asking
+     * `BottomSheetBehavior.from` for one there throws, which crashed the screen on rotation.
+     */
+    internal fun bottomSheetBehavior(): BottomSheetBehavior<View>? =
+        (binding.recordBottomSheet.layoutParams as? CoordinatorLayout.LayoutParams)
+            ?.behavior as? BottomSheetBehavior<View>
 
     /**
      * Keeps the chrome clear of the system bars while the map stays full-bleed behind them.
@@ -251,7 +261,7 @@ class RecordFragment : Fragment() {
         binding.recordBottomSheet.doOnLayout { sheet ->
             bottomSheetHeightDp.value = (sheet.height / resources.displayMetrics.density).dp
         }
-        bottomSheetBehavior().apply {
+        bottomSheetBehavior()?.apply {
             // Pinned/non-dismissable: the sheet must never be swipeable away from the screen.
             isHideable = false
             isDraggable = false
@@ -476,15 +486,24 @@ class RecordFragment : Fragment() {
             } else {
                 setText(message)
                 setTextColor(
-                    ContextCompat.getColor(
-                        requireContext(),
-                        if (signal == GpsSignal.LOST) R.color.md_theme_error else R.color.record_paused_ink,
+                    themeColour(
+                        if (signal == GpsSignal.LOST) {
+                            AppCompatR.attr.colorError
+                        } else {
+                            MaterialR.attr.colorTertiary
+                        },
                     ),
                 )
                 visibility = View.VISIBLE
             }
         }
     }
+
+    /**
+     * Resolves a semantic role from the current theme rather than naming a colour resource, so the
+     * value follows dark mode and any future palette change instead of being pinned here.
+     */
+    private fun themeColour(attribute: Int): Int = MaterialColors.getColor(requireView(), attribute)
 
     private fun renderRoute(route: List<LatLngPoint>) {
         val map = googleMap ?: return
@@ -495,7 +514,7 @@ class RecordFragment : Fragment() {
         map.addPolyline(
             PolylineOptions()
                 .addAll(latLngRoute)
-                .color(ContextCompat.getColor(requireContext(), R.color.history_accent))
+                .color(themeColour(AppCompatR.attr.colorPrimary))
                 .width(ROUTE_POLYLINE_WIDTH_PX),
         )
         map.addMarker(MarkerOptions().position(latLngRoute.first()).title(getString(R.string.record_start_marker_title)))

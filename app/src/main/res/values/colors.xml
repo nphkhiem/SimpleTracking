@@ -66,7 +66,6 @@
     <!-- ============================================================
          TERTIARY · warm ochre. Reserved for the PAUSED state, which
          must read as "held", never as "wrong". Carries forward the
-         intent of today's record_paused_ink (#B9822A / #E3A349).
          ============================================================ -->
     <color name="ref_tertiary_10">#FF241A00</color>
     <color name="ref_tertiary_20">#FF3E2E00</color>
@@ -96,25 +95,5 @@
          independently of the app theme.
          ============================================================ -->
 
-    <!--
-      History screen tokens (light), taken from the reviewed UI mockup's Variant A design system
-      (https://claude.ai/code/artifact/0fdcd862-be87-4a06-b3d0-548142852ca1?screen=history&hv=a).
-      Consumed by the Record screen's layout and drawables, which are still View-based. The
-      History screen no longer uses them: it is Compose and reads the semantic roles in
-      md_theme.xml. These disappear entirely when Record is rebuilt.
-    -->
-    <color name="history_surface">#FFFFFF</color>
-    <color name="history_ink">#211F19</color>
-    <color name="history_ink_soft">#7A7669</color>
-    <color name="history_border">#14211F19</color>
-    <color name="history_accent">#E2432E</color>
 
-    <!--
-      Record screen tokens (light), same reviewed mockup's design system, Record/Variant C
-      (https://claude.ai/code/artifact/0fdcd862-be87-4a06-b3d0-548142852ca1?screen=record&rv=c).
-      history_surface/history_ink/history_ink_soft/history_border/history_accent above are reused
-      as-is for Record - these two are the only tokens that screen needs beyond those.
-    -->
-    <color name="record_accent_ink">#FFF8F6</color>
-    <color name="record_paused_ink">#B9822A</color>
 </resources>

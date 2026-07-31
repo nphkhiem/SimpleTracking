@@ -55,8 +55,8 @@
             android:letterSpacing="0.05"
             android:text="@string/record_paused_tag"
             android:textAllCaps="true"
-            android:textColor="@color/record_paused_ink"
-            android:textSize="12sp"
+            android:textColor="?attr/colorTertiary"
+            android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelMedium"
             android:textStyle="bold"
             android:visibility="gone"
             tools:visibility="visible" />
@@ -73,7 +73,7 @@
             android:layout_marginBottom="8dp"
             android:letterSpacing="0.05"
             android:textAllCaps="true"
-            android:textSize="12sp"
+            android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelMedium"
             android:textStyle="bold"
             android:visibility="invisible"
             tools:text="@string/record_signal_weak"
@@ -97,8 +97,8 @@
                     android:id="@+id/record_distance_value"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/history_ink"
-                    android:textSize="18sp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textAppearance="@style/TextAppearance.ChayNgayDi.TitleMedium"
                     android:textStyle="bold"
                     tools:text="5.42" />
 
@@ -106,8 +106,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/record_distance_unit"
-                    android:textColor="@color/history_ink_soft"
-                    android:textSize="11sp"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelSmall"
                     android:textStyle="bold" />
 
             </LinearLayout>
@@ -123,8 +123,8 @@
                     android:id="@+id/record_current_speed_value"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/history_accent"
-                    android:textSize="22sp"
+                    android:textColor="?attr/colorPrimary"
+                    android:textAppearance="@style/TextAppearance.ChayNgayDi.TitleLarge"
                     android:textStyle="bold"
                     tools:text="12.4" />
 
@@ -132,8 +132,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/record_current_speed_unit"
-                    android:textColor="@color/history_ink_soft"
-                    android:textSize="11sp"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelSmall"
                     android:textStyle="bold" />
 
             </LinearLayout>
@@ -149,8 +149,8 @@
                     android:id="@+id/record_duration_value"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/history_ink"
-                    android:textSize="18sp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textAppearance="@style/TextAppearance.ChayNgayDi.TitleMedium"
                     android:textStyle="bold"
                     tools:text="32:18" />
 
@@ -158,8 +158,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/record_duration_unit"
-                    android:textColor="@color/history_ink_soft"
-                    android:textSize="11sp"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelSmall"
                     android:textStyle="bold" />
 
             </LinearLayout>
