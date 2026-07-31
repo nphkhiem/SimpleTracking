@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Landscape: the sheet becomes a side rail so the map keeps the majority of the screen. In portrait
+  the sheet takes the bottom strip; laid out the same way in landscape it took roughly 62% of the
+  height and left a letterbox of map.
+
+  Every id matches the portrait layout exactly, so RecordFragment binds against one set of views and
+  needs no orientation-specific code.
+-->
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -29,13 +37,14 @@
 
     <LinearLayout
         android:id="@+id/record_bottom_sheet"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_width="320dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
         android:background="@drawable/bg_record_bottom_sheet"
         android:orientation="vertical"
         android:paddingTop="12dp"
         android:paddingBottom="28dp"
-        app:layout_behavior="@string/bottom_sheet_behavior">
+        android:gravity="center_vertical">
 
         <TextView
             android:id="@+id/record_paused_tag"
@@ -75,12 +84,12 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dp"
             android:baselineAligned="false"
-            android:orientation="horizontal">
+            android:orientation="vertical">
 
             <LinearLayout
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_marginBottom="16dp"
                 android:gravity="center"
                 android:orientation="vertical">
 
@@ -104,9 +113,9 @@
             </LinearLayout>
 
             <LinearLayout
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_marginBottom="16dp"
                 android:gravity="center"
                 android:orientation="vertical">
 
@@ -130,9 +139,9 @@
             </LinearLayout>
 
             <LinearLayout
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
+                android:layout_marginBottom="16dp"
                 android:gravity="center"
                 android:orientation="vertical">
 
