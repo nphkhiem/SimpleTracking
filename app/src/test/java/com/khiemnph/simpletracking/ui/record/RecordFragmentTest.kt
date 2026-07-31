@@ -188,7 +188,9 @@ class RecordFragmentTest {
             idleMainLooper()
 
             scenario.onActivity { activity ->
-                val behavior = recordFragmentOf(activity).bottomSheetBehavior()
+                // Non-null in portrait, which is this test's configuration; landscape has a rail
+                // with no behavior at all, covered by RecordLandscapeTest.
+                val behavior = requireNotNull(recordFragmentOf(activity).bottomSheetBehavior())
                 assertFalse("Expected the Record bottom sheet to be non-dismissable", behavior.isHideable)
             }
         }
@@ -202,7 +204,7 @@ class RecordFragmentTest {
             idleMainLooper()
 
             scenario.onActivity { activity ->
-                val behavior = recordFragmentOf(activity).bottomSheetBehavior()
+                val behavior = requireNotNull(recordFragmentOf(activity).bottomSheetBehavior())
                 assertEquals(BottomSheetBehavior.STATE_EXPANDED, behavior.state)
             }
         }

@@ -2,5 +2,5 @@
 <!-- Solid accent-filled circle behind the Record screen's Pause/Resume control, per the reviewed mockup. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="oval">
-    <solid android:color="@color/history_accent" />
+    <solid android:color="?attr/colorPrimary" />
 </shape>
