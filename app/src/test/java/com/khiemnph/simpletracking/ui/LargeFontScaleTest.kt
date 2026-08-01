@@ -133,6 +133,7 @@ class LargeFontScaleTest {
                     onBack = {},
                     onRename = {},
                     onShare = {},
+                    onExportGpx = {},
                     onDelete = {},
                 )
             }

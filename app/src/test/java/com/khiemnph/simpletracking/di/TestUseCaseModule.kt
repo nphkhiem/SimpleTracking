@@ -1,6 +1,7 @@
 package com.khiemnph.simpletracking.di
 
 import com.khiemnph.domain.interactor.DeleteSessionUseCase
+import com.khiemnph.domain.interactor.ExportSessionGpxUseCase
 import com.khiemnph.domain.interactor.GetSessionSplitsUseCase
 import com.khiemnph.domain.interactor.ObserveSessionSummaryUseCase
 import com.khiemnph.domain.interactor.RenameSessionUseCase
@@ -56,6 +57,12 @@ object TestUseCaseModule {
     @Provides
     fun provideGetSessionSplitsUseCase(sessionRepository: SessionRepository): GetSessionSplitsUseCase =
         GetSessionSplitsUseCase(sessionRepository)
+
+    // Real, like the other read-only use cases here: it delegates to whatever SessionRepository the
+    // graph provides, so the in-memory fake serves it correctly.
+    @Provides
+    fun provideExportSessionGpxUseCase(sessionRepository: SessionRepository): ExportSessionGpxUseCase =
+        ExportSessionGpxUseCase(sessionRepository)
 
     @Provides
     fun provideRenameSessionUseCase(sessionRepository: SessionRepository): RenameSessionUseCase =

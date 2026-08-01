@@ -1,6 +1,7 @@
 package com.khiemnph.simpletracking.di
 
 import com.khiemnph.domain.interactor.DeleteSessionUseCase
+import com.khiemnph.domain.interactor.ExportSessionGpxUseCase
 import com.khiemnph.domain.interactor.GetSessionSplitsUseCase
 import com.khiemnph.domain.interactor.ObserveSessionSummaryUseCase
 import com.khiemnph.domain.interactor.RenameSessionUseCase
@@ -37,6 +38,10 @@ object UseCaseModule {
     @Provides
     fun provideGetSessionSplitsUseCase(sessionRepository: SessionRepository): GetSessionSplitsUseCase =
         GetSessionSplitsUseCase(sessionRepository)
+
+    @Provides
+    fun provideExportSessionGpxUseCase(sessionRepository: SessionRepository): ExportSessionGpxUseCase =
+        ExportSessionGpxUseCase(sessionRepository)
 
     @Provides
     fun provideRenameSessionUseCase(sessionRepository: SessionRepository): RenameSessionUseCase =

@@ -60,6 +60,7 @@ class SessionDetailScreenTest {
         onBack: () -> Unit = {},
         onRename: (String) -> Unit = {},
         onShare: () -> Unit = {},
+        onExportGpx: () -> Unit = {},
         onDelete: () -> Unit = {},
     ) {
         composeRule.setContent {
@@ -69,6 +70,7 @@ class SessionDetailScreenTest {
                     onBack = onBack,
                     onRename = onRename,
                     onShare = onShare,
+                    onExportGpx = onExportGpx,
                     onDelete = onDelete,
                 )
             }

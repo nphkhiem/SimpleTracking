@@ -49,6 +49,9 @@
     <string name="detail_rename_confirm">Save</string>
     <string name="detail_rename_cancel">Cancel</string>
     <string name="detail_share">Share</string>
+    <string name="detail_export_gpx">Export GPX</string>
+    <string name="detail_export_saved">Saved as GPX</string>
+    <string name="detail_export_failed">Could not save the file</string>
     <string name="detail_share_subject">My run</string>
     <string name="detail_share_body">%1$s km in %2$s, %3$s min/km. Recorded with Chạy Ngay Đi.</string>
     <string name="detail_metric_distance">km</string>

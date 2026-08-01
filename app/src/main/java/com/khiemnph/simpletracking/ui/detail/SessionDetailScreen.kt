@@ -53,6 +53,7 @@ object SessionDetailTestTags {
     const val RENAME_FIELD = "detail_rename_field"
     const val RENAME_CONFIRM = "detail_rename_confirm"
     const val SHARE = "detail_share"
+    const val EXPORT = "detail_export"
     const val SPLITS = "detail_splits"
     const val NOT_FOUND = "detail_not_found"
     const val DELETE = "detail_delete"
@@ -73,6 +74,7 @@ fun SessionDetailScreen(
     onBack: () -> Unit,
     onRename: (String) -> Unit,
     onShare: () -> Unit,
+    onExportGpx: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -121,6 +123,11 @@ fun SessionDetailScreen(
                                 text = { Text(stringResource(R.string.detail_share)) },
                                 onClick = { menuOpen = false; onShare() },
                                 modifier = Modifier.testTag(SessionDetailTestTags.SHARE),
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.detail_export_gpx)) },
+                                onClick = { menuOpen = false; onExportGpx() },
+                                modifier = Modifier.testTag(SessionDetailTestTags.EXPORT),
                             )
                         }
                     }

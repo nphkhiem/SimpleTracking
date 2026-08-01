@@ -3,6 +3,7 @@ package com.khiemnph.simpletracking.ui.detail
 import androidx.lifecycle.SavedStateHandle
 import com.khiemnph.domain.fake.MockedSessionRepository
 import com.khiemnph.domain.interactor.DeleteSessionUseCase
+import com.khiemnph.domain.interactor.ExportSessionGpxUseCase
 import com.khiemnph.domain.interactor.GetSessionSplitsUseCase
 import com.khiemnph.domain.interactor.ObserveSessionSummaryUseCase
 import com.khiemnph.domain.interactor.RenameSessionUseCase
@@ -76,6 +77,7 @@ class SessionDetailViewModelTest {
     private fun viewModel(id: String = sessionId) = SessionDetailViewModel(
         observeSessionSummaryUseCase = ObserveSessionSummaryUseCase(repository),
         getSessionSplitsUseCase = GetSessionSplitsUseCase(repository),
+        exportSessionGpxUseCase = ExportSessionGpxUseCase(repository),
         renameSessionUseCase = RenameSessionUseCase(repository),
         deleteSessionUseCase = DeleteSessionUseCase(repository),
         savedStateHandle = SavedStateHandle(mapOf("sessionId" to id)),
