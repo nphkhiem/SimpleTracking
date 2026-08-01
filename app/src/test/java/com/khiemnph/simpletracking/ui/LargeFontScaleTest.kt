@@ -70,7 +70,7 @@ class LargeFontScaleTest {
         recordedAtLabel = "Thứ Hai, 9:41 SA",
         distanceKm = "128.50",
         durationLabel = "11:12:00",
-        averageSpeedKmh = "11.1",
+        paceLabel = "5:12",
         routePoints = route,
     )
 

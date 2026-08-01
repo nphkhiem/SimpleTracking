@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.khiemnph.domain.interactor.DeleteSessionUseCase
 import com.khiemnph.simpletracking.ui.format.formatDistanceKm
 import com.khiemnph.simpletracking.ui.format.formatDuration
+import com.khiemnph.simpletracking.ui.format.formatPaceMinPerKm
 import com.khiemnph.domain.interactor.ObserveSessionHistoryUseCase
 import com.khiemnph.domain.model.SessionSummary
 import com.khiemnph.domain.util.RoutePolyline
@@ -23,8 +24,6 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-
-private const val MPS_TO_KMH_FACTOR = 3.6f
 
 /**
  * Resolved per call rather than held in a top-level `val`, so a device language change is picked
@@ -134,14 +133,10 @@ fun SessionSummary.toRunSummaryUiModel(
     recordedAtLabel = title ?: formatRecordedAt(recordedAt, zoneId),
     distanceKm = formatDistanceKm(distanceMeters),
     durationLabel = formatDuration(durationMillis),
-    averageSpeedKmh = formatAverageSpeedKmh(averageSpeedMps),
+    paceLabel = formatPaceMinPerKm(averageSpeedMps),
     routePoints = routePolyline?.let(RoutePolyline::decode).orEmpty(),
 )
 
 private fun formatRecordedAt(recordedAtMillis: Long, zoneId: ZoneId): String =
     Instant.ofEpochMilli(recordedAtMillis).atZone(zoneId).format(recordedAtFormatter())
 
-
-/** The number alone. The unit is applied by the composable, from resources. */
-private fun formatAverageSpeedKmh(averageSpeedMps: Float): String =
-    String.format(Locale.getDefault(), "%.1f", averageSpeedMps * MPS_TO_KMH_FACTOR)

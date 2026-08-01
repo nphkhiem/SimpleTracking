@@ -467,7 +467,7 @@ private fun SessionRow(
                 Text(
                     text = session.durationLabel +
                         stringResource(R.string.runs_item_stats_separator) +
-                        stringResource(R.string.unit_speed_kmh_avg, session.averageSpeedKmh),
+                        stringResource(R.string.unit_pace_per_km, session.paceLabel),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.fillMaxWidth(),

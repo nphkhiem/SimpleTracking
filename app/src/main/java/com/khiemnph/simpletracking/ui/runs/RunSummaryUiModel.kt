@@ -13,7 +13,8 @@ data class RunSummaryUiModel(
     /** The number alone, e.g. "0.21". The unit is applied by the composable, from resources. */
     val distanceKm: String,
     val durationLabel: String,
-    val averageSpeedKmh: String,
+    /** Minutes per kilometre, e.g. "6:43", or "--:--" below the formatter's meaningful floor. */
+    val paceLabel: String,
     /** Empty when the session has no recorded shape, which the row renders as its empty state. */
     val routePoints: List<LatLngPoint>,
 )

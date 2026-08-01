@@ -161,10 +161,22 @@ class RunsViewModelTest {
     }
 
     @Test
-    fun givenAverageSpeedOf2Point5Mps_whenMappedToUiModel_thenAverageSpeedLabelIsConvertedToKmPerHour() {
+    fun givenAverageSpeedOf2Point5Mps_whenMappedToUiModel_thenPaceLabelIsMinutesPerKilometre() {
+        // 2.5 m/s is 400 s per km. The row states pace, not km/h: the list is where runs are
+        // compared, and every other screen in the app already talks in pace.
         val uiModel = sessionSummary(averageSpeedMps = 2.5f).toRunSummaryUiModel()
 
-        assertEquals("9.0", uiModel.averageSpeedKmh)
+        assertEquals("6:40", uiModel.paceLabel)
+    }
+
+    @Test
+    fun givenSpeedBelowTheMeaningfulFloor_whenMappedToUiModel_thenPaceLabelIsThePlaceholder() {
+        // Runs used to print "0.9 km/h" for a session whose detail screen showed "--:--" for the
+        // same number. Sharing one formatter means the two screens can no longer disagree about
+        // whether a pace exists.
+        val uiModel = sessionSummary(averageSpeedMps = 0.25f).toRunSummaryUiModel()
+
+        assertEquals("--:--", uiModel.paceLabel)
     }
 
     @Test

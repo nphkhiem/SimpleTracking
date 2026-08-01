@@ -1,4 +1,4 @@
-package com.khiemnph.simpletracking.ui.record
+package com.khiemnph.simpletracking.ui.format
 
 import org.junit.Assert.assertEquals
 import com.khiemnph.simpletracking.testing.DefaultLocaleRule

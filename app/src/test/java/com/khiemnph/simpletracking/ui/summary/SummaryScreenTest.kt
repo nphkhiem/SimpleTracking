@@ -1,10 +1,14 @@
 package com.khiemnph.simpletracking.ui.summary
 
+import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.test.core.app.ApplicationProvider
 import com.khiemnph.domain.model.LatLngPoint
+import com.khiemnph.simpletracking.R
 import com.khiemnph.simpletracking.testing.DefaultLocaleRule
 import com.khiemnph.simpletracking.ui.route.RouteHeroTestTags
 import com.khiemnph.simpletracking.ui.theme.ChayNgayDiTheme
@@ -24,6 +28,8 @@ class SummaryScreenTest {
 
     @get:Rule
     val composeRule = createComposeRule()
+
+    private val context: Context get() = ApplicationProvider.getApplicationContext()
 
     private val route = listOf(
         LatLngPoint(21.0278, 105.8342),
@@ -95,6 +101,24 @@ class SummaryScreenTest {
         render(ready(distanceKm = "0.00", isTooShortToKeep = true))
 
         composeRule.onNodeWithTag(SummaryTestTags.TOO_SHORT).assertIsDisplayed()
+    }
+
+    @Test
+    fun `the headline congratulates a real run`() {
+        render(ready(isTooShortToKeep = false))
+
+        composeRule.onNodeWithTag(SummaryTestTags.HEADLINE)
+            .assertTextEquals(context.getString(R.string.summary_headline))
+    }
+
+    @Test
+    fun `the headline does not congratulate a run it is offering to delete`() {
+        // The screen used to say "Nice run" directly above "That was a very short run. Delete it?",
+        // praising and dismissing the same thirty seconds in one screenful.
+        render(ready(distanceKm = "0.00", isTooShortToKeep = true))
+
+        composeRule.onNodeWithTag(SummaryTestTags.HEADLINE)
+            .assertTextEquals(context.getString(R.string.summary_headline_too_short))
     }
 
     @Test
