@@ -55,9 +55,23 @@ fun RouteHero(
             .background(MaterialTheme.colorScheme.surfaceContainerLow),
         contentAlignment = Alignment.Center,
     ) {
-        if (points.size < MINIMUM_POINTS_TO_DRAW) {
+        // Two distinct nothings, and they mean different things to the person reading them. Too
+        // few points is a recording that never got going. Enough points with no extent is a
+        // recording that worked and a run that did not move, which drew as a lone dot in a large
+        // empty frame and read as a failed render rather than as a fact about the run.
+        val hasExtent = points.size >= MINIMUM_POINTS_TO_DRAW &&
+            (points.minOf { it.latitude } != points.maxOf { it.latitude } ||
+                points.minOf { it.longitude } != points.maxOf { it.longitude })
+
+        if (points.size < MINIMUM_POINTS_TO_DRAW || !hasExtent) {
             Text(
-                text = stringResource(R.string.route_not_enough_points),
+                text = stringResource(
+                    if (points.size < MINIMUM_POINTS_TO_DRAW) {
+                        R.string.route_not_enough_points
+                    } else {
+                        R.string.route_no_movement
+                    },
+                ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,

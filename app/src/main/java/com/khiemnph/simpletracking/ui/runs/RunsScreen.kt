@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -100,6 +102,9 @@ fun RunsScreen(
     // Collapses on scroll, so the list gets the room when the user is reading it and the title
     // gets it when they arrive.
     val animationsEnabled = rememberAnimationsEnabled()
+    // Owned here rather than inside the list, because the FAB needs to know whether the list has
+    // moved.
+    val listState = rememberLazyListState()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -135,21 +140,26 @@ fun RunsScreen(
         // action is the screen's single primary action and sits under the thumb on both hands.
         floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
+            // Collapses to the dot alone once the list has moved, which the IA asked for and which
+            // centring makes necessary rather than optional: a centred extended FAB floats over the
+            // middle of a row's metrics line rather than over a margin, and at font scale 1.5 it
+            // covered that line completely.
             ExtendedFloatingActionButton(
                 onClick = onRecordClick,
+                expanded = !listState.canScrollBackward,
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
+                icon = {
+                    Box(
+                        Modifier
+                            .size(10.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.onPrimary),
+                    )
+                },
+                text = { Text(stringResource(R.string.runs_record_button_text)) },
                 modifier = Modifier.testTag(RunsTestTags.RECORD_BUTTON),
-            ) {
-                Box(
-                    Modifier
-                        .size(10.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.onPrimary),
-                )
-                Spacer(Modifier.width(10.dp))
-                Text(stringResource(R.string.runs_record_button_text))
-            }
+            )
         },
     ) { insets ->
         val contentPadding = PaddingValues(
@@ -165,6 +175,7 @@ fun RunsScreen(
             RunsUiState.Loading -> LoadingSkeleton(Modifier.padding(contentPadding))
             RunsUiState.Empty -> EmptyRuns(Modifier.padding(contentPadding))
             is RunsUiState.Sessions -> SessionList(
+                listState = listState,
                 week = state.week,
                 groups = state.groups,
                 animationsEnabled = animationsEnabled,
@@ -188,6 +199,7 @@ fun RunsScreen(
 
 @Composable
 private fun SessionList(
+    listState: LazyListState,
     week: WeekSummaryUiModel,
     groups: List<SessionGroupUiModel>,
     animationsEnabled: Boolean,
@@ -200,6 +212,7 @@ private fun SessionList(
         modifier = modifier
             .fillMaxSize()
             .testTag(RunsTestTags.LIST),
+        state = listState,
         contentPadding = contentPadding,
     ) {
         item(key = "week") { WeekSummary(week) }
