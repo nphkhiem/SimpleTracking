@@ -39,4 +39,25 @@ class PermissionRationaleDialogFactory @Inject constructor() {
             .setPositiveButton(R.string.permission_location_permanently_denied_positive) { _, _ -> onOpenSettings() }
             .setNegativeButton(R.string.permission_location_permanently_denied_negative, null)
             .create()
+
+    /**
+     * Shown when Back is pressed during a live session.
+     *
+     * Leaving does not lose the run: tracking is a foreground service and keeps going with a
+     * notification. What it does do is drop the user into the list while the GPS is still on, which
+     * they may not notice, so the three answers are the three things they might actually have
+     * meant: stop it, leave it running deliberately, or stay on this screen.
+     */
+    fun leaveWhileRunningDialog(
+        context: Context,
+        onStopAndSave: () -> Unit,
+        onLeaveRunning: () -> Unit,
+    ): AlertDialog =
+        MaterialAlertDialogBuilder(context)
+            .setTitle(R.string.record_leave_while_running_title)
+            .setMessage(R.string.record_leave_while_running_message)
+            .setPositiveButton(R.string.record_leave_while_running_stop) { _, _ -> onStopAndSave() }
+            .setNegativeButton(R.string.record_leave_while_running_leave) { _, _ -> onLeaveRunning() }
+            .setNeutralButton(R.string.record_leave_while_running_cancel, null)
+            .create()
 }

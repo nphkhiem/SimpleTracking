@@ -29,6 +29,8 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
+import android.content.res.Configuration
+import androidx.activity.OnBackPressedCallback
 import androidx.core.view.doOnLayout
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -45,6 +47,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.PolylineOptions
+import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import androidx.appcompat.R as AppCompatR
 import com.google.android.material.R as MaterialR
@@ -128,6 +131,20 @@ class RecordFragment : Fragment() {
     private val bottomSheetHeightDp = mutableStateOf(0.dp)
 
     /**
+     * The sheet's height in pixels, fed to [com.google.android.gms.maps.GoogleMap.setPadding].
+     *
+     * Padding, not a smaller map: the map keeps the full window so its tiles reach behind the
+     * sheet, but Google Maps treats the padded region as off-limits when it centres the camera, so
+     * the current-position marker stops sitting underneath the sheet.
+     */
+    private var bottomSheetHeightPx = 0
+
+    /** Enabled only while a session is live, so Back is untouched the rest of the time. */
+    private var leaveConfirmationCallback: OnBackPressedCallback? = null
+
+    private var isSessionLive = false
+
+    /**
      * Must be registered unconditionally at construction time - before `onCreate`/`onAttach`
      * complete - regardless of whether this particular screen instance ends up needing to launch
      * it (Android requires the launcher exist before the Fragment reaches `CREATED`).
@@ -193,7 +210,11 @@ class RecordFragment : Fragment() {
         setUpBottomSheet()
         applyWindowInsets()
 
+        // The on-screen button is an aimed, deliberate action and keeps its existing contract of
+        // leaving without stopping. Only system Back is intercepted, because that is the one a user
+        // can trigger without meaning to.
         binding.recordBackButton.setOnClickListener { findNavController().popBackStack() }
+        setUpBackHandling()
         binding.recordPauseResumeButton.setOnClickListener { viewModel.onPauseOrResumeClicked() }
         binding.recordStopButton.setOnClickListener { handleStopClicked() }
 
@@ -265,6 +286,8 @@ class RecordFragment : Fragment() {
     private fun setUpBottomSheet() {
         binding.recordBottomSheet.doOnLayout { sheet ->
             bottomSheetHeightDp.value = (sheet.height / resources.displayMetrics.density).dp
+            bottomSheetHeightPx = sheet.height
+            applyMapPadding()
         }
         bottomSheetBehavior()?.apply {
             // Pinned/non-dismissable: the sheet must never be swipeable away from the screen.
@@ -304,6 +327,8 @@ class RecordFragment : Fragment() {
             // GoogleMap is not evidence it can draw: offline it can be handed over and still never
             // render a tile.
             map.setOnMapLoadedCallback { _binding?.recordRouteFallback?.isVisible = false }
+            applyNightMapStyle(map)
+            applyMapPadding()
             routeRedrawGate.invalidate()
             renderRoute(viewModel.uiState.value.route)
         }
@@ -462,6 +487,9 @@ class RecordFragment : Fragment() {
         binding.recordCurrentSpeedValue.text = formatPaceMinPerKm(state.currentSpeedMps)
         binding.recordDurationValue.text = formatDuration(state.elapsedDurationMillis)
 
+        isSessionLive = state.status == SessionStatus.RUNNING || state.status == SessionStatus.PAUSED
+        leaveConfirmationCallback?.isEnabled = isSessionLive
+
         binding.recordPausedTag.visibility = if (isPaused) View.VISIBLE else View.GONE
         renderGpsSignal(state.gpsSignal)
         binding.recordPauseResumeButton.setImageResource(if (isPaused) R.drawable.ic_play else R.drawable.ic_pause)
@@ -508,6 +536,57 @@ class RecordFragment : Fragment() {
      * value follows dark mode and any future palette change instead of being pinned here.
      */
     private fun themeColour(attribute: Int): Int = MaterialColors.getColor(requireView(), attribute)
+
+    /**
+     * Intercepts Back while a session is live.
+     *
+     * Leaving does not lose the run: tracking is a foreground service and keeps going. What it does
+     * is drop the user into the list with the GPS still on, which is easy not to notice, so Back
+     * asks what they meant rather than assuming.
+     *
+     * The callback is only enabled while recording, so once a session has stopped Back behaves
+     * exactly as it always did and nothing has to remember to unregister it.
+     */
+    private fun setUpBackHandling() {
+        val callback = object : OnBackPressedCallback(false) {
+            override fun handleOnBackPressed() = confirmLeavingIfRecording()
+        }
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, callback)
+        leaveConfirmationCallback = callback
+    }
+
+    private fun confirmLeavingIfRecording() {
+        permissionRationaleDialogFactory.leaveWhileRunningDialog(
+            context = requireContext(),
+            onStopAndSave = { handleStopClicked() },
+            onLeaveRunning = { findNavController().popBackStack() },
+        ).show()
+    }
+
+    /**
+     * Darkens the map in dark mode, so it stops being a lit rectangle inside a dark UI.
+     *
+     * Read from the configuration rather than from `AppCompatDelegate.getDefaultNightMode()`,
+     * because the app's own theme preference can override the system and the configuration is what
+     * actually got applied.
+     */
+    private fun applyNightMapStyle(map: GoogleMap) {
+        val isNight = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK ==
+            Configuration.UI_MODE_NIGHT_YES
+        map.setMapStyle(
+            if (isNight) MapStyleOptions.loadRawResourceStyle(requireContext(), R.raw.map_style_night) else null,
+        )
+    }
+
+    /**
+     * Keeps the camera clear of the sheet.
+     *
+     * Called from both the sheet's layout pass and the map callback, because either can land first
+     * and each is only half the information.
+     */
+    private fun applyMapPadding() {
+        googleMap?.setPadding(0, 0, 0, bottomSheetHeightPx)
+    }
 
     /**
      * Clears and redraws the polyline and the Start/Current markers, which is the simplest correct
