@@ -3,9 +3,12 @@
   Solid accent-filled circle behind the Record screen's Pause/Resume control, per the reviewed
   mockup. Wrapped in a ripple so the press is acknowledged: this is the control a runner taps
   without looking, and a button that gives no feedback invites a second tap.
+  The ripple uses the theme's control highlight, which is an alpha-tuned ink rather than a solid
+  role colour. An earlier version rippled with colorOnPrimary at full strength and washed the whole
+  button pale on every press.
 -->
 <ripple xmlns:android="http://schemas.android.com/apk/res/android"
-    android:color="?attr/colorOnPrimary">
+    android:color="?android:attr/colorControlHighlight">
     <item android:id="@android:id/mask">
         <shape android:shape="oval">
             <solid android:color="?attr/colorOnPrimary" />

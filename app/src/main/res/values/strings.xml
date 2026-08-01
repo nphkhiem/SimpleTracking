@@ -20,7 +20,7 @@
     <string name="runs_delete">Delete</string>
     <string name="runs_session_deleted">Run deleted</string>
     <string name="runs_undo">Undo</string>
-    <string name="runs_record_button_text">Record</string>
+    <string name="runs_record_button_text">Start</string>
     <string name="runs_item_stats_separator" translatable="false">" · "</string>
     <string name="runs_group_today">Today</string>
     <string name="runs_group_yesterday">Yesterday</string>
@@ -33,13 +33,11 @@
     <string name="route_not_enough_points">Not enough map data</string>
     <string name="route_no_movement">No movement recorded</string>
     <string name="summary_headline">Nice run</string>
-    <string name="summary_headline_too_short">All done</string>
     <string name="summary_metric_distance">km</string>
     <string name="summary_metric_duration">time</string>
     <string name="summary_metric_pace">pace</string>
     <string name="summary_keep">Save</string>
     <string name="summary_discard">Delete</string>
-    <string name="summary_too_short">That was a very short run. Delete it?</string>
     <string name="summary_not_found">This run is no longer available.</string>
     <string name="summary_back_to_runs">Back to Runs</string>
     <string name="session_detail_title">Run</string>

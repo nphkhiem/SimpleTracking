@@ -17,7 +17,6 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -85,23 +84,7 @@ class SummaryViewModelTest {
         assertEquals("5:13", ready.paceLabel)
     }
 
-    @Test
-    fun `a run over the threshold is not flagged as too short`() = runTest {
-        seed(distanceMeters = 100.0)
 
-        val ready = viewModel().also { advanceUntilIdle() }.uiState.value as SummaryUiState.Ready
-
-        assertFalse(ready.isTooShortToKeep)
-    }
-
-    @Test
-    fun `a run under the threshold is flagged, which is what stops the junk rows`() = runTest {
-        seed(distanceMeters = 99.0)
-
-        val ready = viewModel().also { advanceUntilIdle() }.uiState.value as SummaryUiState.Ready
-
-        assertTrue(ready.isTooShortToKeep)
-    }
 
     @Test
     fun `an unknown session reports not found rather than crashing`() = runTest {

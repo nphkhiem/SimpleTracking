@@ -39,14 +39,12 @@ class SummaryScreenTest {
 
     private fun ready(
         distanceKm: String = "5.42",
-        isTooShortToKeep: Boolean = false,
         routePoints: List<LatLngPoint> = route,
     ) = SummaryUiState.Ready(
         distanceKm = distanceKm,
         durationLabel = "28:14",
         paceLabel = "5:12",
         routePoints = routePoints,
-        isTooShortToKeep = isTooShortToKeep,
     )
 
     private fun render(
@@ -89,37 +87,9 @@ class SummaryScreenTest {
         assertEquals(1, discarded)
     }
 
-    @Test
-    fun `a normal run is not offered for deletion`() {
-        render(ready(isTooShortToKeep = false))
 
-        composeRule.onNodeWithTag(SummaryTestTags.TOO_SHORT).assertDoesNotExist()
-    }
 
-    @Test
-    fun `a run too short to be real offers to delete itself`() {
-        render(ready(distanceKm = "0.00", isTooShortToKeep = true))
 
-        composeRule.onNodeWithTag(SummaryTestTags.TOO_SHORT).assertIsDisplayed()
-    }
-
-    @Test
-    fun `the headline congratulates a real run`() {
-        render(ready(isTooShortToKeep = false))
-
-        composeRule.onNodeWithTag(SummaryTestTags.HEADLINE)
-            .assertTextEquals(context.getString(R.string.summary_headline))
-    }
-
-    @Test
-    fun `the headline does not congratulate a run it is offering to delete`() {
-        // The screen used to say "Nice run" directly above "That was a very short run. Delete it?",
-        // praising and dismissing the same thirty seconds in one screenful.
-        render(ready(distanceKm = "0.00", isTooShortToKeep = true))
-
-        composeRule.onNodeWithTag(SummaryTestTags.HEADLINE)
-            .assertTextEquals(context.getString(R.string.summary_headline_too_short))
-    }
 
     @Test
     fun `a run with no usable route still shows its numbers`() {

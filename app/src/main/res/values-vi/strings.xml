@@ -22,7 +22,7 @@
     <string name="runs_delete">Xoá</string>
     <string name="runs_session_deleted">Đã xoá buổi chạy</string>
     <string name="runs_undo">Hoàn tác</string>
-    <string name="runs_record_button_text">Ghi lại</string>
+    <string name="runs_record_button_text">Bắt đầu</string>
     <string name="runs_group_today">Hôm nay</string>
     <string name="runs_group_yesterday">Hôm qua</string>
 
@@ -37,13 +37,11 @@
     <string name="route_not_enough_points">Không đủ dữ liệu bản đồ</string>
     <string name="route_no_movement">Không ghi nhận di chuyển</string>
     <string name="summary_headline">Chạy tốt lắm</string>
-    <string name="summary_headline_too_short">Xong rồi</string>
     <string name="summary_metric_distance">km</string>
     <string name="summary_metric_duration">thời gian</string>
     <string name="summary_metric_pace">tốc độ</string>
     <string name="summary_keep">Lưu</string>
     <string name="summary_discard">Xoá</string>
-    <string name="summary_too_short">Buổi chạy này rất ngắn. Bạn có muốn xoá không?</string>
     <string name="summary_not_found">Không còn buổi chạy này nữa.</string>
     <string name="summary_back_to_runs">Quay lại Hoạt động</string>
     <string name="session_detail_title">Buổi chạy</string>

@@ -103,7 +103,6 @@ class LargeFontScaleTest {
                         durationLabel = "11:12:00",
                         paceLabel = "5:12",
                         routePoints = route,
-                        isTooShortToKeep = false,
                     ),
                     onKeep = {},
                     onDiscard = {},

@@ -28,7 +28,6 @@ object SummaryTestTags {
     const val HEADLINE = "summary_headline"
     const val KEEP = "summary_keep"
     const val DISCARD = "summary_discard"
-    const val TOO_SHORT = "summary_too_short"
     const val NOT_FOUND = "summary_not_found"
     const val LOADING = "summary_loading"
 }
@@ -73,12 +72,7 @@ private fun Ready(
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         Text(
-            // Praise is conditional. A run this screen is about to offer to delete has not earned
-            // "Nice run", and saying both in one screenful reads as the app not knowing what it
-            // just recorded.
-            text = stringResource(
-                if (state.isTooShortToKeep) R.string.summary_headline_too_short else R.string.summary_headline,
-            ),
+            text = stringResource(R.string.summary_headline),
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface,
@@ -102,17 +96,6 @@ private fun Ready(
             ),
         )
 
-        if (state.isTooShortToKeep) {
-            Text(
-                text = stringResource(R.string.summary_too_short),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag(SummaryTestTags.TOO_SHORT),
-            )
-        }
 
         Column(
             modifier = Modifier.padding(bottom = 20.dp),
@@ -127,9 +110,14 @@ private fun Ready(
             ) {
                 Text(stringResource(R.string.summary_keep))
             }
+            // Full width, matching the primary above it. A screen's stacked actions share a width
+            // across this app: a narrow secondary under a full-width primary reads as a different
+            // kind of control rather than the alternative to the one above it.
             TextButton(
                 onClick = onDiscard,
-                modifier = Modifier.testTag(SummaryTestTags.DISCARD),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(SummaryTestTags.DISCARD),
             ) {
                 Text(
                     text = stringResource(R.string.summary_discard),

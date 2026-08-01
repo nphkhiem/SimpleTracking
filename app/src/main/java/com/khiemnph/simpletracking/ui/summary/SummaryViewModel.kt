@@ -24,7 +24,6 @@ import kotlinx.coroutines.withTimeoutOrNull
  * stopped again, or a session left running while stationary. Short enough that a genuine sprint
  * still counts.
  */
-private const val TOO_SHORT_METERS = 100.0
 
 /**
  * How long to wait for the Service to finish writing the run before concluding it is genuinely
@@ -73,7 +72,6 @@ class SummaryViewModel @Inject constructor(
                     // three numbers on screen always agree with each other.
                     paceLabel = formatPaceMinPerKm(averageSpeedMps(summary.distanceMeters, summary.durationMillis)),
                     routePoints = summary.routePolyline?.let(RoutePolyline::decode).orEmpty(),
-                    isTooShortToKeep = summary.distanceMeters < TOO_SHORT_METERS,
                 )
             }
         }

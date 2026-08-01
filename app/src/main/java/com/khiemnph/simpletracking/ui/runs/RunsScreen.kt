@@ -147,6 +147,10 @@ fun RunsScreen(
             ExtendedFloatingActionButton(
                 onClick = onRecordClick,
                 expanded = !listState.canScrollBackward,
+                // Material's default shape leaves the collapsed button a squircle. Fully rounded
+                // gives a true circle collapsed and a stadium expanded, which is the same shape rule
+                // at both ends rather than two different ones.
+                shape = CircleShape,
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 icon = {
