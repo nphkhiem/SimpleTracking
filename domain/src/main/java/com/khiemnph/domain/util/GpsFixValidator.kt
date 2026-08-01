@@ -48,7 +48,7 @@ object GpsFixValidator {
             LatLngPoint(previousAccepted.latitude, previousAccepted.longitude),
             LatLngPoint(candidate.latitude, candidate.longitude),
         )
-        val elapsedMillis = candidate.timestamp - previousAccepted.timestamp
+        val elapsedMillis = candidate.elapsedRealtimeMillis - previousAccepted.elapsedRealtimeMillis
 
         if (isImplausiblyFast(distanceMeters, elapsedMillis)) {
             return Decision.REJECTED

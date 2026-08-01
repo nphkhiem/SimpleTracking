@@ -33,6 +33,8 @@ internal fun locationPointEntity(
     timestamp: Long = 0L,
     horizontalAccuracyMeters: Float = 5f,
     speedMetersPerSec: Float = 0f,
+    /** Mirrors the wall clock unless a test is specifically about the two disagreeing. */
+    elapsedRealtimeMillis: Long = timestamp,
 ) = LocationPointEntity(
     sessionId = sessionId,
     latitude = latitude,
@@ -40,4 +42,5 @@ internal fun locationPointEntity(
     timestamp = timestamp,
     horizontalAccuracyMeters = horizontalAccuracyMeters,
     speedMetersPerSec = speedMetersPerSec,
+    elapsedRealtimeMillis = elapsedRealtimeMillis,
 )

@@ -18,19 +18,19 @@ class GpsSignalEvaluatorTest {
 
     @Test
     fun givenNoFixYet_whenEvaluated_thenSignalIsAcquiring() {
-        assertEquals(GpsSignal.ACQUIRING, GpsSignalEvaluator.evaluate(lastAccepted = null, nowMillis = 10_000L))
+        assertEquals(GpsSignal.ACQUIRING, GpsSignalEvaluator.evaluate(lastAccepted = null, nowElapsedRealtimeMillis = 10_000L))
     }
 
     @Test
     fun givenARecentAccurateFix_whenEvaluated_thenSignalIsGood() {
-        val signal = GpsSignalEvaluator.evaluate(point(timestamp = 9_000L, accuracyMeters = 5f), nowMillis = 10_000L)
+        val signal = GpsSignalEvaluator.evaluate(point(timestamp = 9_000L, accuracyMeters = 5f), nowElapsedRealtimeMillis = 10_000L)
 
         assertEquals(GpsSignal.GOOD, signal)
     }
 
     @Test
     fun givenARecentButImpreciseFix_whenEvaluated_thenSignalIsWeak() {
-        val signal = GpsSignalEvaluator.evaluate(point(timestamp = 9_000L, accuracyMeters = 18f), nowMillis = 10_000L)
+        val signal = GpsSignalEvaluator.evaluate(point(timestamp = 9_000L, accuracyMeters = 18f), nowElapsedRealtimeMillis = 10_000L)
 
         assertEquals(GpsSignal.WEAK, signal)
     }
@@ -41,14 +41,14 @@ class GpsSignalEvaluatorTest {
      */
     @Test
     fun givenNoFixForLongerThanTheTimeout_whenEvaluated_thenSignalIsLost() {
-        val signal = GpsSignalEvaluator.evaluate(point(timestamp = 0L, accuracyMeters = 5f), nowMillis = 31_000L)
+        val signal = GpsSignalEvaluator.evaluate(point(timestamp = 0L, accuracyMeters = 5f), nowElapsedRealtimeMillis = 31_000L)
 
         assertEquals(GpsSignal.LOST, signal)
     }
 
     @Test
     fun givenAFixJustInsideTheTimeout_whenEvaluated_thenSignalIsNotYetLost() {
-        val signal = GpsSignalEvaluator.evaluate(point(timestamp = 0L, accuracyMeters = 5f), nowMillis = 29_000L)
+        val signal = GpsSignalEvaluator.evaluate(point(timestamp = 0L, accuracyMeters = 5f), nowElapsedRealtimeMillis = 29_000L)
 
         assertEquals(GpsSignal.GOOD, signal)
     }
@@ -56,7 +56,7 @@ class GpsSignalEvaluatorTest {
     /** A stale fix is stale regardless of how precise it was when it arrived. */
     @Test
     fun givenAnOldButVeryAccurateFix_whenEvaluated_thenLostWinsOverAccuracy() {
-        val signal = GpsSignalEvaluator.evaluate(point(timestamp = 0L, accuracyMeters = 1f), nowMillis = 60_000L)
+        val signal = GpsSignalEvaluator.evaluate(point(timestamp = 0L, accuracyMeters = 1f), nowElapsedRealtimeMillis = 60_000L)
 
         assertEquals(GpsSignal.LOST, signal)
     }
@@ -67,7 +67,7 @@ class GpsSignalEvaluatorTest {
      */
     @Test
     fun givenAFixTimestampedInTheFuture_whenEvaluated_thenItIsTreatedAsCurrent() {
-        val signal = GpsSignalEvaluator.evaluate(point(timestamp = 20_000L, accuracyMeters = 5f), nowMillis = 10_000L)
+        val signal = GpsSignalEvaluator.evaluate(point(timestamp = 20_000L, accuracyMeters = 5f), nowElapsedRealtimeMillis = 10_000L)
 
         assertEquals(GpsSignal.GOOD, signal)
     }

@@ -29,4 +29,6 @@ data class LocationPointEntity(
     val timestamp: Long,
     val horizontalAccuracyMeters: Float,
     val speedMetersPerSec: Float,
+    /** Monotonic milliseconds since boot. Every interval this app measures comes from here. */
+    val elapsedRealtimeMillis: Long,
 )

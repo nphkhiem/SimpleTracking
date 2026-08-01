@@ -41,6 +41,7 @@ internal fun LocationPointEntity.toDomain(): LocationPoint = LocationPoint(
     timestamp = timestamp,
     horizontalAccuracyMeters = horizontalAccuracyMeters,
     speedMetersPerSec = speedMetersPerSec,
+    elapsedRealtimeMillis = elapsedRealtimeMillis,
 )
 
 internal fun LocationPoint.toEntity(): LocationPointEntity = LocationPointEntity(
@@ -50,4 +51,5 @@ internal fun LocationPoint.toEntity(): LocationPointEntity = LocationPointEntity
     timestamp = timestamp,
     horizontalAccuracyMeters = horizontalAccuracyMeters,
     speedMetersPerSec = speedMetersPerSec,
+    elapsedRealtimeMillis = elapsedRealtimeMillis,
 )

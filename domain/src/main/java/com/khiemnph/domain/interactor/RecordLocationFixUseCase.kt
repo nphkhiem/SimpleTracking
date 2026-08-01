@@ -28,6 +28,7 @@ class RecordLocationFixUseCase(private val sessionRepository: SessionRepository)
                 latitude = fix.latitude,
                 longitude = fix.longitude,
                 timestamp = fix.timestamp,
+                elapsedRealtimeMillis = fix.elapsedRealtimeMillis,
                 horizontalAccuracyMeters = fix.horizontalAccuracyMeters,
                 speedMetersPerSec = resolvedSpeedMetersPerSec,
             ),
@@ -37,7 +38,7 @@ class RecordLocationFixUseCase(private val sessionRepository: SessionRepository)
     private fun fallbackSpeed(fix: RawLocationFix, previousAccepted: LocationPoint?): Float {
         if (previousAccepted == null) return 0f
 
-        val elapsedSeconds = (fix.timestamp - previousAccepted.timestamp) / 1_000.0
+        val elapsedSeconds = (fix.elapsedRealtimeMillis - previousAccepted.elapsedRealtimeMillis) / 1_000.0
         if (elapsedSeconds <= 0.0) return 0f
 
         val distanceMeters = DistanceCalculator.distanceBetween(

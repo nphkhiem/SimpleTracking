@@ -112,3 +112,28 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
         db.execSQL("ALTER TABLE session ADD COLUMN title TEXT")
     }
 }
+
+/**
+ * Adds a monotonic timestamp to each recorded fix.
+ *
+ * `timestamp` is `Location.time`, a wall clock. It can jump backwards or forwards mid-run on an NTP
+ * correction or a manual change, and every interval this app measures was derived from it: the
+ * jitter window, the movement threshold, pace, and the per-kilometre splits. Session *duration* was
+ * moved to a monotonic clock during the audit, which is what made this look handled; the per-point
+ * timestamps behind the splits were not, so a clock change corrupted the splits while the headline
+ * duration stayed correct. That is the most confusing shape a wrong number can take.
+ *
+ * Existing rows are backfilled from `timestamp` rather than left at zero. Within a single session
+ * those wall-clock values are self-consistent, so every historic run's intervals, distance and
+ * splits come out exactly as they did before. Zero would have collapsed every past run to a single
+ * instant.
+ *
+ * NOT NULL with a default, because SQLite cannot add a NOT NULL column without one, and the
+ * backfill immediately replaces it.
+ */
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE location_point ADD COLUMN elapsedRealtimeMillis INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("UPDATE location_point SET elapsedRealtimeMillis = timestamp")
+    }
+}

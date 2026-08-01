@@ -43,6 +43,7 @@ class FusedLocationTrackingRepository @Inject constructor(
 }
 
 private const val LOCATION_UPDATE_INTERVAL_MILLIS = 2_000L
+private const val NANOS_PER_MILLI = 1_000_000L
 
 /**
  * The exact request shape this app tracks a session with - shared with
@@ -59,6 +60,9 @@ internal fun Location.toRawLocationFix(sessionId: String): RawLocationFix = RawL
     latitude = latitude,
     longitude = longitude,
     timestamp = time,
+    // Nanos since boot, from the fix itself rather than from a clock read on arrival, so queueing
+    // between the provider and here cannot stretch an interval.
+    elapsedRealtimeMillis = elapsedRealtimeNanos / NANOS_PER_MILLI,
     horizontalAccuracyMeters = accuracy,
     speedMetersPerSec = if (hasSpeed()) speed else null,
 )

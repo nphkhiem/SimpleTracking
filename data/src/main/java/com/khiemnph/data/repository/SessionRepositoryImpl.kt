@@ -191,7 +191,7 @@ class SessionRepositoryImpl @Inject constructor(
             route = route,
             // Recomputed on every ticker emission, which is what makes a signal that has gone
             // quiet visible: nothing new has to arrive for the state to change.
-            gpsSignal = GpsSignalEvaluator.evaluate(domainPoints.lastOrNull(), now),
+            gpsSignal = GpsSignalEvaluator.evaluate(domainPoints.lastOrNull(), clock.elapsedRealtimeMillis()),
         )
     }
 
