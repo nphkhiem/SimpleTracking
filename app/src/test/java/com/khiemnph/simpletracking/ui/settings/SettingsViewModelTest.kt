@@ -2,6 +2,9 @@ package com.khiemnph.simpletracking.ui.settings
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.preferencesDataStoreFile
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
 import androidx.test.core.app.ApplicationProvider
 import com.khiemnph.simpletracking.settings.ThemeChoice
 import com.khiemnph.simpletracking.settings.UserPreferencesRepository
@@ -30,7 +33,29 @@ import org.robolectric.annotation.Config
 class SettingsViewModelTest {
 
     private val storeScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val viewModelStore = ViewModelStore()
+    private var createdViewModels = 0
     private lateinit var repository: UserPreferencesRepository
+
+    /**
+     * Built through a [ViewModelStore] rather than by calling the constructor, so [tearDown] can
+     * clear them.
+     *
+     * A [SettingsViewModel] collects preferences on its `viewModelScope`, which runs on
+     * `Dispatchers.Main`. Constructed directly it is never cleared, so that collection outlives the
+     * test and races `Dispatchers.resetMain()`, failing with "Dispatchers.Main is used concurrently
+     * with setting it". Whether it lost that race depended on the order JUnit happened to run the
+     * suite in, so the tests passed until an unrelated file moved between packages.
+     *
+     * Each call gets its own key, because one test deliberately needs two independent instances.
+     */
+    private fun settingsViewModel(): SettingsViewModel {
+        val factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T = SettingsViewModel(repository) as T
+        }
+        return ViewModelProvider(viewModelStore, factory)["vm${createdViewModels++}", SettingsViewModel::class.java]
+    }
 
     @Before
     fun setUp() {
@@ -42,8 +67,11 @@ class SettingsViewModelTest {
 
     @After
     fun tearDown() {
-        Dispatchers.resetMain()
+        // Order matters: cancel the collectors, then the source they read, and only then hand
+        // Dispatchers.Main back.
+        viewModelStore.clear()
         storeScope.cancel()
+        Dispatchers.resetMain()
         ApplicationProvider.getApplicationContext<android.content.Context>()
             .filesDir.resolve("datastore").deleteRecursively()
     }
@@ -61,7 +89,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `starts from the stored defaults`() = runBlocking {
-        val viewModel = SettingsViewModel(repository)
+        val viewModel = settingsViewModel()
 
         val state = viewModel.uiState.value
         assertEquals(ThemeChoice.System, state.theme)
@@ -70,7 +98,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `choosing a theme is reflected back`() {
-        val viewModel = SettingsViewModel(repository)
+        val viewModel = settingsViewModel()
 
         viewModel.onThemeChosen(ThemeChoice.Dark)
 
@@ -80,7 +108,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `turning dynamic colour on is reflected back`() {
-        val viewModel = SettingsViewModel(repository)
+        val viewModel = settingsViewModel()
 
         viewModel.onDynamicColourChanged(true)
 
@@ -90,10 +118,10 @@ class SettingsViewModelTest {
 
     @Test
     fun `a second view model sees what the first one chose`() {
-        SettingsViewModel(repository).onThemeChosen(ThemeChoice.Light)
+        settingsViewModel().onThemeChosen(ThemeChoice.Light)
         awaiting { repository.preferences.first { it.theme == ThemeChoice.Light } }
 
-        val fresh = SettingsViewModel(repository)
+        val fresh = settingsViewModel()
 
         val state = awaiting { fresh.uiState.first { it.theme == ThemeChoice.Light } }
         assertEquals(ThemeChoice.Light, state.theme)
@@ -101,7 +129,7 @@ class SettingsViewModelTest {
 
     @Test
     fun `reports a version to show in about`() = runBlocking {
-        val viewModel = SettingsViewModel(repository)
+        val viewModel = settingsViewModel()
 
         assertEquals(true, viewModel.uiState.value.versionName.isNotBlank())
     }

@@ -8,7 +8,7 @@ import com.khiemnph.domain.interactor.ObserveSessionSummaryUseCase
 import com.khiemnph.domain.util.RoutePolyline
 import com.khiemnph.simpletracking.ui.format.formatDistanceKm
 import com.khiemnph.simpletracking.ui.format.formatDuration
-import com.khiemnph.simpletracking.ui.record.formatPaceMinPerKm
+import com.khiemnph.simpletracking.ui.format.formatPaceMinPerKm
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow

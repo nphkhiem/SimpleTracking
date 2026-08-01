@@ -27,7 +27,7 @@
     <string name="runs_group_yesterday">Hôm qua</string>
 
     <!-- "km/h tb" is the usual short form: tb is trung bình, average. -->
-    <string name="unit_speed_kmh_avg">%1$s km/h tb</string>
+    <string name="unit_pace_per_km">%1$s / km</string>
     <!-- Same as the default today, declared so a locale can reorder or respace it later. -->
     <string name="unit_distance_km">%1$s km</string>
     <string name="route_scale_meters">%1$d m</string>
@@ -36,6 +36,7 @@
     <string name="summary_title">Tổng kết</string>
     <string name="route_not_enough_points">Không đủ dữ liệu bản đồ</string>
     <string name="summary_headline">Chạy tốt lắm</string>
+    <string name="summary_headline_too_short">Xong rồi</string>
     <string name="summary_metric_distance">km</string>
     <string name="summary_metric_duration">thời gian</string>
     <string name="summary_metric_pace">tốc độ</string>

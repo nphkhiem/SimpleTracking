@@ -28,10 +28,11 @@
     <!-- Units live apart from the numbers so a translation can move them, or drop the space that
          some locales do not use. -->
     <string name="unit_distance_km">%1$s km</string>
-    <string name="unit_speed_kmh_avg">%1$s km/h avg</string>
+    <string name="unit_pace_per_km">%1$s / km</string>
     <string name="summary_title">Summary</string>
     <string name="route_not_enough_points">Not enough map data</string>
     <string name="summary_headline">Nice run</string>
+    <string name="summary_headline_too_short">All done</string>
     <string name="summary_metric_distance">km</string>
     <string name="summary_metric_duration">time</string>
     <string name="summary_metric_pace">pace</string>

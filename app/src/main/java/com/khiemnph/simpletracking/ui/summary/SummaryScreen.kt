@@ -73,7 +73,12 @@ private fun Ready(
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         Text(
-            text = stringResource(R.string.summary_headline),
+            // Praise is conditional. A run this screen is about to offer to delete has not earned
+            // "Nice run", and saying both in one screenful reads as the app not knowing what it
+            // just recorded.
+            text = stringResource(
+                if (state.isTooShortToKeep) R.string.summary_headline_too_short else R.string.summary_headline,
+            ),
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface,

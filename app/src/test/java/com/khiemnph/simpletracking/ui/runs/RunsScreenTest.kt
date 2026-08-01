@@ -40,7 +40,7 @@ class RunsScreenTest {
         recordedAtLabel = "Sat, 9:41 AM",
         distanceKm = distance,
         durationLabel = "28:14",
-        averageSpeedKmh = "11.1",
+        paceLabel = "5:12",
         routePoints = emptyList(),
     )
 
@@ -111,7 +111,9 @@ class RunsScreenTest {
 
         composeRule.onNodeWithText("5.23 km").assertIsDisplayed()
         composeRule.onNodeWithText("Sat, 9:41 AM").assertIsDisplayed()
-        composeRule.onNodeWithText("28:14 · 11.1 km/h avg").assertIsDisplayed()
+        // The row's secondary line is `duration · pace`, the anatomy the IA specifies. It read
+        // "11.1 km/h avg" until pace replaced speed here.
+        composeRule.onNodeWithText("28:14 · 5:12 / km").assertIsDisplayed()
     }
 
     @Test

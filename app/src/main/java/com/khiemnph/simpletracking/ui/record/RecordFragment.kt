@@ -61,6 +61,7 @@ import com.khiemnph.simpletracking.permission.LocationPermissionAskTracker
 import com.khiemnph.simpletracking.permission.PermissionRationaleDialogFactory
 import com.khiemnph.simpletracking.ui.format.formatDistanceKm
 import com.khiemnph.simpletracking.ui.format.formatDuration
+import com.khiemnph.simpletracking.ui.format.formatPaceMinPerKm
 import com.khiemnph.simpletracking.ui.route.OfflineRouteCanvas
 import com.khiemnph.simpletracking.ui.theme.ChayNgayDiTheme
 import dagger.hilt.android.AndroidEntryPoint

@@ -1,4 +1,4 @@
-package com.khiemnph.simpletracking.ui.record
+package com.khiemnph.simpletracking.ui.format
 
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -18,9 +18,9 @@ private const val NO_PACE = "--:--"
 /**
  * Formats speed as pace in minutes per kilometre.
  *
- * Pace is the unit runners actually use and talk in; km/h is a car's unit. Distance and duration on
- * the same sheet already describe how fast the run is going, so this is the reading that has to be
- * glanceable mid-stride.
+ * Pace is the unit runners actually use and talk in; km/h is a car's unit. Every screen that states
+ * how fast a run was goes through here, so the app cannot end up quoting one unit in a list and
+ * another on the detail behind it, which it did until the Runs row moved off km/h.
  */
 fun formatPaceMinPerKm(speedMps: Float): String {
     if (speedMps < SLOWEST_MEANINGFUL_SPEED_MPS) return NO_PACE
