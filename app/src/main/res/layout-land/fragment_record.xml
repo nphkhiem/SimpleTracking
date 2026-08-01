@@ -35,6 +35,28 @@
         android:padding="8dp"
         android:src="@drawable/ic_close" />
 
+    <!--
+      GPS status floated over the map, matching portrait. Anchored top|start here because the rail
+      occupies the end edge, so top|end would sit underneath it, and clear of the back button.
+    -->
+    <TextView
+        android:id="@+id/record_signal_tag"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_marginTop="@dimen/record_close_button_margin"
+        android:layout_marginStart="76dp"
+        android:background="@drawable/bg_record_signal_chip"
+        android:drawableStart="@drawable/ic_signal_bars"
+        android:drawablePadding="7dp"
+        android:letterSpacing="0.05"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="8dp"
+        android:textAllCaps="true"
+        android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelMedium"
+        android:textStyle="bold"
+        tools:text="@string/record_signal_good" />
+
     <LinearLayout
         android:id="@+id/record_bottom_sheet"
         android:layout_width="320dp"
@@ -51,33 +73,19 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="8dp"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/bg_record_paused_chip"
             android:letterSpacing="0.05"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="7dp"
             android:text="@string/record_paused_tag"
             android:textAllCaps="true"
-            android:textColor="?attr/colorTertiary"
+            android:textColor="?attr/colorOnError"
             android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelMedium"
             android:textStyle="bold"
             android:visibility="gone"
             tools:visibility="visible" />
 
-        <!--
-          Reserved space, never gone: the status line occupies a row whether or not it has anything
-          to say, so the metrics below never jump when the signal changes mid-run.
-        -->
-        <TextView
-            android:id="@+id/record_signal_tag"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="8dp"
-            android:letterSpacing="0.05"
-            android:textAllCaps="true"
-            android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelMedium"
-            android:textStyle="bold"
-            android:visibility="invisible"
-            tools:text="@string/record_signal_weak"
-            tools:visibility="visible" />
 
         <LinearLayout
             android:layout_width="match_parent"

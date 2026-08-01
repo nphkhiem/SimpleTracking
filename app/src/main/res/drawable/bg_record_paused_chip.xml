@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Filled pill behind the paused status, so the state is unmissable rather than a tinted word. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="?attr/colorError" />
+    <corners android:radius="14dp" />
+</shape>

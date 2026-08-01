@@ -1,0 +1,11 @@
+<!-- Three rising bars for the GPS status chip, tinted by the state rather than redrawn per state. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="14dp"
+    android:height="14dp"
+    android:viewportWidth="14"
+    android:viewportHeight="14"
+    android:tint="?attr/colorPrimary">
+    <path android:fillColor="@android:color/white" android:pathData="M1,9h2.6v4H1z" />
+    <path android:fillColor="@android:color/white" android:pathData="M5.7,6.2h2.6v6.8H5.7z" />
+    <path android:fillColor="@android:color/white" android:pathData="M10.4,3h2.6v10h-2.6z" />
+</vector>

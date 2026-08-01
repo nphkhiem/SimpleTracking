@@ -504,33 +504,26 @@ class RecordFragment : Fragment() {
     }
 
     /**
-     * Says nothing when the signal is fine. The point of this line is the cases where the numbers
-     * above it cannot be trusted, and a permanent "GPS good" badge would train the user to stop
-     * reading it. Kept [View.INVISIBLE] rather than gone so the metrics never shift.
+     * The GPS chip over the map.
+     *
+     * Always present, unlike the old in-sheet line that hid itself when the signal was fine. A
+     * runner who has just been told the signal was lost needs somewhere to look to see it recover,
+     * and a control that vanishes on success cannot answer that. The cost is a badge that reads
+     * "good" most of the time; the state is carried by colour and word together, never colour
+     * alone.
      */
     private fun renderGpsSignal(signal: GpsSignal) {
-        val message = when (signal) {
-            GpsSignal.ACQUIRING -> R.string.record_signal_acquiring
-            GpsSignal.WEAK -> R.string.record_signal_weak
-            GpsSignal.LOST -> R.string.record_signal_lost
-            GpsSignal.GOOD -> null
+        val (message, roleAttribute) = when (signal) {
+            GpsSignal.ACQUIRING -> R.string.record_signal_acquiring to MaterialR.attr.colorTertiary
+            GpsSignal.WEAK -> R.string.record_signal_weak to MaterialR.attr.colorTertiary
+            GpsSignal.LOST -> R.string.record_signal_lost to AppCompatR.attr.colorError
+            GpsSignal.GOOD -> R.string.record_signal_good to AppCompatR.attr.colorPrimary
         }
+        val role = themeColour(roleAttribute)
         binding.recordSignalTag.apply {
-            if (message == null) {
-                visibility = View.INVISIBLE
-            } else {
-                setText(message)
-                setTextColor(
-                    themeColour(
-                        if (signal == GpsSignal.LOST) {
-                            AppCompatR.attr.colorError
-                        } else {
-                            MaterialR.attr.colorTertiary
-                        },
-                    ),
-                )
-                visibility = View.VISIBLE
-            }
+            setText(message)
+            setTextColor(role)
+            compoundDrawablesRelative.firstOrNull()?.setTint(role)
         }
     }
 
