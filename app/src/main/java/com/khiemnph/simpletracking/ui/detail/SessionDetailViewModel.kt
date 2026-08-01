@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.khiemnph.domain.interactor.DeleteSessionUseCase
+import com.khiemnph.domain.interactor.ExportSessionGpxUseCase
 import com.khiemnph.domain.interactor.GetSessionSplitsUseCase
 import com.khiemnph.domain.interactor.ObserveSessionSummaryUseCase
 import com.khiemnph.domain.interactor.RenameSessionUseCase
@@ -35,6 +36,7 @@ private fun titleFormatter(): DateTimeFormatter =
 class SessionDetailViewModel @Inject constructor(
     private val observeSessionSummaryUseCase: ObserveSessionSummaryUseCase,
     private val getSessionSplitsUseCase: GetSessionSplitsUseCase,
+    private val exportSessionGpxUseCase: ExportSessionGpxUseCase,
     private val renameSessionUseCase: RenameSessionUseCase,
     private val deleteSessionUseCase: DeleteSessionUseCase,
     savedStateHandle: SavedStateHandle,
@@ -63,6 +65,17 @@ class SessionDetailViewModel @Inject constructor(
 
     fun onRename(title: String) {
         viewModelScope.launch { renameSessionUseCase(sessionId, title) }
+    }
+
+    /**
+     * The GPX document for this run, built off the main thread.
+     *
+     * Returned rather than written here: choosing the destination and opening a stream for it are
+     * the Fragment's job, because only it has an Activity result and a ContentResolver.
+     */
+    suspend fun gpxDocument(): String {
+        val name = (uiState.value as? SessionDetailUiState.Ready)?.titleLabel.orEmpty()
+        return exportSessionGpxUseCase(sessionId, name)
     }
 
     fun onDelete(onDeleted: () -> Unit) {

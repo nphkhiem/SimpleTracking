@@ -53,6 +53,9 @@
     <string name="detail_rename_confirm">Lưu</string>
     <string name="detail_rename_cancel">Huỷ</string>
     <string name="detail_share">Chia sẻ</string>
+    <string name="detail_export_gpx">Xuất file GPX</string>
+    <string name="detail_export_saved">Đã lưu file GPX</string>
+    <string name="detail_export_failed">Không lưu được file</string>
     <string name="detail_share_subject">Buổi chạy của tôi</string>
     <string name="detail_share_body">%1$s km trong %2$s, %3$s phút/km. Ghi lại bằng Chạy Ngay Đi.</string>
     <string name="detail_metric_distance">km</string>
