@@ -85,10 +85,10 @@
             android:gravity="center"
             android:maxLines="1"
             android:autoSizeTextType="uniform"
-            android:autoSizeMinTextSize="24sp"
-            android:autoSizeMaxTextSize="32sp"
+            android:autoSizeMinTextSize="32sp"
+            android:autoSizeMaxTextSize="57sp"
             android:textColor="?attr/colorOnSurface"
-            android:textAppearance="@style/TextAppearance.ChayNgayDi.HeadlineLarge"
+            android:textAppearance="@style/TextAppearance.ChayNgayDi.DisplayLarge"
             android:textStyle="bold"
             tools:text="5,42" />
 
@@ -121,7 +121,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="?attr/colorOnSurface"
-                    android:textAppearance="@style/TextAppearance.ChayNgayDi.TitleMedium"
+                    android:textAppearance="@style/TextAppearance.ChayNgayDi.TitleLarge"
                     android:textStyle="bold"
                     tools:text="32:18" />
 
@@ -147,7 +147,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="?attr/colorPrimary"
-                    android:textAppearance="@style/TextAppearance.ChayNgayDi.TitleMedium"
+                    android:textAppearance="@style/TextAppearance.ChayNgayDi.TitleLarge"
                     android:textStyle="bold"
                     tools:text="5:24" />
 
@@ -173,7 +173,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="?attr/colorOnSurface"
-                    android:textAppearance="@style/TextAppearance.ChayNgayDi.TitleMedium"
+                    android:textAppearance="@style/TextAppearance.ChayNgayDi.TitleLarge"
                     android:textStyle="bold"
                     tools:text="5:31" />
 
