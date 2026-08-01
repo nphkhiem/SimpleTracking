@@ -8,6 +8,7 @@ import com.khiemnph.data.local.db.MIGRATION_1_2
 import com.khiemnph.data.local.db.MIGRATION_2_3
 import com.khiemnph.data.local.db.MIGRATION_3_4
 import com.khiemnph.data.local.db.MIGRATION_4_5
+import com.khiemnph.data.local.db.MIGRATION_5_6
 import com.khiemnph.data.local.db.SessionDao
 import dagger.Module
 import dagger.Provides
@@ -29,7 +30,7 @@ object DatabaseModule {
             // Every version bump needs its Migration registered here. There is deliberately no
             // fallbackToDestructiveMigration: silently wiping a user's recorded history is a worse
             // outcome than a build that fails until the migration is written.
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
             .build()
 
     @Provides

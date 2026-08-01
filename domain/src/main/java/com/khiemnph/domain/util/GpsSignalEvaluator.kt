@@ -23,13 +23,14 @@ object GpsSignalEvaluator {
     /** Matches [GpsFixValidator]'s own acceptance ceiling: at the edge of usable, so say so. */
     const val WEAK_ABOVE_ACCURACY_METERS = 15f
 
-    fun evaluate(lastAccepted: LocationPoint?, nowMillis: Long): GpsSignal {
+    fun evaluate(lastAccepted: LocationPoint?, nowElapsedRealtimeMillis: Long): GpsSignal {
         if (lastAccepted == null) return GpsSignal.ACQUIRING
 
-        // Fix timestamps come from the GPS clock and `now` from the system clock, so a fix can
-        // appear to be from the future. Treat that as current rather than reporting a signal
-        // problem that is really a clock disagreement.
-        val ageMillis = (nowMillis - lastAccepted.timestamp).coerceAtLeast(0L)
+        // Both sides are now monotonic milliseconds since boot, so they share a basis and cannot
+        // drift apart the way a GPS clock and a wall clock could. The floor stays: a fix can still
+        // arrive with a marginally later reading than the `now` captured just before it. Treat that
+        // as current rather than reporting a signal problem that is really a rounding artefact.
+        val ageMillis = (nowElapsedRealtimeMillis - lastAccepted.elapsedRealtimeMillis).coerceAtLeast(0L)
 
         return when {
             ageMillis >= LOST_AFTER_MILLIS -> GpsSignal.LOST

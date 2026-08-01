@@ -225,4 +225,70 @@ class AppDatabaseMigrationTest {
             assertEquals("Morning loop", it.getString(0))
         }
     }
+
+    @Test
+    fun givenFixesRecordedByWallClock_whenMigratingTo6_thenTheirIntervalsAreUnchanged() {
+        // The backfill is the whole point. Left at the column default of zero, every point in every
+        // historic run would share one instant, and their distance and splits would collapse.
+        helper.createDatabase(TEST_DB, 5).use { db ->
+            db.execSQL(
+                """
+                INSERT INTO session
+                    (id, startTimestamp, startElapsedRealtimeMillis, pausedDurationMillis, status,
+                     pausedAtTimestamp, pausedAtElapsedRealtimeMillis, stoppedTimestamp,
+                     finalDistanceMeters, finalAverageSpeedMps, routePolyline, title)
+                VALUES ('s1', 1000, 500, 0, 'STOPPED', NULL, NULL, 61000, 1200.0, 20.0, 'poly', NULL)
+                """.trimIndent(),
+            )
+            db.execSQL(
+                """
+                INSERT INTO location_point
+                    (sessionId, latitude, longitude, timestamp, horizontalAccuracyMeters, speedMetersPerSec)
+                VALUES ('s1', 21.0, 105.8, 10000, 5.0, 3.0), ('s1', 21.001, 105.8, 15000, 5.0, 3.0)
+                """.trimIndent(),
+            )
+        }
+
+        val migrated = helper.runMigrationsAndValidate(TEST_DB, 6, true, MIGRATION_5_6)
+
+        migrated.query(
+            "SELECT timestamp, elapsedRealtimeMillis FROM location_point WHERE sessionId = 's1' ORDER BY timestamp",
+        ).use {
+            assertTrue(it.moveToFirst())
+            assertEquals(10000L, it.getLong(0))
+            assertEquals("backfilled from the wall clock, not left at zero", 10000L, it.getLong(1))
+            assertTrue(it.moveToNext())
+            assertEquals(15000L, it.getLong(1))
+        }
+    }
+
+    @Test
+    fun givenTheMigratedSchema_whenAMonotonicFixIsWritten_thenItReadsBackIndependentlyOfTheWallClock() {
+        helper.createDatabase(TEST_DB, 5).close()
+        val migrated = helper.runMigrationsAndValidate(TEST_DB, 6, true, MIGRATION_5_6)
+
+        migrated.execSQL(
+            """
+            INSERT INTO session
+                (id, startTimestamp, startElapsedRealtimeMillis, pausedDurationMillis, status,
+                 pausedAtTimestamp, pausedAtElapsedRealtimeMillis, stoppedTimestamp,
+                 finalDistanceMeters, finalAverageSpeedMps, routePolyline, title)
+            VALUES ('s2', 1000, 500, 0, 'RUNNING', NULL, NULL, NULL, 0.0, 0.0, NULL, NULL)
+            """.trimIndent(),
+        )
+        migrated.execSQL(
+            """
+            INSERT INTO location_point
+                (sessionId, latitude, longitude, timestamp, horizontalAccuracyMeters,
+                 speedMetersPerSec, elapsedRealtimeMillis)
+            VALUES ('s2', 21.0, 105.8, 1764600000000, 5.0, 3.0, 42000)
+            """.trimIndent(),
+        )
+
+        migrated.query("SELECT timestamp, elapsedRealtimeMillis FROM location_point WHERE sessionId = 's2'").use {
+            assertTrue(it.moveToFirst())
+            assertEquals(1764600000000L, it.getLong(0))
+            assertEquals(42000L, it.getLong(1))
+        }
+    }
 }

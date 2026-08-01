@@ -64,7 +64,8 @@ object DistanceCalculator {
                 LatLngPoint(current.latitude, current.longitude),
                 LatLngPoint(next.latitude, next.longitude),
             )
-            if (isBelowMovementThreshold(hopMeters, next.timestamp - current.timestamp)) 0.0 else hopMeters
+            if (isBelowMovementThreshold(hopMeters, next.elapsedRealtimeMillis - current.elapsedRealtimeMillis)) 0.0
+            else hopMeters
         }.sum()
     }
 

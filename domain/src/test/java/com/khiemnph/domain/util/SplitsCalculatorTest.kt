@@ -26,6 +26,13 @@ class SplitsCalculatorTest {
         speedMetersPerSec = 3f,
     )
 
+    /**
+     * The same point, but with the wall clock and the monotonic clock disagreeing: [atMillis] is
+     * what a monotonic clock read, [wallClockMillis] is what the wall clock claimed.
+     */
+    private fun skewedPoint(northMeters: Double, atMillis: Long, wallClockMillis: Long) =
+        point(northMeters, atMillis).copy(timestamp = wallClockMillis, elapsedRealtimeMillis = atMillis)
+
     /** A straight run of [totalMeters] at a steady [metersPerSecond], sampled every second. */
     private fun steadyRun(totalMeters: Double, metersPerSecond: Double): List<LocationPoint> {
         val seconds = (totalMeters / metersPerSecond).toInt()
@@ -149,5 +156,35 @@ class SplitsCalculatorTest {
 
         assertEquals(3, splits.size)
         assertTrue("a run ending on the mark has no partial split", splits.none { it.isPartial })
+    }
+
+    @Test
+    fun `a wall clock jumping backwards mid-run does not change the splits`() {
+        // An NTP correction or a manual clock change lands 10 minutes in the past, halfway through
+        // the second kilometre. Session duration already came from a monotonic clock, so before
+        // this the headline stayed right while the splits underneath it went wrong, which is the
+        // most confusing shape the error could take.
+        val steady = steadyRun(totalMeters = 2_400.0, metersPerSecond = 3.0)
+        val jumpAt = steady.size * 2 / 3
+        val skewed = steady.mapIndexed { index, p ->
+            val wallClock = if (index < jumpAt) p.timestamp else p.timestamp - 600_000L
+            skewedPoint(
+                northMeters = p.latitude * METERS_PER_DEGREE_LATITUDE,
+                atMillis = p.elapsedRealtimeMillis,
+                wallClockMillis = wallClock,
+            )
+        }
+
+        assertEquals(SplitsCalculator.splitsFor(steady), SplitsCalculator.splitsFor(skewed))
+    }
+
+    @Test
+    fun `a run measured only by a wall clock still works, because the field defaults to it`() {
+        // Every historic row is backfilled this way by MIGRATION_5_6, so this is the shape of all
+        // existing data.
+        val wallClockOnly = steadyRun(totalMeters = 2_400.0, metersPerSecond = 3.0)
+            .map { LocationPoint(it.sessionId, it.latitude, it.longitude, it.timestamp, it.horizontalAccuracyMeters, it.speedMetersPerSec) }
+
+        assertEquals(2, SplitsCalculator.splitsFor(wallClockOnly).count { !it.isPartial })
     }
 }

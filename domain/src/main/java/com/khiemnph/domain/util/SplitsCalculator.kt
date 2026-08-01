@@ -35,7 +35,7 @@ object SplitsCalculator {
         var durationInSplit = 0L
 
         points.zipWithNext { current, next ->
-            val hopMillis = next.timestamp - current.timestamp
+            val hopMillis = next.elapsedRealtimeMillis - current.elapsedRealtimeMillis
             val hopMeters = DistanceCalculator.distanceBetween(
                 LatLngPoint(current.latitude, current.longitude),
                 LatLngPoint(next.latitude, next.longitude),
