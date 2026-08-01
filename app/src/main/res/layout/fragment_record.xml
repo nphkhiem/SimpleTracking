@@ -39,6 +39,8 @@
         android:layout_height="wrap_content"
         android:layout_gravity="top|end"
         android:layout_margin="@dimen/record_close_button_margin"
+        android:minHeight="48dp"
+        android:gravity="center_vertical"
         android:background="@drawable/bg_record_signal_chip"
         android:drawableStart="@drawable/ic_signal_bars"
         android:drawablePadding="7dp"

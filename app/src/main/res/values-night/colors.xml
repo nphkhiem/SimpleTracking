@@ -14,4 +14,7 @@
       when the screens are rebuilt.
     -->
 
+
+    <!-- Lightened for the dark surface; see values/colors.xml for the reasoning. -->
+    <color name="signal_good">#7CD992</color>
 </resources>

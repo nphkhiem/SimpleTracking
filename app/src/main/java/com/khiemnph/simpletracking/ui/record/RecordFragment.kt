@@ -276,6 +276,13 @@ class RecordFragment : Fragment() {
                 topMargin = bars.top + closeButtonMargin
                 leftMargin = bars.left + closeButtonMargin
             }
+            // The signal chip floats over the map like the back button and needs the same inset,
+            // or it lands under the status bar. Both boxes are 48dp with the same top margin, so
+            // sharing the inset is also what keeps them aligned with each other.
+            binding.recordSignalTag.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                topMargin = bars.top + closeButtonMargin
+                rightMargin = bars.right + closeButtonMargin
+            }
             binding.recordBottomSheet.updatePadding(bottom = sheetBottomPadding + bars.bottom)
             // Not consumed: the fallback canvas measures the sheet for itself and needs to see the
             // same insets.
@@ -513,13 +520,16 @@ class RecordFragment : Fragment() {
      * alone.
      */
     private fun renderGpsSignal(signal: GpsSignal) {
-        val (message, roleAttribute) = when (signal) {
-            GpsSignal.ACQUIRING -> R.string.record_signal_acquiring to MaterialR.attr.colorTertiary
-            GpsSignal.WEAK -> R.string.record_signal_weak to MaterialR.attr.colorTertiary
-            GpsSignal.LOST -> R.string.record_signal_lost to AppCompatR.attr.colorError
-            GpsSignal.GOOD -> R.string.record_signal_good to AppCompatR.attr.colorPrimary
+        // Red, amber, green, which is the one convention users read without being taught. Green is
+        // a resource rather than a theme attribute because the app's palette has no green role;
+        // amber and red reuse tertiary and error, which already mean "caution" and "fault" here.
+        val (message, role) = when (signal) {
+            GpsSignal.GOOD ->
+                R.string.record_signal_good to ContextCompat.getColor(requireContext(), R.color.signal_good)
+            GpsSignal.WEAK -> R.string.record_signal_weak to themeColour(MaterialR.attr.colorTertiary)
+            GpsSignal.ACQUIRING -> R.string.record_signal_acquiring to themeColour(MaterialR.attr.colorTertiary)
+            GpsSignal.LOST -> R.string.record_signal_lost to themeColour(AppCompatR.attr.colorError)
         }
-        val role = themeColour(roleAttribute)
         binding.recordSignalTag.apply {
             setText(message)
             setTextColor(role)
