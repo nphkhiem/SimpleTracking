@@ -455,7 +455,7 @@ private fun SessionRow(
     ) {
         Text(
             text = session.recordedAtLabel,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(6.dp))
@@ -472,7 +472,10 @@ private fun SessionRow(
             Column(verticalArrangement = Arrangement.Center) {
                 Text(
                     text = stringResource(R.string.unit_distance_km, session.distanceKm),
-                    style = MaterialTheme.typography.headlineSmall,
+                    // Raised rather than shrinking the lines around it: the row needed a sharper
+                    // hierarchy and the supporting text needed to stay readable, and those pull
+                    // opposite ways if you attack the small text instead.
+                    style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,
                 )

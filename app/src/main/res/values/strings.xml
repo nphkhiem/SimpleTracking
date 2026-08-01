@@ -81,6 +81,9 @@
     <string name="record_signal_weak">Weak GPS</string>
     <string name="record_signal_lost">GPS signal lost</string>
     <string name="record_duration_unit">time</string>
+    <string name="record_hero_unit">Kilometres</string>
+    <string name="record_current_pace_unit">pace /km</string>
+    <string name="record_average_pace_unit">avg /km</string>
     <string name="record_pause_content_description">Pause</string>
     <string name="record_resume_content_description">Resume</string>
     <string name="record_stop_content_description">Stop</string>

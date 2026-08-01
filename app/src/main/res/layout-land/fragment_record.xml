@@ -86,26 +86,36 @@
             android:baselineAligned="false"
             android:orientation="vertical">
 
+            <!--
+                 Same hierarchy as portrait, stacked instead of side by side. The rail is the tighter
+                 of the two, so the trio's spacing is 12dp here against portrait's row, and the
+                 hero's autosize floor is what keeps four blocks and the controls on screen.
+            -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="14dp"
                 android:gravity="center"
                 android:orientation="vertical">
 
                 <TextView
                     android:id="@+id/record_distance_value"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:maxLines="1"
+                    android:autoSizeTextType="uniform"
+                    android:autoSizeMinTextSize="22sp"
+                    android:autoSizeMaxTextSize="32sp"
                     android:textColor="?attr/colorOnSurface"
-                    android:textAppearance="@style/TextAppearance.ChayNgayDi.TitleMedium"
+                    android:textAppearance="@style/TextAppearance.ChayNgayDi.HeadlineLarge"
                     android:textStyle="bold"
-                    tools:text="5.42" />
+                    tools:text="5,42" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/record_distance_unit"
+                    android:text="@string/record_hero_unit"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelSmall"
                     android:textStyle="bold" />
@@ -115,33 +125,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:gravity="center"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/record_current_speed_value"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="?attr/colorPrimary"
-                    android:textAppearance="@style/TextAppearance.ChayNgayDi.TitleLarge"
-                    android:textStyle="bold"
-                    tools:text="12.4" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/record_current_speed_unit"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelSmall"
-                    android:textStyle="bold" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="12dp"
                 android:gravity="center"
                 android:orientation="vertical">
 
@@ -163,6 +147,59 @@
                     android:textStyle="bold" />
 
             </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/record_current_speed_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/colorPrimary"
+                    android:textAppearance="@style/TextAppearance.ChayNgayDi.TitleMedium"
+                    android:textStyle="bold"
+                    tools:text="5:24" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/record_current_pace_unit"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelSmall"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/record_average_pace_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textAppearance="@style/TextAppearance.ChayNgayDi.TitleMedium"
+                    android:textStyle="bold"
+                    tools:text="5:31" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/record_average_pace_unit"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelSmall"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
 
         </LinearLayout>
 

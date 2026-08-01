@@ -485,6 +485,9 @@ class RecordFragment : Fragment() {
 
         binding.recordDistanceValue.text = formatDistanceKm(state.distanceMeters)
         binding.recordCurrentSpeedValue.text = formatPaceMinPerKm(state.currentSpeedMps)
+        // Average pace beside current pace answers the question km/h cannot: am I fading. The value
+        // was already carried on the state and rendered nowhere.
+        binding.recordAveragePaceValue.text = formatPaceMinPerKm(state.averageSpeedMps)
         binding.recordDurationValue.text = formatDuration(state.elapsedDurationMillis)
 
         isSessionLive = state.status == SessionStatus.RUNNING || state.status == SessionStatus.PAUSED

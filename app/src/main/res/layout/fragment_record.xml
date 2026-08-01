@@ -70,64 +70,44 @@
             tools:text="@string/record_signal_weak"
             tools:visibility="visible" />
 
+        <!--
+             Instrument mode: one metric dominates and the rest recede. Distance is the hero because
+             it is the number a runner is actually chasing; duration and the two paces answer "how
+             long" and "am I fading", which are follow-up questions rather than the glance.
+
+             Autosizing has a floor at HeadlineSmall's 24sp so the hero shrinks at large font scales
+             instead of clipping or pushing the controls off the sheet.
+        -->
+        <TextView
+            android:id="@+id/record_distance_value"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:maxLines="1"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="24sp"
+            android:autoSizeMaxTextSize="32sp"
+            android:textColor="?attr/colorOnSurface"
+            android:textAppearance="@style/TextAppearance.ChayNgayDi.HeadlineLarge"
+            android:textStyle="bold"
+            tools:text="5,42" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            android:gravity="center"
+            android:text="@string/record_hero_unit"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelSmall"
+            android:textStyle="bold" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dp"
             android:baselineAligned="false"
             android:orientation="horizontal">
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/record_distance_value"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textAppearance="@style/TextAppearance.ChayNgayDi.TitleMedium"
-                    android:textStyle="bold"
-                    tools:text="5.42" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/record_distance_unit"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelSmall"
-                    android:textStyle="bold" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/record_current_speed_value"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="?attr/colorPrimary"
-                    android:textAppearance="@style/TextAppearance.ChayNgayDi.TitleLarge"
-                    android:textStyle="bold"
-                    tools:text="12.4" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/record_current_speed_unit"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelSmall"
-                    android:textStyle="bold" />
-
-            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -149,6 +129,58 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/record_duration_unit"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelSmall"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/record_current_speed_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/colorPrimary"
+                    android:textAppearance="@style/TextAppearance.ChayNgayDi.TitleMedium"
+                    android:textStyle="bold"
+                    tools:text="5:24" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/record_current_pace_unit"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelSmall"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/record_average_pace_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textAppearance="@style/TextAppearance.ChayNgayDi.TitleMedium"
+                    android:textStyle="bold"
+                    tools:text="5:31" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/record_average_pace_unit"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelSmall"
                     android:textStyle="bold" />
