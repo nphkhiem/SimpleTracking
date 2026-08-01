@@ -117,6 +117,9 @@ class RecordFragment : Fragment() {
     private var stopDispatched = false
     private var hasCenteredCameraOnce = false
 
+    /** Keeps the once-a-second ticker from rebuilding an overlay that has not changed. */
+    private val routeRedrawGate = RouteRedrawGate()
+
     /**
      * How much of the fallback is hidden behind the pinned bottom sheet, so the route is fitted to
      * the part of the screen the user can actually see. Measured rather than assumed: the sheet's
@@ -222,6 +225,7 @@ class RecordFragment : Fragment() {
         super.onDestroyView()
         googleMap = null
         mapFragment = null
+        routeRedrawGate.invalidate()
         _binding = null
     }
 
@@ -300,6 +304,7 @@ class RecordFragment : Fragment() {
             // GoogleMap is not evidence it can draw: offline it can be handed over and still never
             // render a tile.
             map.setOnMapLoadedCallback { _binding?.recordRouteFallback?.isVisible = false }
+            routeRedrawGate.invalidate()
             renderRoute(viewModel.uiState.value.route)
         }
     }
@@ -467,8 +472,6 @@ class RecordFragment : Fragment() {
         renderRoute(state.route)
     }
 
-    /** Clears and redraws Start/Current markers and the route polyline - simplest correct
-     * approach for a route that only ever grows, at this app's scale of points per session. */
     /**
      * Says nothing when the signal is fine. The point of this line is the cases where the numbers
      * above it cannot be trusted, and a permanent "GPS good" badge would train the user to stop
@@ -506,8 +509,18 @@ class RecordFragment : Fragment() {
      */
     private fun themeColour(attribute: Int): Int = MaterialColors.getColor(requireView(), attribute)
 
+    /**
+     * Clears and redraws the polyline and the Start/Current markers, which is the simplest correct
+     * approach for a route that only ever grows at this app's scale of points per session.
+     *
+     * Simple, but not free, so [routeRedrawGate] keeps it off the once-a-second ticker. The camera
+     * follow moves with it: it used to re-animate to the same coordinate every second even when no
+     * fix had arrived.
+     */
     private fun renderRoute(route: List<LatLngPoint>) {
         val map = googleMap ?: return
+        if (!routeRedrawGate.needsRedraw(route)) return
+
         map.clear()
         if (route.isEmpty()) return
 
