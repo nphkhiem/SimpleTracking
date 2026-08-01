@@ -88,6 +88,11 @@
     <string name="record_current_marker_title">Vị trí hiện tại</string>
     <string name="record_location_settings_unknown_message">Không kiểm tra được cài đặt vị trí. Vẫn ghi lại, và nếu không thấy lộ trình, hãy kiểm tra xem Vị trí đã bật chưa.</string>
     <string name="record_map_offline_caption">Không có bản đồ khi ngoại tuyến</string>
+    <string name="record_leave_while_running_title">Buổi chạy vẫn đang ghi</string>
+    <string name="record_leave_while_running_message">Quay lại sẽ để buổi chạy tiếp tục ghi ở chế độ nền. Bạn có thể mở lại từ thông báo.</string>
+    <string name="record_leave_while_running_stop">Dừng và lưu</string>
+    <string name="record_leave_while_running_leave">Cứ để chạy tiếp</string>
+    <string name="record_leave_while_running_cancel">Ở lại</string>
 
     <string name="permission_location_rationale_title">Cần quyền truy cập vị trí</string>
     <string name="permission_location_rationale_message">Chạy Ngay Đi cần quyền truy cập vị trí để ghi lại lộ trình trong lúc bạn chạy.</string>

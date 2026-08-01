@@ -84,6 +84,11 @@
     <string name="record_current_marker_title">Current position</string>
     <string name="record_location_settings_unknown_message">Couldn\'t check your location settings. Recording anyway, and if no route appears, check that Location is on.</string>
     <string name="record_map_offline_caption">Map unavailable offline</string>
+    <string name="record_leave_while_running_title">This run is still recording</string>
+    <string name="record_leave_while_running_message">Going back leaves it recording in the background. You can come back to it from the notification.</string>
+    <string name="record_leave_while_running_stop">Stop and save</string>
+    <string name="record_leave_while_running_leave">Leave it running</string>
+    <string name="record_leave_while_running_cancel">Stay here</string>
     <string name="route_scale_meters">%1$d m</string>
     <string name="route_scale_kilometers">%1$d km</string>
 

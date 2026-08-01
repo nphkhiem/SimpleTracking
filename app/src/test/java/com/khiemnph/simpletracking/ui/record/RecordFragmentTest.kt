@@ -211,6 +211,30 @@ class RecordFragmentTest {
     }
 
     @Test
+    fun givenSystemBackWhileRecording_whenPressed_thenAsksBeforeLeavingAndStaysOnRecord() {
+        // The on-screen button is aimed, so it keeps leaving straight away. System Back is the one
+        // a user can fire without meaning to, and leaving there drops them into the list with the
+        // GPS still running, which is easy not to notice.
+        seedActiveSession()
+
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            idleMainLooper()
+
+            scenario.onActivity { activity -> activity.onBackPressedDispatcher.onBackPressed() }
+            idleMainLooper()
+
+            val dialog = ShadowDialog.getLatestDialog()
+            assertNotNull("a confirmation should have been shown", dialog)
+            assertEquals(true, dialog.isShowing)
+            scenario.onActivity { activity ->
+                val navHostFragment =
+                    activity.supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+                assertEquals(R.id.recordFragment, navHostFragment.navController.currentDestination?.id)
+            }
+        }
+    }
+
+    @Test
     fun givenBackButtonClicked_whenInvoked_thenNavigatesBackToRunsWithoutStoppingTheSession() {
         seedActiveSession()
 
