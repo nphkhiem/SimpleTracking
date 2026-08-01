@@ -35,6 +35,7 @@
 
     <string name="summary_title">Tổng kết</string>
     <string name="route_not_enough_points">Không đủ dữ liệu bản đồ</string>
+    <string name="route_no_movement">Không ghi nhận di chuyển</string>
     <string name="summary_headline">Chạy tốt lắm</string>
     <string name="summary_headline_too_short">Xong rồi</string>
     <string name="summary_metric_distance">km</string>

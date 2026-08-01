@@ -31,6 +31,7 @@
     <string name="unit_pace_per_km">%1$s / km</string>
     <string name="summary_title">Summary</string>
     <string name="route_not_enough_points">Not enough map data</string>
+    <string name="route_no_movement">No movement recorded</string>
     <string name="summary_headline">Nice run</string>
     <string name="summary_headline_too_short">All done</string>
     <string name="summary_metric_distance">km</string>
