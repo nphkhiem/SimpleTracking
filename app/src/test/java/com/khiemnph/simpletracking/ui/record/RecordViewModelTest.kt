@@ -61,9 +61,22 @@ class RecordViewModelTest {
      */
     private val applicationScope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher())
 
+    /**
+     * One dispatcher, and therefore one scheduler, shared by `Dispatchers.Main` and by every
+     * `runTest` below.
+     *
+     * `setMain(UnconfinedTestDispatcher())` with a bare `runTest` gives the two their own
+     * schedulers, and `givenStartSessionUseCaseThrows_...` depends on that not being true: the
+     * failure it asserts on reaches the test only as an uncaught coroutine exception, which
+     * kotlinx-coroutines-test attributes to whichever TestScope happens to be active. With two
+     * schedulers the delivery is a race, and it lost that race on CI while passing on the branch
+     * and five times in a row locally.
+     */
+    private val testDispatcher = UnconfinedTestDispatcher()
+
     @Before
     fun setUp() {
-        Dispatchers.setMain(UnconfinedTestDispatcher())
+        Dispatchers.setMain(testDispatcher)
     }
 
     @After
@@ -117,7 +130,7 @@ class RecordViewModelTest {
     }
 
     @Test
-    fun givenNullExistingSessionId_whenResolveSessionCalled_thenStartSessionUseCaseInvokedAndServiceStartIntentSent() = runTest {
+    fun givenNullExistingSessionId_whenResolveSessionCalled_thenStartSessionUseCaseInvokedAndServiceStartIntentSent() = runTest(testDispatcher) {
         coEvery { startSessionUseCase() } returns "new-session-id"
         val viewModel = createViewModel()
 
@@ -128,7 +141,7 @@ class RecordViewModelTest {
     }
 
     @Test
-    fun givenResolveSessionAlreadyCalled_whenCalledAgain_thenSecondCallIsANoOp() = runTest {
+    fun givenResolveSessionAlreadyCalled_whenCalledAgain_thenSecondCallIsANoOp() = runTest(testDispatcher) {
         coEvery { startSessionUseCase() } returns "new-session-id"
         val viewModel = createViewModel()
 
@@ -141,7 +154,7 @@ class RecordViewModelTest {
     }
 
     @Test
-    fun givenNonNullExistingSessionId_whenResolveSessionCalled_thenStartSessionUseCaseNeverInvokedButServiceStartIntentStillSent() = runTest {
+    fun givenNonNullExistingSessionId_whenResolveSessionCalled_thenStartSessionUseCaseNeverInvokedButServiceStartIntentStillSent() = runTest(testDispatcher) {
         val sessionId = repository.startSession()
         val viewModel = createViewModel()
 
@@ -164,7 +177,7 @@ class RecordViewModelTest {
 
     @Test
     fun givenActiveSessionEmitsFourStatesWhereOnlyTwoHaveNewRoutePoints_whenUiStateCollected_thenSmoothingWindowOnlyUpdatesOnGenuinelyNewSamples() =
-        runTest {
+        runTest(testDispatcher) {
             val sessionId = repository.startSession()
             val viewModel = createViewModel()
 
@@ -189,7 +202,7 @@ class RecordViewModelTest {
         }
 
     @Test
-    fun givenExistingSessionAlreadyHasARoutePointBeforeObservingBegins_whenFirstStateEmitted_thenSmoothingWindowSeededImmediately() = runTest {
+    fun givenExistingSessionAlreadyHasARoutePointBeforeObservingBegins_whenFirstStateEmitted_thenSmoothingWindowSeededImmediately() = runTest(testDispatcher) {
         val sessionId = repository.startSession()
         repository.recordLocationPoint(point(sessionId, timestamp = 1_000L, speedMetersPerSec = 7f))
         val viewModel = createViewModel()
@@ -200,7 +213,7 @@ class RecordViewModelTest {
     }
 
     @Test
-    fun givenActiveSessionState_whenUiStateCollected_thenDistanceDurationAverageSpeedAndRoutePassThroughUnsmoothed() = runTest {
+    fun givenActiveSessionState_whenUiStateCollected_thenDistanceDurationAverageSpeedAndRoutePassThroughUnsmoothed() = runTest(testDispatcher) {
         val sessionId = repository.startSession()
         val viewModel = createViewModel()
         viewModel.resolveSession(sessionId)
@@ -213,7 +226,7 @@ class RecordViewModelTest {
     }
 
     @Test
-    fun givenPauseOrResumeClickedWhileRunning_whenInvoked_thenPauseIntentSentNotResumeIntent() = runTest {
+    fun givenPauseOrResumeClickedWhileRunning_whenInvoked_thenPauseIntentSentNotResumeIntent() = runTest(testDispatcher) {
         val sessionId = repository.startSession()
         val viewModel = createViewModel()
         viewModel.resolveSession(sessionId)
@@ -225,7 +238,7 @@ class RecordViewModelTest {
     }
 
     @Test
-    fun givenPauseOrResumeClickedWhilePaused_whenInvoked_thenResumeIntentSentNotPauseIntent() = runTest {
+    fun givenPauseOrResumeClickedWhilePaused_whenInvoked_thenResumeIntentSentNotPauseIntent() = runTest(testDispatcher) {
         val sessionId = repository.startSession()
         repository.pauseSession(sessionId)
         val viewModel = createViewModel()
@@ -301,7 +314,7 @@ class RecordViewModelTest {
     }
 
     @Test
-    fun givenPauseOrResumeClickedBeforeSessionResolved_whenInvoked_thenNoIntentSent() = runTest {
+    fun givenPauseOrResumeClickedBeforeSessionResolved_whenInvoked_thenNoIntentSent() = runTest(testDispatcher) {
         val viewModel = createViewModel()
 
         viewModel.onPauseOrResumeClicked()
@@ -310,7 +323,7 @@ class RecordViewModelTest {
     }
 
     @Test
-    fun givenStopClicked_whenInvoked_thenStopIntentSentToTrackingService() = runTest {
+    fun givenStopClicked_whenInvoked_thenStopIntentSentToTrackingService() = runTest(testDispatcher) {
         val sessionId = repository.startSession()
         val viewModel = createViewModel()
         viewModel.resolveSession(sessionId)
@@ -335,7 +348,7 @@ class RecordViewModelTest {
      * without the [com.khiemnph.simpletracking.di.ApplicationScope] fix.
      */
     @Test
-    fun givenViewModelClearedBeforeStopCallbackFires_whenStopClicked_thenStopIntentStillReachesTrackingService() = runTest {
+    fun givenViewModelClearedBeforeStopCallbackFires_whenStopClicked_thenStopIntentStillReachesTrackingService() = runTest(testDispatcher) {
         val sessionId = repository.startSession()
         val viewModel = createViewModel()
         viewModel.resolveSession(sessionId)
