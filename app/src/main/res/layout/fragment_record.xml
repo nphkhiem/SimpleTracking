@@ -58,7 +58,6 @@
         android:layout_height="wrap_content"
         android:background="@drawable/bg_record_bottom_sheet"
         android:orientation="vertical"
-        android:paddingTop="12dp"
         android:paddingBottom="28dp"
         app:layout_behavior="@string/bottom_sheet_behavior">
 
@@ -70,7 +69,6 @@
             android:id="@+id/record_paused_tag"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
             android:gravity="center"
             android:background="@drawable/bg_record_paused_banner"
             android:letterSpacing="0.05"
@@ -97,6 +95,7 @@
             android:id="@+id/record_distance_value"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
             android:gravity="center"
             android:maxLines="1"
             android:autoSizeTextType="uniform"

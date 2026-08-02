@@ -1,12 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Full-bleed banner behind the paused status.
+  Full-bleed banner behind the paused status, flush with the top of the sheet.
 
-  Square rather than rounded because it spans the sheet edge to edge: a radius on a full-width bar
-  reads as a pill that failed to fit rather than as a band. It was a centred pill first, and the
-  owner asked for the full width, which is the stronger signal for the state most easily missed.
+  Its top corners match the sheet's 20dp exactly, and its bottom corners are square, so the band
+  reads as the top of the sheet rather than as a card sitting inside it. If the sheet's radius ever
+  changes, this has to change with it: there is no way to inherit one shape's corner into another.
 -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
     <solid android:color="?attr/colorError" />
+    <corners
+        android:topLeftRadius="20dp"
+        android:topRightRadius="20dp" />
 </shape>
