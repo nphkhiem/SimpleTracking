@@ -27,48 +27,94 @@
         android:padding="8dp"
         android:src="@drawable/ic_close" />
 
+
+    <!--
+      GPS status, floated over the map at the top right per the mockup rather than buried in the
+      sheet. It is now always present: a runner who has just seen "GPS signal lost" needs to be able
+      to look back at the same place and see it recover, which a control that disappears cannot do.
+    -->
+    <TextView
+        android:id="@+id/record_signal_tag"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_margin="@dimen/record_close_button_margin"
+        android:minHeight="48dp"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_record_signal_chip"
+        android:drawableStart="@drawable/ic_signal_bars"
+        android:drawablePadding="7dp"
+        android:letterSpacing="0.05"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="8dp"
+        android:textAllCaps="true"
+        android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelMedium"
+        android:textStyle="bold"
+        tools:text="@string/record_signal_good" />
+
     <LinearLayout
         android:id="@+id/record_bottom_sheet"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/bg_record_bottom_sheet"
         android:orientation="vertical"
-        android:paddingTop="12dp"
         android:paddingBottom="28dp"
         app:layout_behavior="@string/bottom_sheet_behavior">
 
+        <!--
+          A filled chip rather than a tinted word: paused is the state most likely to be missed, and
+          missing it means believing you are recording when you are not.
+        -->
         <TextView
             android:id="@+id/record_paused_tag"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="8dp"
+            android:gravity="center"
+            android:background="@drawable/bg_record_paused_banner"
             android:letterSpacing="0.05"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="10dp"
             android:text="@string/record_paused_tag"
             android:textAllCaps="true"
-            android:textColor="?attr/colorTertiary"
+            android:textColor="?attr/colorOnError"
             android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelMedium"
             android:textStyle="bold"
             android:visibility="gone"
             tools:visibility="visible" />
 
+
         <!--
-          Reserved space, never gone: the status line occupies a row whether or not it has anything
-          to say, so the metrics below never jump when the signal changes mid-run.
+             Instrument mode: one metric dominates and the rest recede. Distance is the hero because
+             it is the number a runner is actually chasing; duration and the two paces answer "how
+             long" and "am I fading", which are follow-up questions rather than the glance.
+
+             Autosizing has a floor at HeadlineSmall's 24sp so the hero shrinks at large font scales
+             instead of clipping or pushing the controls off the sheet.
         -->
         <TextView
-            android:id="@+id/record_signal_tag"
-            android:layout_width="wrap_content"
+            android:id="@+id/record_distance_value"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="8dp"
-            android:letterSpacing="0.05"
-            android:textAllCaps="true"
-            android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelMedium"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:maxLines="1"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="32sp"
+            android:autoSizeMaxTextSize="57sp"
+            android:textColor="?attr/colorOnSurface"
+            android:textAppearance="@style/TextAppearance.ChayNgayDi.DisplayLarge"
             android:textStyle="bold"
-            android:visibility="invisible"
-            tools:text="@string/record_signal_weak"
-            tools:visibility="visible" />
+            tools:text="5,42" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            android:gravity="center"
+            android:text="@string/record_hero_unit"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelSmall"
+            android:textStyle="bold" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -85,18 +131,18 @@
                 android:orientation="vertical">
 
                 <TextView
-                    android:id="@+id/record_distance_value"
+                    android:id="@+id/record_duration_value"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="?attr/colorOnSurface"
-                    android:textAppearance="@style/TextAppearance.ChayNgayDi.TitleMedium"
+                    android:textAppearance="@style/TextAppearance.ChayNgayDi.TitleLarge"
                     android:textStyle="bold"
-                    tools:text="5.42" />
+                    tools:text="32:18" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/record_distance_unit"
+                    android:text="@string/record_duration_unit"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelSmall"
                     android:textStyle="bold" />
@@ -117,12 +163,12 @@
                     android:textColor="?attr/colorPrimary"
                     android:textAppearance="@style/TextAppearance.ChayNgayDi.TitleLarge"
                     android:textStyle="bold"
-                    tools:text="12.4" />
+                    tools:text="5:24" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/record_current_speed_unit"
+                    android:text="@string/record_current_pace_unit"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelSmall"
                     android:textStyle="bold" />
@@ -137,18 +183,18 @@
                 android:orientation="vertical">
 
                 <TextView
-                    android:id="@+id/record_duration_value"
+                    android:id="@+id/record_average_pace_value"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="?attr/colorOnSurface"
-                    android:textAppearance="@style/TextAppearance.ChayNgayDi.TitleMedium"
+                    android:textAppearance="@style/TextAppearance.ChayNgayDi.TitleLarge"
                     android:textStyle="bold"
-                    tools:text="32:18" />
+                    tools:text="5:31" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/record_duration_unit"
+                    android:text="@string/record_average_pace_unit"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelSmall"
                     android:textStyle="bold" />

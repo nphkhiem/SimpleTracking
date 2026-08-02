@@ -35,6 +35,30 @@
         android:padding="8dp"
         android:src="@drawable/ic_close" />
 
+    <!--
+      GPS status floated over the map, matching portrait. Anchored top|start here because the rail
+      occupies the end edge, so top|end would sit underneath it, and clear of the back button.
+    -->
+    <TextView
+        android:id="@+id/record_signal_tag"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_marginTop="@dimen/record_close_button_margin"
+        android:layout_marginStart="76dp"
+        android:minHeight="48dp"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_record_signal_chip"
+        android:drawableStart="@drawable/ic_signal_bars"
+        android:drawablePadding="7dp"
+        android:letterSpacing="0.05"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="8dp"
+        android:textAllCaps="true"
+        android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelMedium"
+        android:textStyle="bold"
+        tools:text="@string/record_signal_good" />
+
     <LinearLayout
         android:id="@+id/record_bottom_sheet"
         android:layout_width="320dp"
@@ -42,42 +66,26 @@
         android:layout_gravity="end"
         android:background="@drawable/bg_record_bottom_sheet"
         android:orientation="vertical"
-        android:paddingTop="12dp"
         android:paddingBottom="28dp"
         android:gravity="center_vertical">
 
         <TextView
             android:id="@+id/record_paused_tag"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="8dp"
+            android:gravity="center"
+            android:background="@drawable/bg_record_paused_banner"
             android:letterSpacing="0.05"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="10dp"
             android:text="@string/record_paused_tag"
             android:textAllCaps="true"
-            android:textColor="?attr/colorTertiary"
+            android:textColor="?attr/colorOnError"
             android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelMedium"
             android:textStyle="bold"
             android:visibility="gone"
             tools:visibility="visible" />
 
-        <!--
-          Reserved space, never gone: the status line occupies a row whether or not it has anything
-          to say, so the metrics below never jump when the signal changes mid-run.
-        -->
-        <TextView
-            android:id="@+id/record_signal_tag"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="8dp"
-            android:letterSpacing="0.05"
-            android:textAllCaps="true"
-            android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelMedium"
-            android:textStyle="bold"
-            android:visibility="invisible"
-            tools:text="@string/record_signal_weak"
-            tools:visibility="visible" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -86,26 +94,39 @@
             android:baselineAligned="false"
             android:orientation="vertical">
 
+            <!--
+                 Same hierarchy as portrait, stacked instead of side by side, but NOT the same
+                 sizes. The rail is height-bound: portrait's 57sp hero and 22sp trio pushed the Stop
+                 and Pause controls off the bottom edge, which is a functional failure on the one
+                 screen where reaching Stop matters. Landscape therefore holds a smaller step, and
+                 the controls staying on screen outranks matching portrait.
+            -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="14dp"
                 android:gravity="center"
                 android:orientation="vertical">
 
                 <TextView
                     android:id="@+id/record_distance_value"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:maxLines="1"
+                    android:autoSizeTextType="uniform"
+                    android:autoSizeMinTextSize="22sp"
+                    android:autoSizeMaxTextSize="36sp"
                     android:textColor="?attr/colorOnSurface"
-                    android:textAppearance="@style/TextAppearance.ChayNgayDi.TitleMedium"
+                    android:textAppearance="@style/TextAppearance.ChayNgayDi.DisplaySmall"
                     android:textStyle="bold"
-                    tools:text="5.42" />
+                    tools:text="5,42" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/record_distance_unit"
+                    android:text="@string/record_hero_unit"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelSmall"
                     android:textStyle="bold" />
@@ -115,33 +136,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:gravity="center"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/record_current_speed_value"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="?attr/colorPrimary"
-                    android:textAppearance="@style/TextAppearance.ChayNgayDi.TitleLarge"
-                    android:textStyle="bold"
-                    tools:text="12.4" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/record_current_speed_unit"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelSmall"
-                    android:textStyle="bold" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="12dp"
                 android:gravity="center"
                 android:orientation="vertical">
 
@@ -163,6 +158,59 @@
                     android:textStyle="bold" />
 
             </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/record_current_speed_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/colorPrimary"
+                    android:textAppearance="@style/TextAppearance.ChayNgayDi.TitleMedium"
+                    android:textStyle="bold"
+                    tools:text="5:24" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/record_current_pace_unit"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelSmall"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/record_average_pace_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textAppearance="@style/TextAppearance.ChayNgayDi.TitleMedium"
+                    android:textStyle="bold"
+                    tools:text="5:31" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/record_average_pace_unit"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textAppearance="@style/TextAppearance.ChayNgayDi.LabelSmall"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
 
         </LinearLayout>
 

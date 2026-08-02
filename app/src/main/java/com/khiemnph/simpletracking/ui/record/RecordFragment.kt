@@ -276,6 +276,13 @@ class RecordFragment : Fragment() {
                 topMargin = bars.top + closeButtonMargin
                 leftMargin = bars.left + closeButtonMargin
             }
+            // The signal chip floats over the map like the back button and needs the same inset,
+            // or it lands under the status bar. Both boxes are 48dp with the same top margin, so
+            // sharing the inset is also what keeps them aligned with each other.
+            binding.recordSignalTag.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                topMargin = bars.top + closeButtonMargin
+                rightMargin = bars.right + closeButtonMargin
+            }
             binding.recordBottomSheet.updatePadding(bottom = sheetBottomPadding + bars.bottom)
             // Not consumed: the fallback canvas measures the sheet for itself and needs to see the
             // same insets.
@@ -485,6 +492,9 @@ class RecordFragment : Fragment() {
 
         binding.recordDistanceValue.text = formatDistanceKm(state.distanceMeters)
         binding.recordCurrentSpeedValue.text = formatPaceMinPerKm(state.currentSpeedMps)
+        // Average pace beside current pace answers the question km/h cannot: am I fading. The value
+        // was already carried on the state and rendered nowhere.
+        binding.recordAveragePaceValue.text = formatPaceMinPerKm(state.averageSpeedMps)
         binding.recordDurationValue.text = formatDuration(state.elapsedDurationMillis)
 
         isSessionLive = state.status == SessionStatus.RUNNING || state.status == SessionStatus.PAUSED
@@ -501,33 +511,29 @@ class RecordFragment : Fragment() {
     }
 
     /**
-     * Says nothing when the signal is fine. The point of this line is the cases where the numbers
-     * above it cannot be trusted, and a permanent "GPS good" badge would train the user to stop
-     * reading it. Kept [View.INVISIBLE] rather than gone so the metrics never shift.
+     * The GPS chip over the map.
+     *
+     * Always present, unlike the old in-sheet line that hid itself when the signal was fine. A
+     * runner who has just been told the signal was lost needs somewhere to look to see it recover,
+     * and a control that vanishes on success cannot answer that. The cost is a badge that reads
+     * "good" most of the time; the state is carried by colour and word together, never colour
+     * alone.
      */
     private fun renderGpsSignal(signal: GpsSignal) {
-        val message = when (signal) {
-            GpsSignal.ACQUIRING -> R.string.record_signal_acquiring
-            GpsSignal.WEAK -> R.string.record_signal_weak
-            GpsSignal.LOST -> R.string.record_signal_lost
-            GpsSignal.GOOD -> null
+        // Red, amber, green, which is the one convention users read without being taught. Green is
+        // a resource rather than a theme attribute because the app's palette has no green role;
+        // amber and red reuse tertiary and error, which already mean "caution" and "fault" here.
+        val (message, role) = when (signal) {
+            GpsSignal.GOOD ->
+                R.string.record_signal_good to ContextCompat.getColor(requireContext(), R.color.signal_good)
+            GpsSignal.WEAK -> R.string.record_signal_weak to themeColour(MaterialR.attr.colorTertiary)
+            GpsSignal.ACQUIRING -> R.string.record_signal_acquiring to themeColour(MaterialR.attr.colorTertiary)
+            GpsSignal.LOST -> R.string.record_signal_lost to themeColour(AppCompatR.attr.colorError)
         }
         binding.recordSignalTag.apply {
-            if (message == null) {
-                visibility = View.INVISIBLE
-            } else {
-                setText(message)
-                setTextColor(
-                    themeColour(
-                        if (signal == GpsSignal.LOST) {
-                            AppCompatR.attr.colorError
-                        } else {
-                            MaterialR.attr.colorTertiary
-                        },
-                    ),
-                )
-                visibility = View.VISIBLE
-            }
+            setText(message)
+            setTextColor(role)
+            compoundDrawablesRelative.firstOrNull()?.setTint(role)
         }
     }
 

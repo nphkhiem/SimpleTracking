@@ -96,4 +96,14 @@
          ============================================================ -->
 
 
+
+    <!--
+      GPS signal states, the one traffic-light in an otherwise warm palette. Green is a genuine
+      addition: the app's ramp is clay and neutral with no green in it, and it earns its place
+      because signal strength is the one thing users read as red/amber/green without being taught.
+      Weak reuses the tertiary ochre and lost reuses the error role, so only this one is new.
+
+      Measured on the chip's surface: 6.32:1 light, 10.52:1 dark, both past AA for text.
+    -->
+    <color name="signal_good">#1B6B3A</color>
 </resources>

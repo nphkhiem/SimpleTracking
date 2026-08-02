@@ -23,6 +23,5 @@ sealed interface SummaryUiState {
          * True when the run is too short to be worth keeping. The screen offers to discard it,
          * which is what stops a tap-Record-then-tap-Stop mistake becoming a permanent 0.00 km row.
          */
-        val isTooShortToKeep: Boolean,
     ) : SummaryUiState
 }

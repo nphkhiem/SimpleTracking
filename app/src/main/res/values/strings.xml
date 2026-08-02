@@ -20,7 +20,7 @@
     <string name="runs_delete">Delete</string>
     <string name="runs_session_deleted">Run deleted</string>
     <string name="runs_undo">Undo</string>
-    <string name="runs_record_button_text">Record</string>
+    <string name="runs_record_button_text">Start</string>
     <string name="runs_item_stats_separator" translatable="false">" · "</string>
     <string name="runs_group_today">Today</string>
     <string name="runs_group_yesterday">Yesterday</string>
@@ -33,13 +33,11 @@
     <string name="route_not_enough_points">Not enough map data</string>
     <string name="route_no_movement">No movement recorded</string>
     <string name="summary_headline">Nice run</string>
-    <string name="summary_headline_too_short">All done</string>
     <string name="summary_metric_distance">km</string>
     <string name="summary_metric_duration">time</string>
     <string name="summary_metric_pace">pace</string>
     <string name="summary_keep">Save</string>
     <string name="summary_discard">Delete</string>
-    <string name="summary_too_short">That was a very short run. Delete it?</string>
     <string name="summary_not_found">This run is no longer available.</string>
     <string name="summary_back_to_runs">Back to Runs</string>
     <string name="session_detail_title">Run</string>
@@ -80,7 +78,11 @@
     <string name="record_signal_acquiring">Finding GPS…</string>
     <string name="record_signal_weak">Weak GPS</string>
     <string name="record_signal_lost">GPS signal lost</string>
+    <string name="record_signal_good">GPS good</string>
     <string name="record_duration_unit">time</string>
+    <string name="record_hero_unit" translatable="false">km</string>
+    <string name="record_current_pace_unit">pace /km</string>
+    <string name="record_average_pace_unit">avg /km</string>
     <string name="record_pause_content_description">Pause</string>
     <string name="record_resume_content_description">Resume</string>
     <string name="record_stop_content_description">Stop</string>
