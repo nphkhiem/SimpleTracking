@@ -18,7 +18,7 @@
     <string name="runs_title">Hoạt động</string>
     <string name="runs_week_heading">7 ngày qua</string>
     <string name="runs_empty_title">Chưa có buổi chạy nào</string>
-    <string name="runs_empty_body">Chạm Ghi lại để bắt đầu theo dõi. Lộ trình của bạn sẽ xuất hiện ở đây.</string>
+    <string name="runs_empty_body">Chạm Bắt đầu để ghi lại buổi chạy. Lộ trình của bạn sẽ xuất hiện ở đây.</string>
     <string name="runs_delete">Xoá</string>
     <string name="runs_session_deleted">Đã xoá buổi chạy</string>
     <string name="runs_undo">Hoàn tác</string>

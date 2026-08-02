@@ -20,7 +20,7 @@
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
 </p>
 
-Tap record and go. The route draws as you run, the numbers stay readable at a glance, and when you
+Tap start and go. The route draws as you run, the numbers stay readable at a glance, and when you
 stop you get a summary of what you just did instead of being dropped back into a list. Past runs
 keep their route, their splits per kilometre, and a name you can give them.
 
@@ -37,7 +37,12 @@ finished run, and as the thumbnail on every row.
 ## Screenshots
 
 Captured on a Pixel 6a emulator with the app in Vietnamese, its primary language. Distances read
-`0,45 km` with a comma because the formatters follow the device locale rather than a pinned one.
+`0,99 km` with a comma because the formatters follow the device locale rather than a pinned one.
+
+Two things are emulator artefacts rather than app behaviour. The live pace reads `--:--` because
+injected GPS fixes carry no speed for the app to smooth, and on a phone it shows a number. And the
+paces are quicker than a person would run, because a scripted track covers ground faster than the
+clock.
 
 <table>
   <tr>
@@ -58,19 +63,23 @@ the app when you are not running. Stopping goes forward to the summary, not back
 <table>
   <tr>
     <th>Run detail</th>
-    <th>No signal</th>
+    <th>Paused</th>
     <th>Settings</th>
   </tr>
   <tr>
     <td><img src="docs/screenshots/detail_light.png" width="230"></td>
-    <td><img src="docs/screenshots/record_offline_light.png" width="230"></td>
+    <td><img src="docs/screenshots/record_paused_light.png" width="230"></td>
     <td><img src="docs/screenshots/settings_light.png" width="230"></td>
   </tr>
 </table>
 
-The middle one is the app with no map available. The route, the scale bar and every metric are
-still there, because none of them need the network. The map is the only thing missing, and it says
-so rather than showing an empty screen.
+Paused is a band across the sheet rather than a tinted word, because it is the state most easily
+missed and missing it means believing you are recording when you are not.
+
+There is no screenshot of the app with the map unavailable, which is a real and common state: the
+Maps renderer is a Play Services module fetched at runtime, and without it the route is drawn on a
+canvas with a scale bar instead. It could not be captured here because this emulator has already
+cached the renderer, and a stale image from an older build would have been worse than none.
 
 Dark mode is a first-class theme rather than an inverted afterthought, and you can pin it in
 Settings regardless of what the system is doing.
@@ -102,8 +111,8 @@ Settings regardless of what the system is doing.
   ships as a Play Services module fetched at runtime, so on a phone that has never downloaded it
   there would otherwise be nothing on screen at all.
 - **A moment after the run.** Stopping goes to a summary with the route, the distance, the time and
-  the pace. A run under 100 m offers to delete itself, which is what a tap-record-then-tap-stop
-  mistake actually produces.
+  the pace, with Save and Delete side by side. It does not second-guess a short run: Delete is
+  already on the screen, so telling you the run was too short only added tone.
 - **Runs you can look back at.** Each one opens to its full route, four metrics, and per-kilometre
   splits with a bar for relative pace. The fastest complete kilometre is marked; a partial closing
   split never counts as the best, because extrapolating 200 m to a full kilometre reports a pace you
@@ -131,13 +140,14 @@ Settings regardless of what the system is doing.
 | --- | --- |
 | Language | Kotlin 2.4, Coroutines and Flow throughout |
 | UI | Jetpack Compose, Material 3, with the recording screen still on Views |
+| Type | Bricolage Grotesque, bundled under the SIL OFL, with tabular figures forced on every number |
 | Navigation | Navigation Component with Safe Args |
 | DI | Hilt |
 | Persistence | Room, schema exported and every migration tested |
 | Preferences | DataStore |
 | Location | Fused Location Provider in a foreground service |
 | Maps | Google Maps SDK, with a Canvas fallback that needs no map at all |
-| Testing | JUnit, Robolectric, Compose UI testing, MockK, Turbine, 426 unit tests plus instrumented tests |
+| Testing | JUnit, Robolectric, Compose UI testing, MockK, Turbine, 454 unit tests plus instrumented tests |
 | Build | AGP 9.3, minSdk 29, targetSdk 37, R8 on for release |
 
 ## Architecture
@@ -207,7 +217,7 @@ shows the canvas route instead of a map.
 
 ## Tests
 
-426 unit tests across the three modules, plus instrumented tests covering the recording and
+454 unit tests across the three modules, plus instrumented tests covering the recording and
 recovery flows against real Room persistence. Everything runs on every pull request through GitHub
 Actions.
 
