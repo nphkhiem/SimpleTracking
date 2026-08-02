@@ -16,7 +16,7 @@
     <string name="runs_title">Runs</string>
     <string name="runs_week_heading">Last 7 days</string>
     <string name="runs_empty_title">No runs yet</string>
-    <string name="runs_empty_body">Tap Record to start tracking. Your route will show up here.</string>
+    <string name="runs_empty_body">Tap Start to record a run. Your route will show up here.</string>
     <string name="runs_delete">Delete</string>
     <string name="runs_session_deleted">Run deleted</string>
     <string name="runs_undo">Undo</string>
