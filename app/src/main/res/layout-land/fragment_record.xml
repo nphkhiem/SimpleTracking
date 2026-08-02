@@ -72,14 +72,14 @@
 
         <TextView
             android:id="@+id/record_paused_tag"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
             android:layout_marginBottom="12dp"
-            android:background="@drawable/bg_record_paused_chip"
+            android:gravity="center"
+            android:background="@drawable/bg_record_paused_banner"
             android:letterSpacing="0.05"
             android:paddingHorizontal="16dp"
-            android:paddingVertical="7dp"
+            android:paddingVertical="10dp"
             android:text="@string/record_paused_tag"
             android:textAllCaps="true"
             android:textColor="?attr/colorOnError"
